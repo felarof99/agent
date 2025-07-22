@@ -6,10 +6,9 @@ import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
 import MessageManager, {
   MessageManagerSettingsSchema,
 } from "@/lib/runtime/MessageManager";
-import { Orchestrator, OrchestratorResult } from "@/lib/orchestrators/Orchestrator";
-import { VISION_CONFIG } from "@/config/visionConfig";
 import { profileStart, profileEnd, profileAsync } from "@/lib/utils/Profiler";
-
+import { BrowseAgent } from "@/lib/agent/BrowseAgent";
+import { AgentInput } from "@/lib/agent/IAgent";
 
 /**
  * Configuration schema for NxtScape agent
@@ -23,35 +22,6 @@ export const NxtScapeConfigSchema = z.object({
  */
 export type NxtScapeConfig = z.infer<typeof NxtScapeConfigSchema>;
 
-/**
- * Result type for NxtScape execution
- */
-export const NxtScapeResultSchema = z.object({
-  success: z.boolean(), // Whether the operation succeeded
-  messages: z.array(z.any()).optional(), // LLM conversation messages
-  error: z.string().optional(), // Error message if failed
-  duration: z.number().optional(), // Execution duration in ms
-  timestamp: z.string().optional(), // ISO timestamp
-  cancelled: z.boolean().optional(), // Whether task was cancelled
-  graphState: z.any().optional(), // Final graph state for debugging
-  debug: z
-    .object({
-      stepCount: z.number(), // Number of execution steps
-      executionTrace: z.array(
-        z.object({
-          step: z.number(), // Step number
-          type: z.string(), // Message type
-          role: z.string(), // Message role
-          content: z.any().optional(), // Message content
-          toolCalls: z.array(z.any()).optional(), // Tool calls
-          toolCallId: z.string().optional(), // Tool call ID
-        })
-      ),
-    })
-    .optional(), // Debug information (only in debug mode)
-});
-
-export type NxtScapeResult = z.infer<typeof NxtScapeResultSchema>;
 
 /**
  * Schema for run method options
@@ -74,7 +44,7 @@ export class NxtScape {
   private executionContext: ExecutionContext;
   private abortController: AbortController; // Track current execution for cancellation
   private messageManager: MessageManager; // Clean conversation history management using MessageManager
-  private orchestrator!: Orchestrator; // Orchestrator for agent graph execution (initialized in initialize())
+  private browseAgent: BrowseAgent; // The browse agent for navigation
 
   // All agents now managed by AgentGraph
 
@@ -98,7 +68,7 @@ export class NxtScape {
 
     // Create new browser context with vision configuration
     this.browserContext = new BrowserContext({
-      useVision: VISION_CONFIG.DEFAULT_USE_VISION,
+      useVision: true,
     });
 
     // create new abort controller for this execution
@@ -114,6 +84,9 @@ export class NxtScape {
 
     // Initialize logging
     Logging.initialize({ debugMode: this.config.debug || false });
+    
+    // Initialize the browse agent
+    this.browseAgent = new BrowseAgent();
   }
 
   /**
@@ -127,24 +100,25 @@ export class NxtScape {
       return;
     }
 
-    await profileAsync('NxtScape.initialize', async () => {
+    await profileAsync("NxtScape.initialize", async () => {
       try {
         // BrowserContextV2 doesn't need initialization
 
-        // Initialize orchestrator for agent graph execution
-        profileStart('NxtScape.initializeOrchestrator');
-        this.orchestrator = new Orchestrator(this.executionContext);
-        profileEnd('NxtScape.initializeOrchestrator');
-
-        Logging.log("NxtScape", "NxtScape initialization completed successfully");
+        Logging.log(
+          "NxtScape",
+          "NxtScape initialization completed successfully",
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
-        Logging.log("NxtScape", `Failed to initialize: ${errorMessage}`, "error");
+        Logging.log(
+          "NxtScape",
+          `Failed to initialize: ${errorMessage}`,
+          "error",
+        );
 
         // Clean up partial initialization
         this.browserContext = null as any;
-        this.orchestrator = null as any;
 
         throw new Error(`NxtScape initialization failed: ${errorMessage}`);
       }
@@ -156,7 +130,7 @@ export class NxtScape {
    * @returns True if initialized, false otherwise
    */
   public isInitialized(): boolean {
-    return this.browserContext !== null && this.orchestrator !== undefined;
+    return this.browserContext !== null;
   }
 
   /**
@@ -164,20 +138,19 @@ export class NxtScape {
    * Always uses streaming execution for real-time progress updates.
    *
    * @param options - Run options including query, optional tabIds, and eventBus
-   * @returns Result of the processed query with detailed execution trace
    */
-  public async run(options: RunOptions): Promise<NxtScapeResult> {
+  public async run(options: RunOptions): Promise<void> {
     const parsedOptions = RunOptionsSchema.parse(options);
     const { query, tabIds, eventBus } = parsedOptions;
 
-    profileStart('NxtScape.run');
+    profileStart("NxtScape.run");
     const runStartTime = Date.now();
 
     Logging.log(
       "NxtScape",
       `Processing user query with unified classification: ${query}${
         tabIds ? ` (${tabIds.length} tabs)` : ""
-      }`
+      }`,
     );
 
     if (!this.isInitialized()) {
@@ -191,7 +164,7 @@ export class NxtScape {
     if (this.isRunning()) {
       Logging.log(
         "NxtScape",
-        "Another task is already running. Cleaning up..."
+        "Another task is already running. Cleaning up...",
       );
       this._internalCancel();
     }
@@ -204,20 +177,20 @@ export class NxtScape {
     }
 
     // Always get the current page from browser context - this is the tab the agent will operate on
-    profileStart('NxtScape.getCurrentPage');
+    profileStart("NxtScape.getCurrentPage");
     const currentPage = await this.browserContext.getCurrentPage();
     const currentTabId = currentPage.tabId;
-    profileEnd('NxtScape.getCurrentPage');
+    profileEnd("NxtScape.getCurrentPage");
 
     // Lock browser context to the current tab to prevent tab switches during execution
     this.browserContext.lockExecutionToTab(currentTabId);
-    
+
     // Mark execution as started
     this.executionContext.startExecution(currentTabId);
-    
+
     // Set the event bus for this execution
     this.executionContext.setEventBus(eventBus);
-    
+
     // Set selected tab IDs for context (e.g., for summarizing multiple tabs)
     // These are NOT the tabs the agent operates on, just context for tools like ExtractTool
     this.executionContext.setSelectedTabIds(tabIds || [currentTabId]);
@@ -228,7 +201,7 @@ export class NxtScape {
       // System messages are now added at the agent level (position 0) in each agent's executeAgent method
       this.messageManager.addTaskMessage(query);
     } else {
-      // TODO(nithin): Ideally it would be better if we remove the previous task message to not confuse dummer models like ollama. 
+      // TODO(nithin): Ideally it would be better if we remove the previous task message to not confuse dummer models like ollama.
       // If not for a follow up task, there'll be two task messages -- first one like "Your ultimate task is to list tabs after you complete terminate"
       // and the second one like "Your NEW ultimate task is to close tabs after you complete terminate"
       this.messageManager.addFollowUpTaskMessage(query);
@@ -249,107 +222,69 @@ export class NxtScape {
       "NxtScape",
       isFollowUp
         ? `Processing follow-up task after ${this.messageManager.getPreviousTaskType()} agent`
-        : "Starting new task with classification"
+        : "Starting new task with classification",
     );
 
     const startTime = Date.now();
 
     try {
-      // Execute via orchestrator with follow-up context
-      profileStart('NxtScape.orchestratorExecute');
-      const orchestratorResult = await this.orchestrator.execute(
+      // Execute the browse agent
+      const agentInput: AgentInput = {
         query,
+        context: {
+          tabIds: tabIds || [],
+        },
+      };
+      
+      const result = await this.browseAgent.execute(
+        agentInput,
+        this.executionContext,
         eventBus,
-        this.abortController.signal,
-        this.browserContext,
-        followUpContext
+        this.abortController.signal
       );
-      profileEnd('NxtScape.orchestratorExecute');
-
-      // Agent type is now stored immediately after classification in Orchestrator
+      
+      // Log the result
+      if (result.success) {
+        Logging.log("NxtScape", `Agent execution successful: ${result.message || "No message"}`);
+      } else {
+        Logging.log("NxtScape", `Agent execution failed: ${result.error || "Unknown error"}`, "error");
+      }
+      
+      // Agent type is now stored immediately after classification
       // This ensures it's saved even if the task is interrupted
-
-      // Transform orchestrator result to NxtScapeResult
-      return this.createExecutionResult(orchestratorResult.success, startTime, {
-        messages: [], // Orchestrator doesn't use message format
-        error: orchestratorResult.error,
-        cancelled: orchestratorResult.cancelled,
-        graphState: orchestratorResult.finalState,
-        debug: orchestratorResult.debugInfo,
-      });
     } catch (error) {
-      return this.handleExecutionError(error, startTime);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const wasCancelled = error instanceof Error && error.name === "AbortError";
+
+      if (wasCancelled) {
+        Logging.log("NxtScape", `Execution cancelled: ${errorMessage}`);
+      } else {
+        Logging.log("NxtScape", `Execution error: ${errorMessage}`, "error");
+      }
     } finally {
       // Always mark execution as ended
       this.executionContext.endExecution();
       this.currentQuery = null;
-      
+
       // Unlock browser context and update to active tab
-      profileStart('NxtScape.cleanup');
+      profileStart("NxtScape.cleanup");
       await this.browserContext.unlockExecution();
-      
+
       // Highlights not implemented in BrowserContextV2
-      
-      profileEnd('NxtScape.cleanup');
-      
+
+      profileEnd("NxtScape.cleanup");
+
       // Clean up abort controller
       this.resetAbortController();
-      
-      profileEnd('NxtScape.run');
-      Logging.log('NxtScape', `Total execution time: ${Date.now() - runStartTime}ms`);
+
+      profileEnd("NxtScape.run");
+      Logging.log(
+        "NxtScape",
+        `Total execution time: ${Date.now() - runStartTime}ms`,
+      );
     }
   }
 
-
-
-  /**
-   * Creates a standard execution result
-   */
-  private async createExecutionResult(
-    success: boolean,
-    startTime: number,
-    options: {
-      messages?: any[];
-      error?: string;
-      debug?: NxtScapeResult["debug"];
-      cancelled?: boolean;
-      graphState?: any;
-    } = {}
-  ): Promise<NxtScapeResult> {
-    const duration = Date.now() - startTime;
-
-    return {
-      success,
-      messages: options.messages || [],
-      error: options.error,
-      duration,
-      timestamp: new Date().toISOString(),
-      cancelled: options.cancelled,
-      graphState: options.graphState,
-      debug: options.debug,
-    };
-  }
-
-  /**
-   * Handles execution errors consistently
-   */
-  private async handleExecutionError(
-    error: unknown,
-    startTime: number
-  ): Promise<NxtScapeResult> {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    const wasCancelled = error instanceof Error && error.name === "AbortError";
-
-    if (wasCancelled) {
-      Logging.log("NxtScape", `Execution cancelled: ${errorMessage}`);
-    } else {
-      Logging.log("NxtScape", `Execution error: ${errorMessage}`, "error");
-    }
-
-    return this.createExecutionResult(false, startTime, {
-      error: wasCancelled ? "Task was cancelled by user" : errorMessage,
-    });
-  }
 
   public isRunning(): boolean {
     return this.executionContext.isExecuting();
@@ -364,9 +299,11 @@ export class NxtScape {
       const cancelledQuery = this.currentQuery;
       Logging.log(
         "NxtScape",
-        `User cancelling current task execution: "${cancelledQuery}"`
+        `User cancelling current task execution: "${cancelledQuery}"`,
       );
-      this.executionContext.cancelExecution(/*isUserInitiatedsCancellation=*/true);
+      this.executionContext.cancelExecution(
+        /*isUserInitiatedsCancellation=*/ true,
+      );
       return { wasCancelled: true, query: cancelledQuery || undefined };
     }
 
@@ -383,7 +320,7 @@ export class NxtScape {
     if (this.abortController && !this.abortController.signal.aborted) {
       Logging.log(
         "NxtScape",
-        "Internal cleanup: cancelling previous execution"
+        "Internal cleanup: cancelling previous execution",
       );
       // false = not user-initiated, this is internal cleanup
       this.executionContext.cancelExecution(false);
@@ -402,7 +339,7 @@ export class NxtScape {
     return {
       isRunning: this.isRunning(),
       lockedTabId: this.executionContext.getLockedTabId(),
-      query: this.currentQuery
+      query: this.currentQuery,
     };
   }
 
@@ -433,12 +370,9 @@ export class NxtScape {
       abortController: this.abortController,
     });
 
-    // Recreate orchestrator with updated context
-    this.orchestrator = new Orchestrator(this.executionContext);
-
     Logging.log(
       "NxtScape",
-      "Conversation history and state cleared completely"
+      "Conversation history and state cleared completely",
     );
   }
 
@@ -449,6 +383,6 @@ export class NxtScape {
   private resetAbortController(): void {
     this.executionContext.resetAbortController();
     this.abortController = this.executionContext.abortController;
-    Logging.log('NxtScape', 'Abort controller reset');
+    Logging.log("NxtScape", "Abort controller reset");
   }
 }
