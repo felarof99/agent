@@ -20,11 +20,11 @@ const NavigationAnalysisSchema = z.object({
 });
 
 /**
- * Simple browse agent that can navigate to URLs
+ * Main agent that handles user queries and executes tasks
  */
-export class BrowseAgent extends BaseAgent {
-  name = "BrowseAgent";
-  description = "Agent that can browse the web by navigating to URLs";
+export class Agent extends BaseAgent {
+  name = "Agent";
+  description = "Agent that handles web browsing and other tasks";
   
   private llm: BaseChatModel;
   private navigationTool: NavigationTool;

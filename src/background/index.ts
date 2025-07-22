@@ -1,7 +1,7 @@
 import { MessageType, LogMessage, ExecuteQueryMessage, AgentStreamUpdateMessage, CancelTaskMessage, ResetConversationMessage, GetTabsMessage } from '@/lib/types/messaging'
 import { PortName, PortMessage } from '@/lib/runtime/PortMessaging'
 import { Logging } from '@/lib/utils/Logging'
-import { NxtScape } from '@/lib/core/NxtScape'
+import { Controller } from '@/lib/core/Controller'
 import { StreamEventBus } from '@/lib/events'
 import { UIEventHandler } from '@/lib/events/UIEventHandler'
 // Removed deprecated IStreamingCallbacks import
@@ -34,24 +34,24 @@ function captureEvent(eventName: string, properties?: Record<string, any>) {
   // debugLog(`📊 PostHog event: ${prefixedEventName}`, 'info')
 }
 
-// Initialize NxtScape agent with Claude
-const nxtScape = new NxtScape({
+// Initialize Controller
+const controller = new Controller({
   debug: isDevelopmentMode()
 })
 
 // Global initialization flag to ensure we only initialize once
-let isNxtScapeInitialized = false
+let isControllerInitialized = false
 
 
 /**
- * Ensure NxtScape is initialized only once globally
+ * Ensure Controller is initialized only once globally
  */
-async function ensureNxtScapeInitialized(): Promise<void> {
-  if (!isNxtScapeInitialized) {
-    debugLog('Initializing NxtScape for the first time...')
-    await nxtScape.initialize()
-    isNxtScapeInitialized = true
-    debugLog('NxtScape initialized successfully')
+async function ensureControllerInitialized(): Promise<void> {
+  if (!isControllerInitialized) {
+    debugLog('Initializing Controller for the first time...')
+    await controller.initialize()
+    isControllerInitialized = true
+    debugLog('Controller initialized successfully')
   }
 }
 
@@ -91,9 +91,9 @@ function initialize(): void {
   // Capture extension initialization event
   captureEvent('extension_initialized')
   
-  // Initialize NxtScape once at startup to preserve conversation across queries
-  ensureNxtScapeInitialized().catch(error => {
-    debugLog(`Failed to initialize NxtScape at startup: ${error}`, 'error')
+  // Initialize Controller once at startup to preserve conversation across queries
+  ensureControllerInitialized().catch(error => {
+    debugLog(`Failed to initialize Controller at startup: ${error}`, 'error')
   })
   
   
@@ -435,24 +435,24 @@ async function handleExecuteQueryPort(
       source: payload.source || 'unknown'
     })
     
-    // Initialize NxtScape if not already done
-    await ensureNxtScapeInitialized()
+    // Initialize Controller if not already done
+    await ensureControllerInitialized()
     
     
     // Create EventBus for streaming
     const { eventBus, cleanup: cleanupFn } = createStreamingEventBus()
     cleanup = cleanupFn
     
-    // Execute the query using NxtScape with EventBus
-    // Starting NxtScape execution
+    // Execute the query using Controller with EventBus
+    // Starting Controller execution
     
-    const result = await nxtScape.run({
+    const result = await controller.run({
       query: payload.query,
       tabIds: payload.tabIds,
       eventBus: eventBus
     })
     
-    // NxtScape execution completed
+    // Controller execution completed
     
     // Send workflow status based on result
     const statusPayload: any = {
@@ -549,8 +549,8 @@ function handleResetConversationPort(
     
     debugLog(`Conversation reset requested from ${source || 'unknown'}`)
     
-    // Clear conversation history in NxtScape
-    nxtScape.reset()
+    // Clear conversation history in Controller
+    controller.reset()
     
     // Capture conversation reset event
     captureEvent('conversation_reset')
@@ -668,7 +668,7 @@ function handleCancelTaskPort(
     debugLog(`Task cancellation requested from ${source || 'unknown'}: ${reason || 'No reason provided'}`)
     
     // Attempt to cancel the current task
-    const cancellationResult = nxtScape.cancel()
+    const cancellationResult = controller.cancel()
     
     if (cancellationResult.wasCancelled) {
       const cancelledQuery = cancellationResult.query || 'Unknown query';

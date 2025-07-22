@@ -7,20 +7,20 @@ import MessageManager, {
   MessageManagerSettingsSchema,
 } from "@/lib/runtime/MessageManager";
 import { profileStart, profileEnd, profileAsync } from "@/lib/utils/Profiler";
-import { BrowseAgent } from "@/lib/agent/BrowseAgent";
+import { Agent } from "@/lib/agent/Agent";
 import { AgentInput } from "@/lib/agent/IAgent";
 
 /**
- * Configuration schema for NxtScape agent
+ * Configuration schema for Controller
  */
-export const NxtScapeConfigSchema = z.object({
+export const ControllerConfigSchema = z.object({
   debug: z.boolean().default(false).optional(), // Debug mode flag
 });
 
 /**
- * Configuration type for NxtScape agent
+ * Configuration type for Controller
  */
-export type NxtScapeConfig = z.infer<typeof NxtScapeConfigSchema>;
+export type ControllerConfig = z.infer<typeof ControllerConfigSchema>;
 
 
 /**
@@ -35,28 +35,28 @@ export const RunOptionsSchema = z.object({
 export type RunOptions = z.infer<typeof RunOptionsSchema>;
 
 /**
- * Main orchestration agent for the NxtScape framework.
- * Delegates agent graph execution to Orchestrator for clean separation of concerns.
+ * Main controller for the Nxtscape framework.
+ * Handles user queries and delegates to the Agent for execution.
  */
-export class NxtScape {
-  private readonly config: NxtScapeConfig;
+export class Controller {
+  private readonly config: ControllerConfig;
   private browserContext: BrowserContext;
   private executionContext: ExecutionContext;
   private abortController: AbortController; // Track current execution for cancellation
   private messageManager: MessageManager; // Clean conversation history management using MessageManager
-  private browseAgent: BrowseAgent; // The browse agent for navigation
+  private agent: Agent; // The agent for handling tasks
 
   // All agents now managed by AgentGraph
 
   private currentQuery: string | null = null; // Track current query for better cancellation messages
 
   /**
-   * Creates a new NxtScape orchestration agent
-   * @param config - Configuration for the NxtScape agent
+   * Creates a new Controller
+   * @param config - Configuration for the Controller
    */
-  constructor(config: NxtScapeConfig) {
+  constructor(config: ControllerConfig) {
     // Validate config with Zod schema
-    this.config = NxtScapeConfigSchema.parse(config);
+    this.config = ControllerConfigSchema.parse(config);
 
     // Initialize message manager with reasonable settings
     const messageSettings = MessageManagerSettingsSchema.parse({
@@ -85,8 +85,8 @@ export class NxtScape {
     // Initialize logging
     Logging.initialize({ debugMode: this.config.debug || false });
     
-    // Initialize the browse agent
-    this.browseAgent = new BrowseAgent();
+    // Initialize the agent
+    this.agent = new Agent();
   }
 
   /**
@@ -96,7 +96,7 @@ export class NxtScape {
   public async initialize(): Promise<void> {
     // Skip initialization if already initialized to preserve conversation state
     if (this.isInitialized()) {
-      Logging.log("NxtScape", "NxtScape already initialized, skipping...");
+      Logging.log("Controller", "Controller already initialized, skipping...");
       return;
     }
 
@@ -105,14 +105,14 @@ export class NxtScape {
         // BrowserContextV2 doesn't need initialization
 
         Logging.log(
-          "NxtScape",
-          "NxtScape initialization completed successfully",
+          "Controller",
+          "Controller initialization completed successfully",
         );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : String(error);
         Logging.log(
-          "NxtScape",
+          "Controller",
           `Failed to initialize: ${errorMessage}`,
           "error",
         );
@@ -120,7 +120,7 @@ export class NxtScape {
         // Clean up partial initialization
         this.browserContext = null as any;
 
-        throw new Error(`NxtScape initialization failed: ${errorMessage}`);
+        throw new Error(`Controller initialization failed: ${errorMessage}`);
       }
     });
   }
@@ -147,8 +147,8 @@ export class NxtScape {
     const runStartTime = Date.now();
 
     Logging.log(
-      "NxtScape",
-      `Processing user query with unified classification: ${query}${
+      "Controller",
+      `Processing user query: ${query}${
         tabIds ? ` (${tabIds.length} tabs)` : ""
       }`,
     );
@@ -158,12 +158,12 @@ export class NxtScape {
     }
 
     if (!this.browserContext) {
-      throw new Error("NxtScape.initialize() must be awaited before run()");
+      throw new Error("Controller.initialize() must be awaited before run()");
     }
 
     if (this.isRunning()) {
       Logging.log(
-        "NxtScape",
+        "Controller",
         "Another task is already running. Cleaning up...",
       );
       this._internalCancel();
@@ -219,10 +219,10 @@ export class NxtScape {
 
     // Use unified classification-based execution with follow-up awareness
     Logging.log(
-      "NxtScape",
+      "Controller",
       isFollowUp
         ? `Processing follow-up task after ${this.messageManager.getPreviousTaskType()} agent`
-        : "Starting new task with classification",
+        : "Starting new task",
     );
 
     const startTime = Date.now();
@@ -236,7 +236,7 @@ export class NxtScape {
         },
       };
       
-      const result = await this.browseAgent.execute(
+      const result = await this.agent.execute(
         agentInput,
         this.executionContext,
         eventBus,
@@ -245,9 +245,9 @@ export class NxtScape {
       
       // Log the result
       if (result.success) {
-        Logging.log("NxtScape", `Agent execution successful: ${result.message || "No message"}`);
+        Logging.log("Controller", `Agent execution successful: ${result.message || "No message"}`);
       } else {
-        Logging.log("NxtScape", `Agent execution failed: ${result.error || "Unknown error"}`, "error");
+        Logging.log("Controller", `Agent execution failed: ${result.error || "Unknown error"}`, "error");
       }
       
       // Agent type is now stored immediately after classification
@@ -257,9 +257,9 @@ export class NxtScape {
       const wasCancelled = error instanceof Error && error.name === "AbortError";
 
       if (wasCancelled) {
-        Logging.log("NxtScape", `Execution cancelled: ${errorMessage}`);
+        Logging.log("Controller", `Execution cancelled: ${errorMessage}`);
       } else {
-        Logging.log("NxtScape", `Execution error: ${errorMessage}`, "error");
+        Logging.log("Controller", `Execution error: ${errorMessage}`, "error");
       }
     } finally {
       // Always mark execution as ended
@@ -279,7 +279,7 @@ export class NxtScape {
 
       profileEnd("NxtScape.run");
       Logging.log(
-        "NxtScape",
+        "Controller",
         `Total execution time: ${Date.now() - runStartTime}ms`,
       );
     }
@@ -298,7 +298,7 @@ export class NxtScape {
     if (this.abortController && !this.abortController.signal.aborted) {
       const cancelledQuery = this.currentQuery;
       Logging.log(
-        "NxtScape",
+        "Controller",
         `User cancelling current task execution: "${cancelledQuery}"`,
       );
       this.executionContext.cancelExecution(
@@ -319,7 +319,7 @@ export class NxtScape {
   private _internalCancel(): void {
     if (this.abortController && !this.abortController.signal.aborted) {
       Logging.log(
-        "NxtScape",
+        "Controller",
         "Internal cleanup: cancelling previous execution",
       );
       // false = not user-initiated, this is internal cleanup
@@ -371,7 +371,7 @@ export class NxtScape {
     });
 
     Logging.log(
-      "NxtScape",
+      "Controller",
       "Conversation history and state cleared completely",
     );
   }
@@ -383,6 +383,6 @@ export class NxtScape {
   private resetAbortController(): void {
     this.executionContext.resetAbortController();
     this.abortController = this.executionContext.abortController;
-    Logging.log("NxtScape", "Abort controller reset");
+    Logging.log("Controller", "Abort controller reset");
   }
 }
