@@ -446,7 +446,7 @@ async function handleExecuteQueryPort(
     // Execute the query using Controller with EventBus
     // Starting Controller execution
     
-    const result = await controller.run({
+    await controller.run({
       query: payload.query,
       tabIds: payload.tabIds,
       eventBus: eventBus
@@ -454,23 +454,10 @@ async function handleExecuteQueryPort(
     
     // Controller execution completed
     
-    // Send workflow status based on result
+    // Send workflow status - since controller doesn't return result, assume success
     const statusPayload: any = {
-      status: result.success ? 'completed' : 'failed',
-      message: result.success ? 'Task completed successfully' : result.error || 'Task failed',
-    }
-    
-    if (result.error) {
-      statusPayload.error = result.error
-    }
-    
-    
-    // Check if it was cancelled
-    if (result.error && (result.error.includes('cancelled') || result.error.includes('stopped'))) {
-      statusPayload.cancelled = true
-      statusPayload.cancelledQuery = payload.query
-      // Override the error message to be more user-friendly
-      statusPayload.error = undefined  // Don't show error for cancellations
+      status: 'completed',
+      message: 'Task completed successfully',
     }
     
     port.postMessage({

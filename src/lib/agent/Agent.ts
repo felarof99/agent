@@ -89,7 +89,7 @@ export class Agent extends BaseAgent {
       
       // Execute navigation
       const result = await this.navigationTool.execute(
-        { url: analysis.url },
+        { url: analysis.url, waitUntil: "load" },
         executionContext
       );
       

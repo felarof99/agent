@@ -8,7 +8,7 @@ import { Logging } from "@/lib/utils/Logging";
  */
 export const NavigationParametersSchema = z.object({
   url: z.string().url(),  // The URL to navigate to
-  waitUntil: z.enum(["load", "domcontentloaded", "networkidle0", "networkidle2"]).optional().default("load"),  // When to consider navigation complete
+  waitUntil: z.enum(["load", "domcontentloaded", "networkidle0", "networkidle2"]).default("load"),  // When to consider navigation complete
 });
 
 export type NavigationParameters = z.infer<typeof NavigationParametersSchema>;
@@ -38,7 +38,7 @@ export class NavigationTool implements ITool {
       }
       
       // Navigate to the URL
-      await page.goto(url, { waitUntil });
+      await page.navigateTo(url);
       
       // Get the final URL after any redirects
       const finalUrl = page.url();
