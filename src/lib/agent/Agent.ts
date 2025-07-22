@@ -4,8 +4,7 @@ import { StreamEventBus } from "@/lib/events";
 import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
 import { NavigationTool } from "@/lib/tools/NavigationTool";
 import { Logging } from "@/lib/utils/Logging";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatOpenAI } from "@langchain/openai";
+import { LangChainProviderFactory } from "@/lib/llm/LangChainProviderFactory";
 import { BaseChatModel } from "@langchain/core/language_models/chat_models";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { z } from "zod";
@@ -26,8 +25,9 @@ export class Agent extends BaseAgent {
   name = "Agent";
   description = "Agent that handles web browsing and other tasks";
   
-  private llm: BaseChatModel;
+  private llm: BaseChatModel | null = null;
   private navigationTool: NavigationTool;
+  private llmInitialized: Promise<void>;
   
   constructor() {
     super();
@@ -35,18 +35,33 @@ export class Agent extends BaseAgent {
     // Initialize the navigation tool
     this.navigationTool = new NavigationTool();
     
-    // Initialize LLM (using Claude by default)
-    // In a real implementation, this would come from configuration
-    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.LITELLM_API_KEY;
-    if (!apiKey) {
-      throw new Error("No API key found for LLM");
+    // Initialize LLM using the factory
+    // This will use user settings or defaults
+    this.llmInitialized = this.initializeLLM();
+  }
+  
+  private async initializeLLM(): Promise<void> {
+    try {
+      // Create LLM based on user settings
+      this.llm = await LangChainProviderFactory.createLLM({
+        temperature: 0, // Override temperature for more deterministic behavior
+      });
+      Logging.log(this.name, "LLM initialized successfully");
+    } catch (error) {
+      Logging.log(this.name, `Failed to initialize LLM: ${error}`, "error");
+      // Fallback to default Claude model if settings fail
+      this.llm = LangChainProviderFactory.createClaude("claude-3-5-sonnet-20241022", {
+        temperature: 0,
+      });
     }
-    
-    this.llm = new ChatAnthropic({
-      apiKey,
-      model: "claude-3-5-sonnet-20241022",
-      temperature: 0,
-    });
+  }
+  
+  private async ensureLLMInitialized(): Promise<BaseChatModel> {
+    await this.llmInitialized;
+    if (!this.llm) {
+      throw new Error("LLM not initialized");
+    }
+    return this.llm;
   }
   
   protected async executeAgent(
@@ -136,7 +151,8 @@ Respond in JSON format with:
     ];
     
     try {
-      const response = await this.llm.invoke(messages);
+      const llm = await this.ensureLLMInitialized();
+      const response = await llm.invoke(messages);
       const content = response.content.toString();
       
       // Extract JSON from the response
