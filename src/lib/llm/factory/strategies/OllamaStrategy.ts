@@ -1,4 +1,4 @@
-import { LLMSettings, ResolvedProviderConfig } from '@/lib/llm/settings/types'
+import { LLMSettings, ResolvedProviderConfig } from '@/lib/llm/settings/LLMSettingsReader'
 import { Logging } from '@/lib/utils/Logging'
 
 /**

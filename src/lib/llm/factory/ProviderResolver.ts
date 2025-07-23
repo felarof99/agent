@@ -1,4 +1,4 @@
-import { LLMSettings, ResolvedProviderConfig, ProviderType } from '@/lib/llm/settings/types'
+import { LLMSettings, ResolvedProviderConfig, ProviderType } from '@/lib/llm/settings/LLMSettingsReader'
 import { Logging } from '@/lib/utils/Logging'
 import { NxtscapeStrategy } from './strategies/NxtscapeStrategy'
 import { OpenAIStrategy } from './strategies/OpenAIStrategy'

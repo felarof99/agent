@@ -7,7 +7,7 @@ export type {
   LLMSettings, 
   ProviderType,
   ResolvedProviderConfig 
-} from './settings/types'
+} from './settings/LLMSettingsReader'
 
 // Settings reader for advanced use cases
 export { LLMSettingsReader } from './settings/LLMSettingsReader'
