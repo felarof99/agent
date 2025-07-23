@@ -27,7 +27,10 @@ alwaysApply: true
 - Use PascalCase for classes.
 - Use camelCase for variables, functions, and methods.
 - Directories: Use kebab-case (e.g. components/auth-wizard).
-- Files: Use PascalCase (e.g. UserProfile.tsx, AuthService.ts).
+- Files: 
+  - Use PascalCase ONLY for files that export a class with the same name (e.g. BrowserContext.ts exports class BrowserContext)
+  - Use lowercase for all other files: utilities, functions, interfaces, types, enums (e.g. profiler.ts, types.ts, tool.interface.ts)
+  - Components (.tsx files) always use PascalCase (e.g. UserProfile.tsx)
 - Use UPPERCASE for environment variables.
 - Avoid magic numbers and define constants.
 - File extensions:

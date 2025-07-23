@@ -6,7 +6,7 @@ import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
 import MessageManager, {
   MessageManagerSettingsSchema,
 } from "@/lib/runtime/MessageManager";
-import { profileStart, profileEnd, profileAsync } from "@/lib/utils/Profiler";
+import { profileStart, profileEnd, profileAsync } from "@/lib/utils/profiler";
 import { BrowseAgent } from "@/lib/agent/BrowseAgent";
 import { AgentInput } from "@/lib/agent/IAgent";
 
