@@ -4,16 +4,17 @@ import { ChatAnthropic } from "@langchain/anthropic"
 import { ChatOllama } from "@langchain/community/chat_models/ollama"
 import { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { LLMSettingsReader } from "@/lib/llm/settings/LLMSettingsReader"
-import type { LLMSettings } from "@/lib/llm/settings/LLMSettingsReader"
+import type { LLMSettings } from '@/lib/llm/settings/types'
 
 // Default constants
 const DEFAULT_TEMPERATURE = 0.7
 const DEFAULT_STREAMING = true
-const DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
-const DEFAULT_ANTHROPIC_MODEL = "claude-3-opus-20240229"
-const DEFAULT_OLLAMA_MODEL = "llama2"
+const DEFAULT_OPENAI_MODEL = "gpt-4o"
+const DEFAULT_ANTHROPIC_MODEL = 'claude-4-sonnet'
+const DEFAULT_OLLAMA_MODEL = "qwen3:4b"
 const DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
-const DEFAULT_NXTSCAPE_PROXY_URL = "https://proxy.nxtscape.com/v1"
+const DEFAULT_NXTSCAPE_PROXY_URL = "http://llm.nxtscape.ai"
+const DEFAULT_NXTSCAPE_MODEL = "claude-3-5-sonnet"
 
 // Simple cache for LLM instances
 const llmCache = new Map<string, BaseChatModel>()
@@ -97,12 +98,12 @@ export class LangChainProvider {
         // Nxtscape uses OpenAI provider with proxy
         return {
           provider: "nxtscape",
-          model: settings.nxtscape?.model || DEFAULT_OPENAI_MODEL,
+          model: settings.nxtscape?.model || DEFAULT_NXTSCAPE_MODEL,
           temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
           maxTokens: options?.maxTokens,
           streaming: DEFAULT_STREAMING,
           // Use environment variables for proxy
-          apiKey: process.env.LITELLM_API_KEY,
+          apiKey: process.env.LITELLM_API_KEY || 'nokey',
           baseURL: DEFAULT_NXTSCAPE_PROXY_URL,
         }
         
@@ -153,11 +154,27 @@ export class LangChainProvider {
     
     switch (config.provider) {
       case "nxtscape":
+        // Nxtscape uses OpenAI client with proxy configuration
+        return new ChatOpenAI({
+          ...baseConfig,
+          openAIApiKey: config.apiKey,
+          configuration: {
+            baseURL: config.baseURL,
+            apiKey: config.apiKey,
+            dangerouslyAllowBrowser: true
+          }
+        })
+      
       case "openai":
         return new ChatOpenAI({
           ...baseConfig,
           openAIApiKey: config.apiKey,
-          configuration: config.baseURL ? { baseURL: config.baseURL } : undefined,
+          configuration: config.baseURL ? { 
+            baseURL: config.baseURL,
+            dangerouslyAllowBrowser: true
+          } : {
+            dangerouslyAllowBrowser: true
+          },
         })
         
       case "anthropic":
