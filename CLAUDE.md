@@ -190,6 +190,7 @@ class MyAgent {
 - DO NOT automatically generate example file to use the code unless asked.
 - DO NOT automatically generate tests for the code unless asked.
 - IMPORTANT: When asked a question or given a task, ALWAYS first generate a rough plan with pseudo code or design. DO NOT make changes without asking for approval first.
+- IMPORTANT: Never use optional defaults like `|| "default-value"` in code. Always define constants at the top of the file for any default values (e.g., `const DEFAULT_MODEL = "gpt-4o-mini"`)
 
 # Code Style & Formatting
 - Use English for all code and documentation.
@@ -204,6 +205,8 @@ class MyAgent {
 - Favor loops and small helper modules over duplicate code.
 - Use descriptive names with auxiliary verbs (e.g. isLoading, hasError).
 - File layout: exported component → subcomponents → hooks/helpers → static content.
+- IMPORTANT: All imports must use path aliases like "@/lib" instead of relative paths like "./" or "../"
+- IMPORTANT: Private methods must be prefixed with underscore (e.g., `_privateMethod()`)
 
 
 # Naming Conventions
@@ -233,6 +236,35 @@ class MyAgent {
 - Use arrow functions for simple cases (<3 instructions), named functions otherwise.
 - Use default parameter values instead of null/undefined checks.
 - Use RO-RO (Receive Object, Return Object) for passing and returning multiple parameters.
+- IMPORTANT: Order methods using "Operation-based grouping" (hybrid approach):
+  ```typescript
+  class Example {
+    // 1. Constructor/Initialization
+    constructor() {}
+    init() {}
+    
+    // 2. Public getter methods
+    getData() {}
+    getStatus() {}
+    
+    // 3. Public creator/builder methods
+    createItem() {}
+    buildConfig() {}
+    
+    // 4. Public action/command methods
+    save() {}
+    delete() {}
+    refresh() {}
+    
+    // 5. Public predicate methods
+    isReady() {}
+    hasData() {}
+    
+    // 6. Private helper methods (with _ prefix)
+    private _validateData() {}
+    private _formatOutput() {}
+  }
+  ```
 
 # Data Handling
 - Avoid excessive use of primitive types; encapsulate data in composite types.
