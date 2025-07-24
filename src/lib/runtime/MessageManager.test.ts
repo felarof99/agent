@@ -1,0 +1,153 @@
+import { HumanMessage, AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
+import { MessageManager } from "./MessageManager";
+
+describe("MessageManager", () => {
+  let manager: MessageManager;
+
+  beforeEach(() => {
+    manager = new MessageManager(1000); // Small token limit for testing
+  });
+
+  describe("Core message operations", () => {
+    it("should add and retrieve messages", () => {
+      manager.addHuman("Hello");
+      manager.addAI("Hi there");
+      
+      const messages = manager.getMessages();
+      expect(messages).toHaveLength(2);
+      expect(messages[0]).toBeInstanceOf(HumanMessage);
+      expect(messages[0].content).toBe("Hello");
+      expect(messages[1]).toBeInstanceOf(AIMessage);
+      expect(messages[1].content).toBe("Hi there");
+    });
+
+    it("should handle system messages (only one allowed)", () => {
+      manager.addSystem("System 1");
+      manager.addHuman("Hello");
+      manager.addSystem("System 2");
+      
+      const messages = manager.getMessages();
+      const systemMessages = messages.filter(m => m instanceof SystemMessage);
+      expect(systemMessages).toHaveLength(1);
+      expect(systemMessages[0].content).toBe("System 2");
+    });
+
+    it("should handle tool messages", () => {
+      manager.addTool("Tool result", "tool-123");
+      
+      const messages = manager.getMessages();
+      expect(messages[0]).toBeInstanceOf(ToolMessage);
+      expect(messages[0].content).toBe("Tool result");
+      expect((messages[0] as ToolMessage).tool_call_id).toBe("tool-123");
+    });
+
+    it("should clear all messages", () => {
+      manager.addHuman("Hello");
+      manager.addAI("Hi");
+      manager.clear();
+      
+      expect(manager.getMessages()).toHaveLength(0);
+      expect(manager.getTokenCount()).toBe(0);
+    });
+
+    it("should remove last message", () => {
+      manager.addHuman("First");
+      manager.addAI("Second");
+      
+      const removed = manager.removeLast();
+      expect(removed).toBe(true);
+      expect(manager.getMessages()).toHaveLength(1);
+      expect(manager.getMessages()[0].content).toBe("First");
+    });
+  });
+
+  describe("Token management", () => {
+    it("should track token count", () => {
+      const initialCount = manager.getTokenCount();
+      expect(initialCount).toBe(0);
+      
+      manager.addHuman("Hello world"); // ~11 chars = ~3 tokens + 3 overhead = 6
+      const count = manager.getTokenCount();
+      expect(count).toBeGreaterThan(0);
+      expect(count).toBeLessThan(20); // Reasonable upper bound
+    });
+
+    it("should calculate remaining tokens", () => {
+      const initial = manager.remaining();
+      expect(initial).toBe(1000);
+      
+      manager.addHuman("Hello");
+      const remaining = manager.remaining();
+      expect(remaining).toBeLessThan(1000);
+      expect(remaining).toBeGreaterThan(980); // Should only use a few tokens
+    });
+
+    it("should auto-trim when exceeding token limit", async () => {
+      // Add messages until we exceed the limit
+      for (let i = 0; i < 50; i++) {
+        manager.addHuman(`This is a long message number ${i} with some content to use up tokens`);
+      }
+      
+      // Should have trimmed to stay under limit
+      expect(manager.getTokenCount()).toBeLessThanOrEqual(1000);
+      
+      // Most recent messages should be preserved
+      const messages = manager.getMessages();
+      const lastMessage = messages[messages.length - 1];
+      expect(lastMessage.content).toContain("49"); // Last message should be preserved
+    });
+
+    it("should preserve system messages during trimming", async () => {
+      manager.addSystem("Important system prompt");
+      
+      // Add many messages to trigger trimming
+      for (let i = 0; i < 50; i++) {
+        manager.addHuman(`Message ${i} with lots of content to trigger trimming`);
+      }
+      
+      // System message should still be there
+      const messages = manager.getMessages();
+      const systemMessages = messages.filter(m => m instanceof SystemMessage);
+      expect(systemMessages).toHaveLength(1);
+      expect(systemMessages[0].content).toBe("Important system prompt");
+    });
+  });
+
+
+  describe("Edge cases", () => {
+    it("should handle empty message manager", () => {
+      expect(manager.getMessages()).toHaveLength(0);
+      expect(manager.getTokenCount()).toBe(0);
+      expect(manager.remaining()).toBe(1000);
+      expect(manager.removeLast()).toBe(false);
+    });
+
+    it("should handle complex content types", () => {
+      const complexContent = [
+        { type: "text", text: "Check this image:" },
+        { type: "image_url", image_url: { url: "https://example.com/image.png" } }
+      ];
+      
+      manager.add(new HumanMessage(complexContent));
+      
+      const messages = manager.getMessages();
+      expect(messages).toHaveLength(1);
+      expect(manager.getTokenCount()).toBeGreaterThan(0);
+    });
+
+    it("should handle very small token limits", () => {
+      const tinyManager = new MessageManager(10); // Very small limit
+      tinyManager.addHuman("This is a message");
+      
+      // Should have the message
+      expect(tinyManager.getMessages().length).toBe(1);
+      
+      // Add another that would exceed limit
+      tinyManager.addHuman("Another long message");
+      
+      // Should have trimmed to stay under limit (kept only the latest)
+      expect(tinyManager.getMessages().length).toBe(1);
+      expect(tinyManager.getMessages()[0].content).toBe("Another long message");
+    });
+  });
+});
