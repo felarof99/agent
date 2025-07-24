@@ -6,6 +6,8 @@ This document describes the updated design for tool calling in the BrowseAgent, 
 
 The design maintains the plan-then-execute flow but shifts tool decision-making to `bindTools`, allowing the LLM to output `tool_calls` in its response. This is more robust and aligns with LangChain's recommended agent-free tool calling pattern.
 
+// NTN -- we are not pure plan then execute, we use hybrid approach, which plan for HORIZON steps and then execute them.
+
 ## Core Architecture
 
 The BrowseAgent executes plans step-by-step. For each step:
@@ -33,6 +35,7 @@ const PlanSchema = z.object({
 
 ### 2. Define Special 'final_answer' Tool
 
+// NTN -- let's define answer tool later.
 To handle non-tool responses, add a dummy tool:
 
 ```typescript
@@ -63,14 +66,19 @@ class BrowseAgent {
     // Step 1: Get plan from PlannerTool
     const planResult = await this.toolManager.execute('planner', { task });
     const plan = JSON.parse(planResult).plan;
-    
+   
+   for {
+    .... 
+    /// NTN -- this is just the inner loop for step execution
+    // NTN -- this is JUST pseudo code, need not implement it exactly like this. Think through and integrate this logic with my code.
     // Step 2: Execute each step
     for (let i = 0; i < plan.steps.length; i++) {
       this.currentStepOfPlan = i;
       const step = plan.steps[i];
       
       // Step 3: Get LLM to decide tool calls using bindTools
-      const executionResponse = await this._getStepExecution(step);
+      // NTN -- let's call this function _executeStep
+      const executionResponse = await this._executeStep(step);
       
       // Step 4: Parse and execute tool calls
       if (executionResponse.tool_calls && executionResponse.tool_calls.length > 0) {
@@ -91,9 +99,11 @@ class BrowseAgent {
         break;
       }
     }
+    ....
+   }
   }
   
-  private async _getStepExecution(step: PlanStep): Promise<AIMessage> {
+  private async _executeStep(step: PlanStep): Promise<AIMessage> {
     // Get all available tools + final_answer
     const tools = [...this.toolManager.getAllTools(), finalAnswerTool];
     
@@ -121,6 +131,8 @@ class BrowseAgent {
 }
 ```
 
+// NTN -- can we put this into browser AGent prompt itself
+// NTN -- look at PlannerTool -- there is SystemPrompt and TaskPrompt -- should we do something like this for BrowserAgent as well
 ### 4. Step Execution Prompt
 
 ```typescript
@@ -163,9 +175,9 @@ private async _executeToolCall(toolCall: ToolCall): Promise<void> {
   }
   
   // Record tool call in message history
-  const toolCallId = this.messageManager.getNextToolCallId();
+  // NTN -- we don't have message manager function to record tool call, you add that.
+  // NTN -- ACtually create a separate private method for this _updateMessageManagerWithToolCall , _updateMessageManagerWithToolResult and so on.
   this.messageManager.addToolCall({
-    id: toolCallId,
     name: tool_name,
     args: args
   });
@@ -191,6 +203,7 @@ private async _executeToolCall(toolCall: ToolCall): Promise<void> {
   }
 }
 
+// NTN -- this need not be separate method, just use _updateMessageManagerWithToolResult
 private async _handleSimpleAnswer(args: { content: string }): Promise<void> {
   // Record as AI message or special entry
   this.messageManager.addAIMessage(args.content);
@@ -208,12 +221,32 @@ class ToolManager {
     return Object.values(this.tools);  // Return array of bound tools
   }
   
-  getDescriptions(tools: DynamicStructuredTool[]): string {
-    return tools.map(tool => `
-${tool.name}:
-  Description: ${tool.description}
-  Arguments: ${JSON.stringify(tool.schema.shape, null, 2)}
-    `).join('\n');
+
+  // NTN  -- this is not defined
+  getToolDescriptions(): string {
+ // NTN -- you can probably use the zod schema used for input of the tool and then convert that to JSON schema using something like below
+ // NTN -- i have already installed zod-to-json-schema 
+//  import { DynamicStructuredTool } from "@langchain/core/tools";
+// import { zodToJsonSchema } from "zod-to-json-schema";
+// import { z } from "zod";
+
+// const browserNavigationTool = new DynamicStructuredTool({
+//   name: "browser_navigation",
+//   description: "Navigate browser to a specific URL",
+//   schema: z.object({
+//     url: z.string().describe("The URL to navigate to"),
+//   }),
+//   func: async ({ url }) => `Navigated to ${url}`,
+// });
+
+// // Convert the tool's schema to JSON Schema
+// const toolJsonSchema = zodToJsonSchema(
+//   browserNavigationTool.schema,
+//   "browserNavigationSchema"
+// );
+
+// console.log(JSON.stringify(toolJsonSchema, null, 2));
+
   }
 }
 ```
