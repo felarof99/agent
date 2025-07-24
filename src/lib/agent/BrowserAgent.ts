@@ -31,24 +31,13 @@ export class BrowserAgent {
     // Register done tool
     this.toolManager.register(createDoneTool());
     
-    // Navigation tool will be registered dynamically when needed
-    // since getCurrentPage() is async
+    // Register navigation tool - now it accepts ExecutionContext
+    this.toolManager.register(createNavigationTool(this.executionContext));
     
     // Add other tools as needed in the future
   }
 
-  private async _ensureNavigationTool(): Promise<void> {
-    // Register navigation tool if not already registered
-    if (!this.toolManager.get('browser_navigation')) {
-      const currentPage = await this.executionContext.browserContext.getCurrentPage();
-      this.toolManager.register(createNavigationTool(currentPage));
-    }
-  }
-
   async execute(task: string): Promise<void> {
-    // Ensure navigation tool is registered
-    await this._ensureNavigationTool();
-    
     // Initialize with system prompt
     const systemPrompt = generateSystemPrompt(this.toolManager.getDescriptions());
     this.messageManager.addSystem(systemPrompt);
@@ -62,7 +51,7 @@ export class BrowserAgent {
       if (this.currentPlan.length === 0) {
         const plannerTool = this.toolManager.get('planner');
         if (!plannerTool) {
-          this.messageManager.addSystem(`Error: Tool "planner" not found. Cannot continue.`);
+          this.messageManager.addAI(`Error: Tool "planner" not found. Cannot continue.`);
           break;
         }
 
@@ -81,7 +70,7 @@ export class BrowserAgent {
           }));
           this.messageManager.addAI(`I have created a new ${parsedResult.plan.steps.length}-step plan.`);
         } else {
-          this.messageManager.addSystem(`Error: Failed to create plan. ${parsedResult.error || 'Unknown error'}`);
+          this.messageManager.addAI(`Error: Failed to create plan. ${parsedResult.error || 'Unknown error'}`);
           break;
         }
       }
@@ -92,7 +81,7 @@ export class BrowserAgent {
 
       const tool = this.toolManager.get(step.tool);
       if (!tool) {
-        this.messageManager.addSystem(`Error: Tool "${step.tool}" not found. Re-planning.`);
+        this.messageManager.addAI(`Error: Tool "${step.tool}" not found. Re-planning.`);
         this.currentPlan = []; // Clear plan to trigger re-planning
         continue;
       }

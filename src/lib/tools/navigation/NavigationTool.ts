@@ -1,6 +1,6 @@
 import { z } from "zod"
 import { DynamicStructuredTool } from "@langchain/core/tools"
-import { BrowserPage } from "@/lib/browser/BrowserPage"
+import { ExecutionContext } from "@/lib/runtime/ExecutionContext"
 import { toolSuccess, toolError, type ToolOutput } from "@/lib/tools/tool.interface"
 
 // Constants
@@ -19,7 +19,7 @@ export const NavigationInputSchema = z.object({
 export type NavigationInput = z.infer<typeof NavigationInputSchema>
 
 export class NavigationTool {
-  constructor(private browserPage: BrowserPage) {}
+  constructor(private executionContext: ExecutionContext) {}
 
   async execute(input: NavigationInput): Promise<ToolOutput> {
     switch (input.action) {
@@ -42,7 +42,8 @@ export class NavigationTool {
 
     try {
       const normalizedUrl = this._normalizeUrl(url)
-      await this.browserPage.navigateTo(normalizedUrl)
+      const browserPage = await this.executionContext.browserContext.getCurrentPage()
+      await browserPage.navigateTo(normalizedUrl)
       
       // Wait a bit for the page to settle after navigation
       if (ENABLE_WAIT) {
@@ -50,8 +51,8 @@ export class NavigationTool {
       }
       
       const [currentUrl, title] = await Promise.all([
-        this.browserPage.url(),
-        this.browserPage.title()
+        browserPage.url(),
+        browserPage.title()
       ])
       
       return toolSuccess(`Navigated to ${currentUrl} - ${title}`)
@@ -69,7 +70,8 @@ export class NavigationTool {
 
   private async _goBack(): Promise<ToolOutput> {
     try {
-      await this.browserPage.goBack()
+      const browserPage = await this.executionContext.browserContext.getCurrentPage()
+      await browserPage.goBack()
       
       // Wait a bit for the page to settle after navigation
       if (ENABLE_WAIT) {
@@ -77,8 +79,8 @@ export class NavigationTool {
       }
       
       const [currentUrl, title] = await Promise.all([
-        this.browserPage.url(),
-        this.browserPage.title()
+        browserPage.url(),
+        browserPage.title()
       ])
       
       return toolSuccess(`Went back to ${currentUrl} - ${title}`)
@@ -94,7 +96,8 @@ export class NavigationTool {
 
   private async _goForward(): Promise<ToolOutput> {
     try {
-      await this.browserPage.goForward()
+      const browserPage = await this.executionContext.browserContext.getCurrentPage()
+      await browserPage.goForward()
       
       // Wait a bit for the page to settle after navigation
       if (ENABLE_WAIT) {
@@ -102,8 +105,8 @@ export class NavigationTool {
       }
       
       const [currentUrl, title] = await Promise.all([
-        this.browserPage.url(),
-        this.browserPage.title()
+        browserPage.url(),
+        browserPage.title()
       ])
       
       return toolSuccess(`Went forward to ${currentUrl} - ${title}`)
@@ -119,7 +122,8 @@ export class NavigationTool {
 
   private async _refresh(): Promise<ToolOutput> {
     try {
-      await this.browserPage.refreshPage()
+      const browserPage = await this.executionContext.browserContext.getCurrentPage()
+      await browserPage.refreshPage()
       
       // Wait a bit for the page to settle after refresh
       if (ENABLE_WAIT) {
@@ -127,8 +131,8 @@ export class NavigationTool {
       }
       
       const [currentUrl, title] = await Promise.all([
-        this.browserPage.url(),
-        this.browserPage.title()
+        browserPage.url(),
+        browserPage.title()
       ])
       
       return toolSuccess(`Refreshed ${currentUrl} - ${title}`)
@@ -157,8 +161,8 @@ export class NavigationTool {
 }
 
 // LangChain wrapper factory function
-export function createNavigationTool(browserPage: BrowserPage): DynamicStructuredTool {
-  const navigationTool = new NavigationTool(browserPage)
+export function createNavigationTool(executionContext: ExecutionContext): DynamicStructuredTool {
+  const navigationTool = new NavigationTool(executionContext)
   
   return new DynamicStructuredTool({
     name: "browser_navigation",
