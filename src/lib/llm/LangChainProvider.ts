@@ -157,10 +157,11 @@ export class LangChainProvider {
         // Nxtscape uses OpenAI client with proxy configuration
         return new ChatOpenAI({
           ...baseConfig,
-          openAIApiKey: config.apiKey,
+          openAIApiKey: config.apiKey,  // This is the correct parameter name
+          // The `configuration` field is forwarded directly to the underlying OpenAI client
           configuration: {
             baseURL: config.baseURL,
-            apiKey: config.apiKey,
+            apiKey: config.apiKey,  // Still required by OpenAI client constructor
             dangerouslyAllowBrowser: true
           }
         })

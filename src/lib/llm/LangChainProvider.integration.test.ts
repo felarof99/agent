@@ -31,7 +31,9 @@ describe('LangChainProvider Integration Test', () => {
       provider: 'nxtscape' as const,
       model: 'gpt-4o-mini',
       temperature: 0,
-      streaming: false
+      streaming: false,
+      apiKey: process.env.LITELLM_API_KEY || 'nokey',
+      baseURL: 'http://llm.nxtscape.ai'
     }
     
     // Create LLM instance
@@ -62,7 +64,9 @@ describe('LangChainProvider Integration Test', () => {
         provider: 'nxtscape' as const,
         model: 'gpt-4o-mini',
         temperature: 0,
-        maxTokens: 50
+        maxTokens: 50,
+        apiKey: process.env.LITELLM_API_KEY || 'nokey',
+        baseURL: 'http://llm.nxtscape.ai'
       }
       
       const llm = provider.createLLMFromConfig(config)
