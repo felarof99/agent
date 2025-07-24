@@ -2,6 +2,8 @@ import { z } from 'zod'
 import BrowserContext from '../browser/BrowserContext'
 import MessageManager from '@/lib/runtime/MessageManager'
 import { StreamEventBus } from '@/lib/events'
+import { getLLM as getLLMFromProvider } from '@/lib/llm/LangChainProvider'
+import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
 /**
  * Configuration options for ExecutionContext
@@ -125,6 +127,15 @@ export class ExecutionContext {
     this._isExecuting = false;
     this._lockedTabId = null;
     this.userInitiatedCancel = false;
+  }
+
+  /**
+   * Get LLM instance for agent/tool usage
+   * @param options - Optional LLM configuration
+   * @returns Promise resolving to chat model
+   */
+  public async getLLM(options?: { temperature?: number; maxTokens?: number }): Promise<BaseChatModel> {
+    return getLLMFromProvider(options);
   }
 }
  
