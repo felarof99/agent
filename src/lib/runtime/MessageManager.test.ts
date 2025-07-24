@@ -1,5 +1,5 @@
 import { HumanMessage, AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
-import { MessageManager } from "./MessageManager";
+import { MessageManager, MessageManagerReadOnly } from "./MessageManager";
 
 describe("MessageManager", () => {
   let manager: MessageManager;
@@ -149,5 +149,102 @@ describe("MessageManager", () => {
       expect(tinyManager.getMessages().length).toBe(1);
       expect(tinyManager.getMessages()[0].content).toBe("Another long message");
     });
+  });
+});
+
+describe("MessageManagerReadOnly", () => {
+  let messageManager: MessageManager;
+  let readOnlyView: MessageManagerReadOnly;
+
+  beforeEach(() => {
+    messageManager = new MessageManager();
+    readOnlyView = new MessageManagerReadOnly(messageManager);
+  });
+
+  // Test 1: Verify read-only access to messages
+  it("should provide read-only access to all messages", () => {
+    // Arrange
+    messageManager.addHuman("Hello");
+    messageManager.addAI("Hi there!");
+    messageManager.addSystem("System prompt");
+
+    // Act
+    const messages = readOnlyView.getAll();
+
+    // Assert
+    expect(messages).toHaveLength(3);
+    expect(messages[0]).toBeInstanceOf(HumanMessage);
+    expect(messages[0].content).toBe("Hello");
+    expect(messages[1]).toBeInstanceOf(AIMessage);
+    expect(messages[1].content).toBe("Hi there!");
+    expect(messages[2]).toBeInstanceOf(SystemMessage);
+    expect(messages[2].content).toBe("System prompt");
+  });
+
+  // Test 2: Verify changes in MessageManager are reflected in read-only view
+  it("should reflect changes made to the underlying MessageManager", () => {
+    // Arrange
+    messageManager.addHuman("First message");
+    const initialMessages = readOnlyView.getAll();
+    expect(initialMessages).toHaveLength(1);
+
+    // Act
+    messageManager.addAI("Response");
+    messageManager.addHuman("Follow-up");
+
+    // Assert
+    const updatedMessages = readOnlyView.getAll();
+    expect(updatedMessages).toHaveLength(3);
+    expect(updatedMessages[1].content).toBe("Response");
+    expect(updatedMessages[2].content).toBe("Follow-up");
+  });
+
+  // Test 3: Verify getAll returns a copy, not the original array
+  it("should return a copy of messages array to prevent external modifications", () => {
+    // Arrange
+    messageManager.addHuman("Test message");
+    
+    // Act
+    const messages1 = readOnlyView.getAll();
+    const messages2 = readOnlyView.getAll();
+    
+    // Assert
+    expect(messages1).not.toBe(messages2);  // Different array instances
+    expect(messages1).toEqual(messages2);    // But same content
+    
+    // Verify modifying returned array doesn't affect internal state
+    messages1.push(new AIMessage("Injected message"));
+    const messages3 = readOnlyView.getAll();
+    expect(messages3).toHaveLength(1);  // Still only original message
+  });
+});
+
+describe("MessageManager.fork", () => {
+  let messageManager: MessageManager;
+
+  beforeEach(() => {
+    messageManager = new MessageManager();
+    messageManager.addHuman("Original message");
+    messageManager.addAI("Original response");
+  });
+
+  // Test 4: Verify fork creates independent copy with history
+  it("should create independent copy with history when includeHistory is true", () => {
+    // Act
+    const forked = messageManager.fork(true);
+    
+    // Assert - forked has same messages
+    expect(forked.getMessages()).toHaveLength(2);
+    expect(forked.getMessages()[0].content).toBe("Original message");
+    
+    // Assert - changes to forked don't affect original
+    forked.addHuman("New message in fork");
+    expect(forked.getMessages()).toHaveLength(3);
+    expect(messageManager.getMessages()).toHaveLength(2);
+    
+    // Assert - changes to original don't affect forked
+    messageManager.addAI("New response in original");
+    expect(messageManager.getMessages()).toHaveLength(3);
+    expect(forked.getMessages()).toHaveLength(3);
   });
 });

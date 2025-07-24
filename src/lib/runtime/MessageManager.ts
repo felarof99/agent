@@ -10,6 +10,17 @@ import {
 const CHARS_PER_TOKEN = 4;
 const TOKENS_PER_MESSAGE = 3;
 
+// Read-only view for tools
+export class MessageManagerReadOnly {
+  constructor(private messageManager: MessageManager) {}
+
+  getAll(): BaseMessage[] {
+    return this.messageManager.getMessages();
+  }
+  
+  // NTN: Only minimal methods added as requested
+}
+
 export class MessageManager {
   private messages: BaseMessage[] = [];
   private maxTokens: number;
@@ -113,5 +124,14 @@ export class MessageManager {
   // Private: Remove system messages
   private _removeSystemMessages(): void {
     this.messages = this.messages.filter(msg => !(msg instanceof SystemMessage));
+  }
+
+  // Fork the message manager with optional history
+  fork(includeHistory: boolean = true): MessageManager {
+    const newMM = new MessageManager(this.maxTokens);
+    if (includeHistory) {
+      newMM.messages = [...this.messages];
+    }
+    return newMM;
   }
 }
