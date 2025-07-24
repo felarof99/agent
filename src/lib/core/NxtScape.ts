@@ -3,12 +3,9 @@ import { StreamEventBus } from "@/lib/events";
 import { Logging } from "@/lib/utils/Logging";
 import { BrowserContext } from "@/lib/browser/BrowserContext";
 import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
-import MessageManager, {
-  MessageManagerSettingsSchema,
-} from "@/lib/runtime/MessageManager";
+import { MessageManager } from "@/lib/runtime/MessageManager";
 import { profileStart, profileEnd, profileAsync } from "@/lib/utils/profiler";
-import { BrowseAgent } from "@/lib/agent/BrowseAgent";
-import { AgentInput } from "@/lib/agent/IAgent";
+import { BrowserAgent } from "@/lib/agent/BrowserAgent";
 
 /**
  * Configuration schema for NxtScape agent
@@ -44,9 +41,7 @@ export class NxtScape {
   private executionContext: ExecutionContext;
   private abortController: AbortController; // Track current execution for cancellation
   private messageManager: MessageManager; // Clean conversation history management using MessageManager
-  private browseAgent: BrowseAgent; // The browse agent for navigation
-
-  // All agents now managed by AgentGraph
+  private browserAgent: BrowserAgent | null = null; // The browser agent for task execution
 
   private currentQuery: string | null = null; // Track current query for better cancellation messages
 
@@ -59,12 +54,7 @@ export class NxtScape {
     this.config = NxtScapeConfigSchema.parse(config);
 
     // Initialize message manager with reasonable settings
-    const messageSettings = MessageManagerSettingsSchema.parse({
-      maxInputTokens: 128000, // Default max tokens
-      estimatedCharactersPerToken: 3,
-      includeAttributes: [],
-    });
-    this.messageManager = new MessageManager(messageSettings);
+    this.messageManager = new MessageManager(128000); // Default max tokens
 
     // Create new browser context with vision configuration
     this.browserContext = new BrowserContext({
@@ -84,9 +74,6 @@ export class NxtScape {
 
     // Initialize logging
     Logging.initialize({ debugMode: this.config.debug || false });
-    
-    // Initialize the browse agent
-    this.browseAgent = new BrowseAgent();
   }
 
   /**
@@ -103,6 +90,9 @@ export class NxtScape {
     await profileAsync("NxtScape.initialize", async () => {
       try {
         // BrowserContextV2 doesn't need initialization
+        
+        // Initialize the browser agent with execution context
+        this.browserAgent = new BrowserAgent(this.executionContext);
 
         Logging.log(
           "NxtScape",
@@ -119,6 +109,7 @@ export class NxtScape {
 
         // Clean up partial initialization
         this.browserContext = null as any;
+        this.browserAgent = null;
 
         throw new Error(`NxtScape initialization failed: ${errorMessage}`);
       }
@@ -130,7 +121,7 @@ export class NxtScape {
    * @returns True if initialized, false otherwise
    */
   public isInitialized(): boolean {
-    return this.browserContext !== null;
+    return this.browserContext !== null && this.browserAgent !== null;
   }
 
   /**
@@ -196,62 +187,31 @@ export class NxtScape {
     this.executionContext.setSelectedTabIds(tabIds || [currentTabId]);
     this.currentQuery = query;
 
-    if (!isFollowUp) {
-      // If it a new conversation, add SystemMessage as the first message
-      // System messages are now added at the agent level (position 0) in each agent's executeAgent method
-      this.messageManager.addTaskMessage(query);
-    } else {
-      // TODO(nithin): Ideally it would be better if we remove the previous task message to not confuse dummer models like ollama.
-      // If not for a follow up task, there'll be two task messages -- first one like "Your ultimate task is to list tabs after you complete terminate"
-      // and the second one like "Your NEW ultimate task is to close tabs after you complete terminate"
-      this.messageManager.addFollowUpTaskMessage(query);
-    }
+    // The BrowserAgent will handle adding messages to the MessageManager
+    // No need to add task messages here since BrowserAgent.execute() handles it
 
-    // Create follow-up context - MessageManager is our single source of truth
-    const followUpContext = isFollowUp
-      ? {
-          isFollowUp: true,
-          previousTaskType: this.messageManager.getPreviousTaskType(),
-          previousPlan: this.messageManager.getPreviousPlan() || null,
-          previousQuery: this.currentQuery,
-        }
-      : null;
-
-    // Use unified classification-based execution with follow-up awareness
+    // Log execution status
     Logging.log(
       "NxtScape",
       isFollowUp
-        ? `Processing follow-up task after ${this.messageManager.getPreviousTaskType()} agent`
-        : "Starting new task with classification",
+        ? `Processing follow-up task`
+        : "Starting new task",
     );
 
     const startTime = Date.now();
 
     try {
-      // Execute the browse agent
-      const agentInput: AgentInput = {
-        query,
-        context: {
-          tabIds: tabIds || [],
-        },
-      };
-      
-      const result = await this.browseAgent.execute(
-        agentInput,
-        this.executionContext,
-        eventBus,
-        this.abortController.signal
-      );
-      
-      // Log the result
-      if (result.success) {
-        Logging.log("NxtScape", `Agent execution successful: ${result.message || "No message"}`);
-      } else {
-        Logging.log("NxtScape", `Agent execution failed: ${result.error || "Unknown error"}`, "error");
+      // Check that browser agent is initialized
+      if (!this.browserAgent) {
+        throw new Error("BrowserAgent not initialized");
       }
+
+      // Execute the browser agent with the task
+      await this.browserAgent.execute(query);
       
-      // Agent type is now stored immediately after classification
-      // This ensures it's saved even if the task is interrupted
+      // BrowserAgent handles all logging and result management internally
+      Logging.log("NxtScape", "Agent execution completed");
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const wasCancelled = error instanceof Error && error.name === "AbortError";
@@ -369,6 +329,9 @@ export class NxtScape {
       debugMode: this.config.debug || false,
       abortController: this.abortController,
     });
+    
+    // Recreate browser agent with new execution context
+    this.browserAgent = new BrowserAgent(this.executionContext);
 
     Logging.log(
       "NxtScape",
