@@ -27,16 +27,14 @@ export class BrowserAgent {
   }
 
   private _registerTools(): void {
-    // Register planner tool
     this.toolManager.register(createPlannerTool(this.executionContext));
-    
-    // Register done tool
     this.toolManager.register(createDoneTool());
-    
-    // Register navigation tool - now it accepts ExecutionContext
     this.toolManager.register(createNavigationTool(this.executionContext));
-    
-    // Add other tools as needed in the future
+  }
+
+  // Simple getter to check if plan was created (for testing)
+  getPlanSteps(): any[] {
+    return this.currentPlan;
   }
 
   async execute(task: string): Promise<void> {
@@ -47,154 +45,135 @@ export class BrowserAgent {
 
     let taskComplete = false;
 
-    // NTN: Using for loop as requested, structure similar to nanobrowser reference
     for (let i = 0; i < MAX_ITERATIONS; i++) {
-      // 1. PLAN: If the current plan is empty, create a new one
+      // Create a new plan if needed
       if (this.currentPlan.length === 0) {
-        const plannerTool = this.toolManager.get('planner_tool');
-        if (!plannerTool) {
-          this.messageManager.addAI(`Error: Tool "planner_tool" not found. Cannot continue.`);
-          break;
-        }
-
-        const planResult = await plannerTool.func({ 
-          task: `Based on the history, continue with the main goal: ${task}`,
-          max_steps: NUM_STEPS_SHORT_PLAN
-        });
-        
-        const parsedResult = JSON.parse(planResult);
-        if (parsedResult.ok && parsedResult.plan) {
-          // Store plan steps directly - no need to infer tools anymore
-          this.currentPlan = parsedResult.plan.steps;
-          this.currentStepOfPlan = 0;
-          this.messageManager.addAI(`I have created a new ${parsedResult.plan.steps.length}-step plan.`);
-        } else {
-          this.messageManager.addAI(`Error: Failed to create plan. ${parsedResult.error || 'Unknown error'}`);
-          break;
-        }
+        await this._createNewPlan(task);
+        if (this.currentPlan.length === 0) break;  // Failed to create plan
       }
 
-      // 2. EXECUTE: Execute the next step from the current plan
-      const step = this.currentPlan.shift(); // Get and remove the first step
+      // Execute the next step
+      const step = this.currentPlan.shift();
       if (!step) continue;
       
       this.currentStepOfPlan++;
 
-      // Execute step using LLM with tool binding
+      // Get AI response for this step
       let aiResponse: AIMessage;
       try {
         aiResponse = await this._executeStep(step);
       } catch (error) {
-        this.messageManager.addAI(`Error executing step: ${error instanceof Error ? error.message : String(error)}`);
-        this.currentPlan = []; // Clear plan to trigger re-planning
+        this.currentPlan = [];  // Trigger re-planning
         continue;
       }
 
-      // Process tool calls from the AI response
-      if (aiResponse.tool_calls && Array.isArray(aiResponse.tool_calls) && aiResponse.tool_calls.length > 0) {
-        for (const toolCall of aiResponse.tool_calls) {
-          const { name: toolName, args, id: toolCallId } = toolCall;
-          
-          // Record tool call
-          this._updateMessageManagerWithToolCall(toolName, args, toolCallId);
-          
-          // Get the tool
-          const tool = this.toolManager.get(toolName);
-          if (!tool) {
-            this._updateMessageManagerWithToolResult(toolName, { ok: false, error: `Tool ${toolName} not found` }, true, toolCallId);
-            this.currentPlan = []; // Clear plan to trigger re-planning
-            continue;
-          }
-
-          // Execute the tool
-          let result: any;
-          try {
-            const toolResult = await tool.func(args);
-            result = typeof toolResult === 'string' ? JSON.parse(toolResult) : toolResult;
-          } catch (error) {
-            result = { ok: false, error: error instanceof Error ? error.message : String(error) };
-          }
-
-          // Record tool result
-          this._updateMessageManagerWithToolResult(toolName, result, !result.ok, toolCallId);
-
-          // Check if task is done
-          if (toolName === 'done' && result.ok) {
-            console.log("Task complete.");
-            taskComplete = true;
-            break;
-          }
-
-          // Check if we need to replan due to error
-          if (!result.ok || result.error?.includes('page changed')) {
-            this.currentPlan = []; // Clear plan to trigger re-planning
-          }
-        }
-        
+      // Process any tool calls in the response
+      if (aiResponse.tool_calls && aiResponse.tool_calls?.length > 0) {
+        taskComplete = await this._processToolCalls(aiResponse.tool_calls);
         if (taskComplete) break;
-      } else {
-        // No tool calls in response - log the content if any
-        if (aiResponse.content) {
-          // Handle both string and complex content
-          const contentStr = typeof aiResponse.content === 'string' 
-            ? aiResponse.content 
-            : JSON.stringify(aiResponse.content);
-          this.messageManager.addAI(contentStr);
-        }
+      } else if (aiResponse.content) {
+        // Log AI content if no tools were called
+        const content = typeof aiResponse.content === 'string' 
+          ? aiResponse.content 
+          : JSON.stringify(aiResponse.content);
+        this.messageManager.addAI(content);
       }
     }
 
     if (!taskComplete) {
-      console.log("Task failed to complete within the maximum loops.");
       this.messageManager.addAI('Max iterations reached');
     }
   }
 
+  // Private helper methods
+  private async _createNewPlan(task: string): Promise<void> {
+    const plannerTool = this.toolManager.get('planner_tool')!;  // Always exists
+    const args = { 
+      task: `Based on the history, continue with the main goal: ${task}`,
+      max_steps: NUM_STEPS_SHORT_PLAN
+    };
+
+    this._updateMessageManagerWithToolCall('planner_tool', args);
+    const planResult = await plannerTool.func(args);
+    this._updateMessageManagerWithToolResult('planner_tool', planResult, false);
+    
+    const parsedResult = JSON.parse(planResult);
+    if (parsedResult.ok && parsedResult.plan) {
+      this.currentPlan = parsedResult.plan.steps;
+      this.currentStepOfPlan = 0;
+    }
+  }
+
+  private async _processToolCalls(toolCalls: any[]): Promise<boolean> {
+    for (const toolCall of toolCalls) {
+      const { name: toolName, args, id: toolCallId } = toolCall;
+      
+      // Record tool call
+      this._updateMessageManagerWithToolCall(toolName, args, toolCallId);
+      
+      // Execute the tool
+      const tool = this.toolManager.get(toolName);
+      if (!tool) {
+        this._updateMessageManagerWithToolResult(toolName, { ok: false, error: `Tool ${toolName} not found` }, true, toolCallId);
+        this.currentPlan = [];  // Trigger re-planning
+        continue;
+      }
+
+      let result: any;
+      try {
+        const toolResult = await tool.func(args);
+        result = typeof toolResult === 'string' ? JSON.parse(toolResult) : toolResult;
+      } catch (error) {
+        result = { ok: false, error: error instanceof Error ? error.message : String(error) };
+      }
+
+      // Record result
+      this._updateMessageManagerWithToolResult(toolName, result, !result.ok, toolCallId);
+
+      // Check if done
+      if (toolName === 'done' && result.ok) {
+        return true;
+      }
+
+      // Check if we need to replan
+      if (!result.ok || result.error?.includes('page changed')) {
+        this.currentPlan = [];
+      }
+    }
+    return false;
+  }
 
   // Helper method to record tool call in message manager
   private _updateMessageManagerWithToolCall(toolName: string, args: any, toolCallId?: string): void {
-    // Record tool invocation as AI message showing intent
-    const toolCallMessage = `Calling tool: ${toolName}${toolCallId ? ` (${toolCallId})` : ''}\nArguments: ${JSON.stringify(args, null, 2)}`;
+    // Keep minimal logging - just tool name and key args
+    const toolCallMessage = `Using ${toolName}`;
     this.messageManager.addAI(toolCallMessage);
   }
 
   // Helper method to record tool result in message manager
   private _updateMessageManagerWithToolResult(toolName: string, result: any, isError: boolean = false, toolCallId?: string): void {
-    // Record tool result with appropriate formatting
     const resultString = typeof result === 'string' ? result : JSON.stringify(result);
-    
-    // Add as tool message for proper conversation tracking
     this.messageManager.addTool(resultString, toolCallId || `${toolName}_result`);
   }
 
   // Execute a single step from the plan using LLM with tool binding
   private async _executeStep(step: { action: string; reasoning: string }): Promise<AIMessage> {
-    // Get LLM instance from execution context
     const llm = await this.executionContext.getLLM();
-    
-    // Get all available tools from tool manager
     const tools = this.toolManager.getAll();
     
-    // Bind tools to LLM for tool calling
-    // Check if bindTools method exists
+    // Bind tools to LLM
     if (!llm.bindTools || typeof llm.bindTools !== 'function') {
       throw new Error('LLM does not support tool binding');
     }
     const llmWithTools = llm.bindTools(tools);
     
-    // Build messages for this step execution
+    // Execute step
     const messages = [
       new SystemMessage(generateStepExecutionPrompt()),
       new HumanMessage(`Step: ${step.action}`)
     ];
     
-    // Invoke LLM with bound tools
-    const response = await llmWithTools.invoke(messages);
-    
-    // Log the raw AI response for debugging
-    this.messageManager.addAI(`Step execution - Action: ${step.action}, Reasoning: ${step.reasoning}`);
-    
-    return response as AIMessage;
+    return await llmWithTools.invoke(messages) as AIMessage;
   }
 
 }
