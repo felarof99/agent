@@ -32,6 +32,19 @@ export const RunOptionsSchema = z.object({
 export type RunOptions = z.infer<typeof RunOptionsSchema>;
 
 /**
+ * Result schema for NxtScape execution
+ */
+export const NxtScapeResultSchema = z.object({
+  success: z.boolean(), // Whether the operation succeeded
+  error: z.string().optional(), // Error message if failed
+});
+
+/**
+ * Result type for NxtScape execution
+ */
+export type NxtScapeResult = z.infer<typeof NxtScapeResultSchema>;
+
+/**
  * Main orchestration agent for the NxtScape framework.
  * Delegates agent graph execution to Orchestrator for clean separation of concerns.
  */
@@ -129,8 +142,9 @@ export class NxtScape {
    * Always uses streaming execution for real-time progress updates.
    *
    * @param options - Run options including query, optional tabIds, and eventBus
+   * @returns Result of the processed query with success/error status
    */
-  public async run(options: RunOptions): Promise<void> {
+  public async run(options: RunOptions): Promise<NxtScapeResult> {
     const parsedOptions = RunOptionsSchema.parse(options);
     const { query, tabIds, eventBus } = parsedOptions;
 
@@ -212,6 +226,9 @@ export class NxtScape {
       // BrowserAgent handles all logging and result management internally
       Logging.log("NxtScape", "Agent execution completed");
       
+      // Return success result
+      return { success: true };
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const wasCancelled = error instanceof Error && error.name === "AbortError";
@@ -221,6 +238,12 @@ export class NxtScape {
       } else {
         Logging.log("NxtScape", `Execution error: ${errorMessage}`, "error");
       }
+      
+      // Return error result
+      return { 
+        success: false, 
+        error: errorMessage 
+      };
     } finally {
       // Always mark execution as ended
       this.executionContext.endExecution();

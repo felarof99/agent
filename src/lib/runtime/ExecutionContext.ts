@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import BrowserContext from '../browser/BrowserContext'
-import MessageManager from '@/lib/runtime/MessageManager'
+import { MessageManager } from '@/lib/runtime/MessageManager'
 import { StreamEventBus } from '@/lib/events'
 import { getLLM as getLLMFromProvider } from '@/lib/llm/LangChainProvider'
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
@@ -33,11 +33,14 @@ export class ExecutionContext {
   private _lockedTabId: number | null = null  // Tab that execution is locked to
 
   constructor(options: ExecutionContextOptions) {
-    this.abortController = options.abortController
-    this.browserContext = options.browserContext
-    this.messageManager = options.messageManager
-    this.debugMode = options.debugMode
-    this.eventBus = options.eventBus || null
+    // Validate options at runtime
+    const validatedOptions = ExecutionContextOptionsSchema.parse(options)
+    
+    this.abortController = validatedOptions.abortController
+    this.browserContext = validatedOptions.browserContext
+    this.messageManager = validatedOptions.messageManager
+    this.debugMode = validatedOptions.debugMode || false
+    this.eventBus = validatedOptions.eventBus || null
     this.userInitiatedCancel = false
   }
   
