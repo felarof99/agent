@@ -51,7 +51,7 @@ describe('BrowserAgent Tool Calling', () => {
       // Arrange
       const mockToolCalls = [
         {
-          name: 'browser_navigation',
+          name: 'navigation_tool',
           args: { url: 'https://google.com' },
           id: 'call_1',
         },
@@ -88,7 +88,7 @@ describe('BrowserAgent Tool Calling', () => {
     it('should properly track tool calls and results in MessageManager', async () => {
       // Test 1: Recording tool calls
       const toolCall = {
-        name: 'browser_navigation',
+        name: 'navigation_tool',
         args: { url: 'https://example.com' },
       };
 
@@ -96,7 +96,7 @@ describe('BrowserAgent Tool Calling', () => {
 
       // Verify tool call was recorded
       expect(mockMessageManager.addAI).toHaveBeenCalledWith(
-        expect.stringContaining('Calling tool: browser_navigation (test_call_id)')
+        expect.stringContaining('Calling tool: navigation_tool (test_call_id)')
       );
 
       // Test 2: Recording tool results (success)
@@ -105,7 +105,7 @@ describe('BrowserAgent Tool Calling', () => {
         output: 'Successfully navigated to example.com',
       };
 
-      browserAgent['_updateMessageManagerWithToolResult']('browser_navigation', toolResult, false, 'test_call_id');
+      browserAgent['_updateMessageManagerWithToolResult']('navigation_tool', toolResult, false, 'test_call_id');
 
       // Verify tool result was recorded
       expect(mockMessageManager.addTool).toHaveBeenCalledWith(
@@ -119,7 +119,7 @@ describe('BrowserAgent Tool Calling', () => {
         error: 'Navigation failed',
       };
 
-      browserAgent['_updateMessageManagerWithToolResult']('browser_navigation', errorResult, true, 'error_call_id');
+      browserAgent['_updateMessageManagerWithToolResult']('navigation_tool', errorResult, true, 'error_call_id');
 
       expect(mockMessageManager.addTool).toHaveBeenCalledWith(
         JSON.stringify(errorResult),
@@ -144,9 +144,9 @@ describe('BrowserAgent Tool Calling', () => {
       // Mock tool manager
       const mockToolManager = browserAgent['toolManager'];
       vi.spyOn(mockToolManager, 'get').mockImplementation((toolName: string) => {
-        if (toolName === 'planner') {
+        if (toolName === 'planner_tool') {
           return {
-            name: 'planner',
+            name: 'planner_tool',
             func: vi.fn().mockResolvedValue(JSON.stringify(plannerResult)),
           } as any;
         }
@@ -156,9 +156,9 @@ describe('BrowserAgent Tool Calling', () => {
             func: vi.fn().mockResolvedValue(JSON.stringify({ ok: true, output: 'Task completed' })),
           } as any;
         }
-        if (toolName === 'browser_navigation') {
+        if (toolName === 'navigation_tool') {
           return {
-            name: 'browser_navigation',
+            name: 'navigation_tool',
             description: 'Navigate to a URL',
             func: vi.fn().mockResolvedValue(JSON.stringify({ ok: true, output: 'Navigated' })),
           } as any;
@@ -170,7 +170,7 @@ describe('BrowserAgent Tool Calling', () => {
       const toolCallResponses = [
         new AIMessage({
           content: 'Navigating to Google',
-          tool_calls: [{ name: 'browser_navigation', args: { url: 'https://google.com' }, id: 'call_1' }],
+          tool_calls: [{ name: 'navigation_tool', args: { url: 'https://google.com' }, id: 'call_1' }],
         }),
         new AIMessage({
           content: 'Searching for TypeScript',
@@ -191,7 +191,7 @@ describe('BrowserAgent Tool Calling', () => {
       await browserAgent.execute('Search for TypeScript documentation on Google');
 
       // Verify planner was called first
-      expect(mockToolManager.get).toHaveBeenCalledWith('planner');
+      expect(mockToolManager.get).toHaveBeenCalledWith('planner_tool');
 
       // Verify LLM was called with tool binding for each step
       expect(mockLLM.bindTools).toHaveBeenCalled();

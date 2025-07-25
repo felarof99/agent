@@ -25,7 +25,7 @@ type PlannerInput = z.infer<typeof PlannerInputSchema>;
 // Factory function to create PlannerTool
 export function createPlannerTool(executionContext: ExecutionContext): DynamicStructuredTool {
   return new DynamicStructuredTool({
-    name: 'planner',
+    name: 'planner_tool',
     description: 'Generate 3-5 upcoming steps for the task',
     schema: PlannerInputSchema,
     func: async (args: PlannerInput): Promise<string> => {

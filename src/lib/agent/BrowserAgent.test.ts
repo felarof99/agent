@@ -65,7 +65,7 @@ describe('BrowserAgent', () => {
 
     // Mock tool creation functions
     vi.mocked(createPlannerTool).mockReturnValue({
-      name: 'planner',
+      name: 'planner_tool',
       func: vi.fn().mockResolvedValue(JSON.stringify({
         ok: true,
         output: 'Created plan with 2 steps',
@@ -112,7 +112,7 @@ describe('BrowserAgent', () => {
     it('should handle max iterations gracefully', async () => {
       // Mock planner to never include done tool
       vi.mocked(createPlannerTool).mockReturnValue({
-        name: 'planner',
+        name: 'planner_tool',
         func: vi.fn().mockResolvedValue(JSON.stringify({
           ok: true,
           output: 'Created plan with 3 steps',

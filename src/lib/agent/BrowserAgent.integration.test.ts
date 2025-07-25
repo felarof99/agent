@@ -64,9 +64,9 @@ describe('BrowserAgent Integration', () => {
     const toolManager = (browserAgent as any).toolManager;
     
     // Verify essential tools are registered
-    expect(toolManager.get('planner')).toBeDefined();
+    expect(toolManager.get('planner_tool')).toBeDefined();
     expect(toolManager.get('done')).toBeDefined();
-    expect(toolManager.get('browser_navigation')).toBeDefined();
+    expect(toolManager.get('navigation_tool')).toBeDefined();
   });
 
   it('should handle a simple task execution flow', async () => {

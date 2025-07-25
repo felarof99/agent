@@ -50,7 +50,7 @@ describe('PlannerTool', () => {
     // Test that the tool is created with correct name, description, and schema
     const tool = createPlannerTool(mockExecutionContext);
     
-    expect(tool.name).toBe('planner');
+    expect(tool.name).toBe('planner_tool');
     expect(tool.description).toBe('Generate 3-5 upcoming steps for the task');
     expect(tool.schema).toBeDefined();
     expect(typeof tool.func).toBe('function');

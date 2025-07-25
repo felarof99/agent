@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { LangChainProvider } from '@/lib/llm/LangChainProvider'
+import { LangChainProvider } from './LangChainProvider'
 
 /**
  * Integration tests for LangChainProvider

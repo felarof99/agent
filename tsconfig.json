@@ -26,7 +26,8 @@
       "./src/types"
     ],
     "types": [
-      "chrome"
+      "chrome",
+      "vitest/globals"
     ]
   },
   "include": ["src/**/*", "tests/**/*"],

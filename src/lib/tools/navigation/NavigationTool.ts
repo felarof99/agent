@@ -165,7 +165,7 @@ export function createNavigationTool(executionContext: ExecutionContext): Dynami
   const navigationTool = new NavigationTool(executionContext)
   
   return new DynamicStructuredTool({
-    name: "browser_navigation",
+    name: "navigation_tool",
     description: "Navigate the browser: go to URL, go back/forward in history, or refresh the page",
     schema: NavigationInputSchema,
     func: async (args): Promise<string> => {

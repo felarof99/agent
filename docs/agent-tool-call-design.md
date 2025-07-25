@@ -154,7 +154,7 @@ Use 'final_answer' ONLY if no tool is needed and you can provide a direct respon
 EXAMPLES:
 
 Step: "Navigate to google.com"
-Response: Call tool 'browser_navigation' with args { "url": "https://google.com" }
+Response: Call tool 'navigation_tool' with args { "url": "https://google.com" }
 
 Step: "Check if we're on the homepage"
 Response: Call tool 'final_answer' with args { "content": "Yes, we are on the Google homepage." }
@@ -231,7 +231,7 @@ class ToolManager {
 // import { z } from "zod";
 
 // const browserNavigationTool = new DynamicStructuredTool({
-//   name: "browser_navigation",
+//   name: "navigation_tool",
 //   description: "Navigate browser to a specific URL",
 //   schema: z.object({
 //     url: z.string().describe("The URL to navigate to"),

@@ -44,7 +44,7 @@ export class ToolManager {
     
     // Placeholder planner tool until actual implementation
     const plannerTool = new DynamicStructuredTool({
-      name: "planner",
+      name: "planner_tool",
       description: "Generate 3-5 upcoming steps for the task",
       schema: z.object({
         task: z.string(),

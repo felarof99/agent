@@ -51,9 +51,9 @@ export class BrowserAgent {
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       // 1. PLAN: If the current plan is empty, create a new one
       if (this.currentPlan.length === 0) {
-        const plannerTool = this.toolManager.get('planner');
+        const plannerTool = this.toolManager.get('planner_tool');
         if (!plannerTool) {
-          this.messageManager.addAI(`Error: Tool "planner" not found. Cannot continue.`);
+          this.messageManager.addAI(`Error: Tool "planner_tool" not found. Cannot continue.`);
           break;
         }
 
@@ -135,7 +135,11 @@ export class BrowserAgent {
       } else {
         // No tool calls in response - log the content if any
         if (aiResponse.content) {
-          this.messageManager.addAI(aiResponse.content);
+          // Handle both string and complex content
+          const contentStr = typeof aiResponse.content === 'string' 
+            ? aiResponse.content 
+            : JSON.stringify(aiResponse.content);
+          this.messageManager.addAI(contentStr);
         }
       }
     }
@@ -172,6 +176,10 @@ export class BrowserAgent {
     const tools = this.toolManager.getAll();
     
     // Bind tools to LLM for tool calling
+    // Check if bindTools method exists
+    if (!llm.bindTools || typeof llm.bindTools !== 'function') {
+      throw new Error('LLM does not support tool binding');
+    }
     const llmWithTools = llm.bindTools(tools);
     
     // Build messages for this step execution
