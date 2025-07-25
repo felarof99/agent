@@ -14,7 +14,7 @@ const DEFAULT_ANTHROPIC_MODEL = 'claude-4-sonnet'
 const DEFAULT_OLLAMA_MODEL = "qwen3:4b"
 const DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
 const DEFAULT_NXTSCAPE_PROXY_URL = "http://llm.nxtscape.ai"
-const DEFAULT_NXTSCAPE_MODEL = "claude-3-5-sonnet"
+const DEFAULT_NXTSCAPE_MODEL = "gpt-4o-mini"
 
 // Simple cache for LLM instances
 const llmCache = new Map<string, BaseChatModel>()

@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
-import { LangChainProvider } from './LangChainProvider'
+import { LangChainProvider, getLLM } from './LangChainProvider'
+import { z } from 'zod'
+import { SystemMessage, HumanMessage } from '@langchain/core/messages'
 
 /**
  * Integration tests for LangChainProvider
@@ -87,4 +89,98 @@ describe('LangChainProvider Integration Test', () => {
     }, 
     30000
   )
+  
+  it('should test getLLM with withStructuredOutput (mimics tools)', async () => {
+    // This test mimics exactly what PlannerTool does
+    
+    // Step 1: Get LLM using the same method as ExecutionContext
+    const llm = await getLLM()
+    
+    
+    // Step 2: Define a simple schema like PlannerTool
+    const TestSchema = z.object({
+      steps: z.array(z.object({
+        action: z.string(),
+        reasoning: z.string()
+      }))
+    })
+    
+    // Step 3: Check if withStructuredOutput exists
+    expect(llm.withStructuredOutput).toBeDefined()
+    expect(typeof llm.withStructuredOutput).toBe('function')
+    
+    // Step 4: Try to create structured LLM
+    let structuredLLM
+    try {
+      structuredLLM = llm.withStructuredOutput(TestSchema)
+    } catch (error) {
+      console.error('Failed to create structured LLM:', error)
+      throw error
+    }
+    
+    // Step 5: Test invoke with simple prompt (only if API key is available)
+    if (process.env.LITELLM_API_KEY && process.env.LITELLM_API_KEY !== 'nokey') {
+      const systemPrompt = 'You are a helpful assistant that creates action plans.'
+      const userPrompt = 'Create a simple 2-step plan to make coffee. Respond with JSON.'
+      
+      try {
+        const result = await structuredLLM.invoke([
+          new SystemMessage(systemPrompt),
+          new HumanMessage(userPrompt)
+        ])
+        
+        // Verify the response matches our schema
+        expect(result).toBeDefined()
+        expect(result.steps).toBeDefined()
+        expect(Array.isArray(result.steps)).toBe(true)
+        expect(result.steps.length).toBeGreaterThan(0)
+        
+        result.steps.forEach((step: any) => {
+          expect(step.action).toBeDefined()
+          expect(step.reasoning).toBeDefined()
+          expect(typeof step.action).toBe('string')
+          expect(typeof step.reasoning).toBe('string')
+        })
+      } catch (error) {
+        console.error('Structured LLM invoke failed:', error)
+        throw error
+      }
+    }
+  }, 30000)
+  
+  it('should test direct withStructuredOutput on created LLM', async () => {
+    // Test using createLLMFromConfig directly
+    const config = {
+      provider: 'nxtscape' as const,
+      model: 'gpt-4o-mini',
+      temperature: 0,
+      apiKey: process.env.LITELLM_API_KEY || 'nokey',
+      baseURL: 'http://llm.nxtscape.ai'
+    }
+    
+    const llm = provider.createLLMFromConfig(config)
+    
+    // Simple schema
+    const SimpleSchema = z.object({
+      message: z.string()
+    })
+    
+    
+    // Check method exists
+    expect(llm.withStructuredOutput).toBeDefined()
+    
+    // Try to create structured version
+    try {
+      const structuredLLM = llm.withStructuredOutput(SimpleSchema)
+      
+      // Only test actual invoke if we have an API key
+      if (process.env.LITELLM_API_KEY && process.env.LITELLM_API_KEY !== 'nokey') {
+        const result = await structuredLLM.invoke('Say hello in JSON format with a "message" field.')
+        expect(result.message).toBeDefined()
+      }
+    } catch (error) {
+      console.error('withStructuredOutput failed:', error)
+      throw error
+    }
+  }, 30000)
 })
