@@ -18,6 +18,12 @@ describe('BrowserAgent Integration', () => {
       getLLM: async () => ({
         withStructuredOutput: () => ({
           invoke: async () => ({ steps: [] })
+        }),
+        bindTools: () => ({
+          invoke: async () => ({
+            content: '',
+            tool_calls: []
+          })
         })
       })
     } as any as ExecutionContext;
@@ -41,6 +47,12 @@ describe('BrowserAgent Integration', () => {
       getLLM: async () => ({
         withStructuredOutput: () => ({
           invoke: async () => ({ steps: [] })
+        }),
+        bindTools: () => ({
+          invoke: async () => ({
+            content: '',
+            tool_calls: []
+          })
         })
       })
     } as any as ExecutionContext;
@@ -54,7 +66,7 @@ describe('BrowserAgent Integration', () => {
     // Verify essential tools are registered
     expect(toolManager.get('planner')).toBeDefined();
     expect(toolManager.get('done')).toBeDefined();
-    expect(toolManager.get('navigate')).toBeDefined();
+    expect(toolManager.get('browser_navigation')).toBeDefined();
   });
 
   it('should handle a simple task execution flow', async () => {
@@ -72,6 +84,12 @@ describe('BrowserAgent Integration', () => {
             steps: [
               { action: 'Mark task as done', reasoning: 'Simple test task' }
             ]
+          })
+        }),
+        bindTools: () => ({
+          invoke: async () => ({
+            content: '',
+            tool_calls: [{ name: 'done', args: { summary: 'Task completed' }, id: 'call_1' }]
           })
         })
       })

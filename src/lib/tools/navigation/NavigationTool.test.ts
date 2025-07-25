@@ -7,6 +7,7 @@ vi.mock('@/lib/browser/BrowserPage')
 describe('NavigationTool', () => {
   let navigationTool: NavigationTool
   let mockBrowserPage: any
+  let mockExecutionContext: any
 
   beforeEach(() => {
     // Create mock browser page with all required methods
@@ -19,7 +20,14 @@ describe('NavigationTool', () => {
       title: vi.fn().mockResolvedValue('Example Page')
     }
 
-    navigationTool = new NavigationTool(mockBrowserPage)
+    // Create mock execution context
+    mockExecutionContext = {
+      browserContext: {
+        getCurrentPage: vi.fn().mockResolvedValue(mockBrowserPage)
+      }
+    }
+
+    navigationTool = new NavigationTool(mockExecutionContext)
   })
 
   it('should navigate to URL with proper normalization', async () => {
