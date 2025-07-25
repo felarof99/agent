@@ -170,6 +170,36 @@ class MyAgent {
 - Group related tests using `describe` blocks
 - Test file structure mirrors source file structure
 
+## Integration Testing
+
+### Core Principles
+
+- Start with one test, one flow if it is a new test - Don't test multiple scenarios, just verify the most generic flow works
+- Super simple - The simpler the test, the better. Avoid complex setups or assertions
+- High-level verification only - Check that major things happened (system prompt added, task added, tool called), not how they happened
+
+### What's OK in Integration Tests
+
+- Access private fields and functions- Using private fields and functions is fine for verification
+- Use timeouts - Give async operations time to complete rather than complex promise handling
+- Abort early - Don't wait for full completion; verify the process started correctly then abort
+- Let some things fail - Chrome API warnings in test environment are expected and OK
+
+### What to Avoid
+
+- Mocking/spying - Use real dependencies and real LLM calls
+- Implementation details - Don't check specific message content or exact tool arguments
+- Multiple assertions - Keep it to 3-4 key checks maximum
+
+### Pattern
+```typescript
+// Setup with real instances
+// Start execution (don't await)
+// Wait a bit
+// Check 2-3 key things happened
+// Cleanup and exit
+```
+
 ## Key Files Reference
 
 - `src/lib/core/NxtScape.ts` - Main orchestration class
@@ -202,12 +232,16 @@ class MyAgent {
 - Use JSDoc to document public classes and methods.
 - For interfaces, class properties, and smaller logic use inline comments, give two spaces and "// <comment>".
 - DO NOT use JSDoc-style comments (`/** ... */`) for class properties or schema definitions, use inline comments instead.
+- IMPORTANT: Avoid excessive commenting. Don't comment obvious operations like "Log tool call" or "Execute planner tool". Only add comments for:
+  - Complex logic that isn't immediately clear (every 5-6 lines at most)
+  - Non-obvious business rules or edge cases
+  - Section separators for long functions (e.g., "// Private helper methods")
+  - TODO items or warnings about gotchas
 - Favor loops and small helper modules over duplicate code.
 - Use descriptive names with auxiliary verbs (e.g. isLoading, hasError).
 - File layout: exported component → subcomponents → hooks/helpers → static content.
 - IMPORTANT: All imports must use path aliases like "@/lib" instead of relative paths like "./" or "../"
 - IMPORTANT: Private methods must be prefixed with underscore (e.g., `_privateMethod()`)
-
 
 # Naming Conventions
 - Use PascalCase for classes.
