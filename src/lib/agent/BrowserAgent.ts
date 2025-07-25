@@ -172,24 +172,13 @@ export class BrowserAgent {
     const llm = await this.executionContext.getLLM();
     
     // Get all available tools from tool manager
-    const tools: DynamicStructuredTool[] = [];
-    
-    // Get all registered tools
-    const toolNames = ['planner', 'done', 'browser_navigation']; // Add more as needed
-    for (const toolName of toolNames) {
-      const tool = this.toolManager.get(toolName);
-      if (tool) {
-        tools.push(tool);
-      }
-    }
+    const tools = this.toolManager.getAll();
     
     // Bind tools to LLM for tool calling
     const llmWithTools = llm.bindTools(tools);
     
-    // Generate tool descriptions for the prompt
-    const toolDescriptions = tools
-      .map(tool => `- ${tool.name}: ${tool.description}`)
-      .join('\n');
+    // Get tool descriptions from tool manager
+    const toolDescriptions = this.toolManager.getDescriptions();
     
     // Build messages for this step execution
     const messages = [
@@ -211,11 +200,4 @@ Execute this step using the appropriate tool(s).`)
     return response as AIMessage;
   }
 
-  // Check if the task is complete
-  private async _isTaskComplete(): Promise<boolean> {
-    // Task is complete when the 'done' tool has been called successfully
-    // We track this in the execute loop when we see a 'done' tool call
-    // For now, return false as the main loop tracks completion
-    return false;
-  }
 }

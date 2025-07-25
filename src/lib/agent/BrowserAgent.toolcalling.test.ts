@@ -205,10 +205,5 @@ describe('BrowserAgent Tool Calling', () => {
       expect(mockMessageManager.addHuman).toHaveBeenCalledWith('Search for TypeScript documentation on Google');
     });
 
-    it('should detect task completion correctly', async () => {
-      // The _isTaskComplete method should return false as completion is tracked in main loop
-      const isComplete = await browserAgent['_isTaskComplete']();
-      expect(isComplete).toBe(false);
-    });
   });
 });
