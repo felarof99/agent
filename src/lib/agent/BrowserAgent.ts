@@ -91,17 +91,17 @@ export class BrowserAgent {
       }
 
       // Process tool calls from the AI response
-      if (aiResponse.tool_calls && aiResponse.tool_calls.length > 0) {
+      if (aiResponse.tool_calls && Array.isArray(aiResponse.tool_calls) && aiResponse.tool_calls.length > 0) {
         for (const toolCall of aiResponse.tool_calls) {
-          const { name: toolName, args } = toolCall;
+          const { name: toolName, args, id: toolCallId } = toolCall;
           
           // Record tool call
-          this._updateMessageManagerWithToolCall(toolName, args);
+          this._updateMessageManagerWithToolCall(toolName, args, toolCallId);
           
           // Get the tool
           const tool = this.toolManager.get(toolName);
           if (!tool) {
-            this._updateMessageManagerWithToolResult(toolName, { ok: false, error: `Tool ${toolName} not found` }, true);
+            this._updateMessageManagerWithToolResult(toolName, { ok: false, error: `Tool ${toolName} not found` }, true, toolCallId);
             this.currentPlan = []; // Clear plan to trigger re-planning
             continue;
           }
@@ -116,7 +116,7 @@ export class BrowserAgent {
           }
 
           // Record tool result
-          this._updateMessageManagerWithToolResult(toolName, result, !result.ok);
+          this._updateMessageManagerWithToolResult(toolName, result, !result.ok, toolCallId);
 
           // Check if task is done
           if (toolName === 'done' && result.ok) {
@@ -148,22 +148,19 @@ export class BrowserAgent {
 
 
   // Helper method to record tool call in message manager
-  private _updateMessageManagerWithToolCall(toolName: string, args: any): void {
+  private _updateMessageManagerWithToolCall(toolName: string, args: any, toolCallId?: string): void {
     // Record tool invocation as AI message showing intent
-    const toolCallMessage = `Calling tool: ${toolName}\nArguments: ${JSON.stringify(args, null, 2)}`;
+    const toolCallMessage = `Calling tool: ${toolName}${toolCallId ? ` (${toolCallId})` : ''}\nArguments: ${JSON.stringify(args, null, 2)}`;
     this.messageManager.addAI(toolCallMessage);
   }
 
   // Helper method to record tool result in message manager
-  private _updateMessageManagerWithToolResult(toolName: string, result: any, isError: boolean = false): void {
+  private _updateMessageManagerWithToolResult(toolName: string, result: any, isError: boolean = false, toolCallId?: string): void {
     // Record tool result with appropriate formatting
     const resultString = typeof result === 'string' ? result : JSON.stringify(result);
-    const toolResultMessage = isError 
-      ? `Tool ${toolName} failed: ${resultString}`
-      : `Tool ${toolName} result: ${resultString}`;
     
     // Add as tool message for proper conversation tracking
-    this.messageManager.addTool(resultString, `${toolName}_result`);
+    this.messageManager.addTool(resultString, toolCallId || `${toolName}_result`);
   }
 
   // Execute a single step from the plan using LLM with tool binding
@@ -177,18 +174,10 @@ export class BrowserAgent {
     // Bind tools to LLM for tool calling
     const llmWithTools = llm.bindTools(tools);
     
-    // Get tool descriptions from tool manager
-    const toolDescriptions = this.toolManager.getDescriptions();
-    
     // Build messages for this step execution
     const messages = [
-      new SystemMessage(generateStepExecutionPrompt(toolDescriptions)),
-      new HumanMessage(`
-Current step to execute:
-Action: ${step.action}
-Reasoning: ${step.reasoning}
-
-Execute this step using the appropriate tool(s).`)
+      new SystemMessage(generateStepExecutionPrompt()),
+      new HumanMessage(`Step: ${step.action}`)
     ];
     
     // Invoke LLM with bound tools

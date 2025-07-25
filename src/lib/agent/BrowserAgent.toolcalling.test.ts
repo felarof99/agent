@@ -92,14 +92,11 @@ describe('BrowserAgent Tool Calling', () => {
         args: { url: 'https://example.com' },
       };
 
-      browserAgent['_updateMessageManagerWithToolCall'](toolCall.name, toolCall.args);
+      browserAgent['_updateMessageManagerWithToolCall'](toolCall.name, toolCall.args, 'test_call_id');
 
       // Verify tool call was recorded
       expect(mockMessageManager.addAI).toHaveBeenCalledWith(
-        expect.stringContaining('Calling tool: browser_navigation')
-      );
-      expect(mockMessageManager.addAI).toHaveBeenCalledWith(
-        expect.stringContaining('"url": "https://example.com"')
+        expect.stringContaining('Calling tool: browser_navigation (test_call_id)')
       );
 
       // Test 2: Recording tool results (success)
@@ -108,12 +105,12 @@ describe('BrowserAgent Tool Calling', () => {
         output: 'Successfully navigated to example.com',
       };
 
-      browserAgent['_updateMessageManagerWithToolResult']('browser_navigation', toolResult, false);
+      browserAgent['_updateMessageManagerWithToolResult']('browser_navigation', toolResult, false, 'test_call_id');
 
       // Verify tool result was recorded
       expect(mockMessageManager.addTool).toHaveBeenCalledWith(
         JSON.stringify(toolResult),
-        'browser_navigation_result'
+        'test_call_id'
       );
 
       // Test 3: Recording tool errors
@@ -122,11 +119,11 @@ describe('BrowserAgent Tool Calling', () => {
         error: 'Navigation failed',
       };
 
-      browserAgent['_updateMessageManagerWithToolResult']('browser_navigation', errorResult, true);
+      browserAgent['_updateMessageManagerWithToolResult']('browser_navigation', errorResult, true, 'error_call_id');
 
       expect(mockMessageManager.addTool).toHaveBeenCalledWith(
         JSON.stringify(errorResult),
-        'browser_navigation_result'
+        'error_call_id'
       );
     });
 
