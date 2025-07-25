@@ -1,3 +1,13 @@
+/**
+ * LangChainProvider - Singleton pattern for LLM instance management
+ * 
+ * This module exports a pre-initialized singleton instance that's created
+ * when the module is first imported. The getInstance() method ensures only
+ * one instance exists throughout the application lifecycle.
+ * 
+ * Usage: import { getLLM } from '@/lib/llm/LangChainProvider'
+ * No manual initialization needed - the singleton is created automatically.
+ */
 import { z } from "zod"
 import { ChatOpenAI } from "@langchain/openai"
 import { ChatAnthropic } from "@langchain/anthropic"
