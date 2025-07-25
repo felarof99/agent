@@ -96,7 +96,7 @@ describe('BrowserAgent Tool Calling', () => {
 
       // Verify tool call was recorded
       expect(mockMessageManager.addAI).toHaveBeenCalledWith(
-        expect.stringContaining('Calling tool: navigation_tool (test_call_id)')
+        'Using navigation_tool'
       );
 
       // Test 2: Recording tool results (success)

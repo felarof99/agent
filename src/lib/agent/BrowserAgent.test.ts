@@ -11,7 +11,7 @@ import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 vi.mock('@/lib/runtime/ExecutionContext');
 vi.mock('@/lib/runtime/MessageManager');
 vi.mock('@/lib/browser/BrowserContext');
-vi.mock('@/lib/tools/base/ToolManager');
+vi.mock('@/lib/tools/ToolManager');
 vi.mock('@/lib/tools/planning/PlannerTool');
 vi.mock('@/lib/tools/utils/DoneTool');
 vi.mock('@/lib/tools/navigation/NavigationTool');
@@ -22,6 +22,8 @@ describe('BrowserAgent', () => {
   let mockMessageManager: any;
   let mockBrowserContext: any;
   let mockToolManager: any;
+  let mockPlannerTool: any;
+  let mockDoneTool: any;
 
   beforeEach(() => {
     // Reset all mocks
@@ -43,6 +45,48 @@ describe('BrowserAgent', () => {
       getBrowserStateString: vi.fn().mockResolvedValue('Browser state: example.com')
     } as any;
 
+    // Create mock tools
+    mockPlannerTool = {
+      name: 'planner_tool',
+      func: vi.fn().mockResolvedValue(JSON.stringify({
+        ok: true,
+        output: 'Created plan with 2 steps',
+        plan: {
+          steps: [
+            { action: 'Navigate to website', reasoning: 'Need to go to target site' },
+            { action: 'Done with task', reasoning: 'Task completed' }
+          ]
+        }
+      }))
+    };
+
+    mockDoneTool = {
+      name: 'done',
+      func: vi.fn().mockResolvedValue(JSON.stringify({
+        ok: true,
+        output: 'Task completed successfully'
+      }))
+    };
+
+    // Mock tool creation functions to return our mock tools
+    vi.mocked(createPlannerTool).mockReturnValue(mockPlannerTool as any);
+    vi.mocked(createDoneTool).mockReturnValue(mockDoneTool as any);
+
+    // Create mock ToolManager with proper get() method
+    mockToolManager = {
+      register: vi.fn(),
+      get: vi.fn((name: string) => {
+        if (name === 'planner_tool') return mockPlannerTool;
+        if (name === 'done') return mockDoneTool;
+        return undefined;
+      }),
+      getAll: vi.fn().mockReturnValue([mockPlannerTool, mockDoneTool]),
+      getDescriptions: vi.fn().mockReturnValue('Available tools:\n- planner_tool: Generate a plan\n- done: Mark task complete')
+    };
+
+    // Mock the ToolManager constructor to return our mock
+    vi.mocked(ToolManager).mockImplementation(() => mockToolManager);
+
     mockExecutionContext = {
       messageManager: mockMessageManager,
       browserContext: mockBrowserContext,
@@ -62,29 +106,6 @@ describe('BrowserAgent', () => {
         })
       })
     } as any;
-
-    // Mock tool creation functions
-    vi.mocked(createPlannerTool).mockReturnValue({
-      name: 'planner_tool',
-      func: vi.fn().mockResolvedValue(JSON.stringify({
-        ok: true,
-        output: 'Created plan with 2 steps',
-        plan: {
-          steps: [
-            { action: 'Navigate to website', reasoning: 'Need to go to target site' },
-            { action: 'Done with task', reasoning: 'Task completed' }
-          ]
-        }
-      }))
-    } as any);
-
-    vi.mocked(createDoneTool).mockReturnValue({
-      name: 'done',
-      func: vi.fn().mockResolvedValue(JSON.stringify({
-        ok: true,
-        output: 'Task completed successfully'
-      }))
-    } as any);
 
     // Create browser agent
     browserAgent = new BrowserAgent(mockExecutionContext);
@@ -110,24 +131,34 @@ describe('BrowserAgent', () => {
     });
 
     it('should handle max iterations gracefully', async () => {
-      // Mock planner to never include done tool
-      vi.mocked(createPlannerTool).mockReturnValue({
-        name: 'planner_tool',
-        func: vi.fn().mockResolvedValue(JSON.stringify({
-          ok: true,
-          output: 'Created plan with 3 steps',
-          plan: {
+      // Mock LLM to never call done tool
+      mockExecutionContext.getLLM = vi.fn().mockResolvedValue({
+        withStructuredOutput: vi.fn().mockReturnValue({
+          invoke: vi.fn().mockResolvedValue({
             steps: [
               { action: 'Navigate to website', reasoning: 'Need to go to target site' },
-              { action: 'Search for content', reasoning: 'Find required information' },
-              { action: 'Extract data', reasoning: 'Get the data' }
+              { action: 'Search for content', reasoning: 'Find required information' }
             ]
-          }
-        }))
-      } as any);
+          })
+        }),
+        bindTools: vi.fn().mockReturnThis(),
+        invoke: vi.fn().mockResolvedValue({
+          content: 'Continuing to work on task',
+          tool_calls: []  // No tool calls, so done is never called
+        })
+      });
 
-      // Create new agent with mocked tools
-      browserAgent = new BrowserAgent(mockExecutionContext);
+      // Mock planner to never include done tool
+      mockPlannerTool.func = vi.fn().mockResolvedValue(JSON.stringify({
+        ok: true,
+        output: 'Created plan with 2 steps',
+        plan: {
+          steps: [
+            { action: 'Navigate to website', reasoning: 'Need to go to target site' },
+            { action: 'Search for content', reasoning: 'Find required information' }
+          ]
+        }
+      }));
 
       // Execute task
       await browserAgent.execute('Complex task that never completes');

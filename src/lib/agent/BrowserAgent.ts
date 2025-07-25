@@ -4,6 +4,7 @@ import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
+import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
 import { generateSystemPrompt, generateStepExecutionPrompt } from './BrowserAgent.prompt';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
@@ -30,6 +31,7 @@ export class BrowserAgent {
     this.toolManager.register(createPlannerTool(this.executionContext));
     this.toolManager.register(createDoneTool());
     this.toolManager.register(createNavigationTool(this.executionContext));
+    this.toolManager.register(createTabOperationsTool(this.executionContext));
   }
 
   // Simple getter to check if plan was created (for testing)
