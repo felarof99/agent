@@ -10,7 +10,7 @@ import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 const MAX_ITERATIONS = 20;
-const HORIZON = 3;
+const NUM_STEPS_SHORT_PLAN = 3;
 
 export class BrowserAgent {
   private executionContext: ExecutionContext;
@@ -59,7 +59,7 @@ export class BrowserAgent {
 
         const planResult = await plannerTool.func({ 
           task: `Based on the history, continue with the main goal: ${task}`,
-          max_steps: HORIZON
+          max_steps: NUM_STEPS_SHORT_PLAN
         });
         
         const parsedResult = JSON.parse(planResult);
