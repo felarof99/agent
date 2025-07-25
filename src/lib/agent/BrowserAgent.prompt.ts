@@ -193,3 +193,39 @@ The index parameter refers to the element's position in the page's interactive e
 - **Don't ignore errors**: Handle unexpected navigation or failures
 - **Don't work with stale state**: Refresh context regularly`;
 }
+
+// Generate prompt for executing a single step with tool calling
+export function generateStepExecutionPrompt(toolDescriptions: string): string {
+  return `You are executing a single step in a web automation plan.
+
+Your task is to:
+1. Understand what the step is asking you to do
+2. Decide which tool(s) to use to accomplish the step
+3. Call the appropriate tool(s) with the correct arguments
+
+AVAILABLE TOOLS:
+${toolDescriptions}
+
+IMPORTANT INSTRUCTIONS:
+- Always use tools to perform actions - do not provide text responses
+- Choose the most appropriate tool for the task
+- Provide accurate arguments based on the step description
+- If a step requires multiple tools, call them in sequence
+- Use the 'done' tool ONLY when explicitly instructed to complete the task
+
+EXAMPLES:
+
+Step: "Navigate to google.com"
+Response: Use tool 'browser_navigation' with args { "url": "https://google.com" }
+
+Step: "Search for TypeScript documentation"  
+Response: Use tool 'search' with args { "query": "TypeScript documentation" }
+
+Step: "Click the first search result"
+Response: Use tool 'interact' with args { "action": "click", "element": "first search result" }
+
+Step: "Task complete"
+Response: Use tool 'done' with args { "summary": "Successfully completed the task" }
+
+Remember: You must use tools to execute the step, not provide explanations.`;
+}
