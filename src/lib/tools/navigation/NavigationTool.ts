@@ -1,7 +1,7 @@
 import { z } from "zod"
 import { DynamicStructuredTool } from "@langchain/core/tools"
 import { ExecutionContext } from "@/lib/runtime/ExecutionContext"
-import { toolSuccess, toolError, type ToolOutput } from "@/lib/tools/tool.interface"
+import { toolSuccess, toolError, type ToolOutput } from "@/lib/tools/Tool.interface"
 
 // Constants
 const ENABLE_WAIT = false  // Set to true to enable wait after navigation actions

@@ -1,6 +1,6 @@
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
-import { ToolManager } from "@/lib/tools/base/ToolManager";
+import { ToolManager } from "@/lib/tools/ToolManager";
 
 describe("ToolManager", () => {
   let toolManager: ToolManager;

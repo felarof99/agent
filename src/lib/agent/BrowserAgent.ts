@@ -1,6 +1,6 @@
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext';
 import { MessageManager, MessageManagerReadOnly } from '@/lib/runtime/MessageManager';
-import { ToolManager } from '@/lib/tools/base/ToolManager';
+import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';

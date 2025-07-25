@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext';
 import { MessageManagerReadOnly } from '@/lib/runtime/MessageManager';
 import { generatePlannerSystemPrompt, generatePlannerTaskPrompt } from './PlannerTool.prompt';
-import { toolError } from '@/lib/tools/tool.interface';
+import { toolError } from '@/lib/tools/Tool.interface';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 // Input schema - simple so LLM can generate and pass it

@@ -3,7 +3,7 @@ import { BrowserAgent } from './BrowserAgent';
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext';
 import { MessageManager } from '@/lib/runtime/MessageManager';
 import { BrowserContext } from '@/lib/browser/BrowserContext';
-import { ToolManager } from '@/lib/tools/base/ToolManager';
+import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 
