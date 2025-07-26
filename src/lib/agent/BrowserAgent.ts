@@ -5,6 +5,7 @@ import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
+import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
 import { generateSystemPrompt, generateStepExecutionPrompt } from './BrowserAgent.prompt';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { BaseChatModel } from '@langchain/core/language_models/chat_models';
@@ -28,10 +29,15 @@ export class BrowserAgent {
   }
 
   private _registerTools(): void {
+    // Register all tools first
     this.toolManager.register(createPlannerTool(this.executionContext));
     this.toolManager.register(createDoneTool());
     this.toolManager.register(createNavigationTool(this.executionContext));
     this.toolManager.register(createTabOperationsTool(this.executionContext));
+    
+    // Register classification tool last with all tool descriptions
+    const toolDescriptions = this.toolManager.getDescriptions();
+    this.toolManager.register(createClassificationTool(this.executionContext, toolDescriptions));
   }
 
   // Simple getter to check if plan was created (for testing)

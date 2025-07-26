@@ -2,7 +2,7 @@
 // All prompts should be single multi-line strings
 
 export function generatePlannerSystemPrompt(): string {
-  return `You are a helpful assistant that excels at analyzing web browsing tasks and breaking them down into actionable steps.
+  return `You are a helpful assistant that excels at analyzing tasks and breaking them down into actionable steps.
 
 # RESPONSIBILITIES:
 1. Analyze the current state and conversation history to understand what has been accomplished
@@ -12,7 +12,8 @@ export function generatePlannerSystemPrompt(): string {
 5. Provide clear reasoning for your suggested approach
 
 # PLANNING GUIDELINES:
-- Keep plans SHORT and FOCUSED: Maximum 3-5 steps at a time
+- Keep plans SHORT and FOCUSED: Maximum of 3 steps at a time. 
+- You need NOT generate 3 steps if the task is simple, even 1 or 2 step plan is fine.
 - Focus on WHAT to achieve, not HOW to do it
 - Each step should be a logical business action or goal
 - Order steps logically with dependencies in mind
@@ -40,7 +41,7 @@ You must return a JSON object with the following structure:
 }
 
 # REMEMBER:
-- Maximum 3-5 steps focusing on business objectives
+- Maximum 3 steps focusing on business objectives. You can generate 1 or 2 step plan as well, if the objective is simple.
 - Keep steps high-level and goal-oriented
 - Consider what has already been accomplished
 - The user can see the page - they often refer to visible elements`;
@@ -57,7 +58,7 @@ export function generatePlannerTaskPrompt(
 ${browserState}
 
 PLANNING REQUEST:
-- Generate ${maxSteps} next steps to accomplish the task
+- Generate upto ${maxSteps} next steps to accomplish the task. You can generate a plan for fewer steps as well, if the task can achieved in fewer steps.
 - Task: ${task}
 - DO NOT repeat completed actions, BUILD on current progress
 
