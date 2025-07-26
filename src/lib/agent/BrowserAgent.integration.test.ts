@@ -35,7 +35,8 @@ describe('BrowserAgent Integration Test', () => {
       const messages = messageManager.getMessages()
       expect(messages.find(m => m._getType() === 'system')).toBeDefined()
       expect(messages.find(m => m._getType() === 'human')).toBeDefined()
-      expect(messages.find(m => m._getType() === 'ai' && m.content?.includes('planner_tool'))).toBeDefined()
+      // Check for tool message that includes planner_tool result
+      expect(messages.find(m => m._getType() === 'tool' && typeof m.content === 'string' && m.content.includes('planner_tool'))).toBeDefined()
       
       console.log('✅ Test passed - BrowserAgent is working with real LLM')
       
