@@ -272,8 +272,8 @@ export class BrowserAgent {
 
   private async *_simplePlanGenerator(task: string): AsyncGenerator<PlanStep> {
     const step: PlanStep = {
-      action: task,
-      reasoning: "Direct execution until completion"
+      action: `${task} and then call done_tool to signal completion`,
+      reasoning: "Direct execution of simple task with explicit completion"
     };
     
     // Log that we're skipping planning

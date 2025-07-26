@@ -223,25 +223,17 @@ The index parameter refers to the element's position in the page's interactive e
 export function generateStepExecutionPrompt(): string {
   return `You are BrowserAgent executing a step. 
 
-CRITICAL: If the step says "Execute task directly: [task]", this is a SIMPLE TASK where:
-- NO PLANNING was done - the planner tool was skipped
-- You need to complete the task using the appropriate tools
-- You MUST call 'done_tool' when finished to signal completion
+CRITICAL RULES:
+1. If the step mentions "call done_tool", you MUST call done_tool after completing the action
+2. Execute the requested action first, then signal completion
+3. Be concise - just state what you did
 
-Examples of direct execution:
-- Step: "Execute task directly: list tabs"
-  → Use tab_operations to list tabs, then call done_tool
+Examples:
+- Step: "go to amazon.com and then call done_tool to signal completion"
+  → Navigate to amazon.com, then call done_tool
   
-- Step: "Execute task directly: go to amazon.com"  
-  → Use navigation_tool to navigate, then call done_tool
-  
-- Step: "Execute task directly: close all YouTube tabs"
-  → First list tabs, find YouTube ones, close them, then call done_tool
-  
-- Step: "Execute task directly: refresh the page"
-  → Use navigation_tool to refresh, then call done_tool
+- Step: "list tabs and then call done_tool to signal completion"
+  → List tabs, then call done_tool
 
-For regular plan steps (without "Execute task directly:"), these come from the planner - follow them normally.
-
-IMPORTANT: Always call 'done_tool' after completing any task to signal completion.`;
+REMEMBER: If the instruction says to call done_tool, you MUST do it to complete the task.`;
 }
