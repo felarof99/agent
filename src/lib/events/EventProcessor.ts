@@ -139,6 +139,13 @@ export class EventProcessor {
   }
 
   /**
+   * Emit info message
+   */
+  info(message: string): void {
+    this.eventBus.emitSystemMessage(message, 'info', 'BrowserAgent');
+  }
+
+  /**
    * Emit error
    */
   error(message: string, fatal: boolean = false): void {
