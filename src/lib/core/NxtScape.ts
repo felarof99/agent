@@ -55,7 +55,6 @@ export class NxtScape {
   private abortController: AbortController; // Track current execution for cancellation
   private messageManager: MessageManager; // Clean conversation history management using MessageManager
   private browserAgent: BrowserAgent | null = null; // The browser agent for task execution
-  private eventBus: EventBus; // EventBus for all executions
 
   private currentQuery: string | null = null; // Track current query for better cancellation messages
 
@@ -78,16 +77,13 @@ export class NxtScape {
     // create new abort controller for this execution
     this.abortController = new AbortController();
 
-    // Create event bus for all executions
-    this.eventBus = new EventBus();
-
-    // Create new execution context
+    // Note: EventBus will be provided during run() from the UI
+    // We create ExecutionContext without EventBus initially
     this.executionContext = new ExecutionContext({
       browserContext: this.browserContext,
       messageManager: this.messageManager,
       debugMode: this.config.debug || false,
       abortController: this.abortController,
-      eventBus: this.eventBus,
     });
 
     // Initialize logging
@@ -350,13 +346,13 @@ export class NxtScape {
     this.executionContext.resetAbortController();
     this.abortController = this.executionContext.abortController;
 
-    // Update executionContext with new message manager and eventBus
+    // Update executionContext with new message manager
+    // Note: EventBus will be set during the next run() call
     this.executionContext = new ExecutionContext({
       browserContext: this.browserContext,
       messageManager: this.messageManager,
       debugMode: this.config.debug || false,
       abortController: this.abortController,
-      eventBus: this.eventBus,
     });
     
     // Recreate browser agent with new execution context

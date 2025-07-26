@@ -1,16 +1,25 @@
 import { EventBus } from '@/lib/events/EventBus';
+import { ExecutionContext } from '@/lib/runtime/ExecutionContext';
 
 /**
  * High-level event processor for BrowserAgent
  * Provides clear, semantic methods for agent operations
  */
 export class EventProcessor {
-  private eventBus: EventBus;
+  private executionContext: ExecutionContext;
   private currentSegmentId: number = 0;
   private currentMessageId: string = '';
 
-  constructor(eventBus: EventBus) {
-    this.eventBus = eventBus;
+  constructor(executionContext: ExecutionContext) {
+    this.executionContext = executionContext;
+  }
+
+  /**
+   * Get the current EventBus from ExecutionContext
+   * This ensures we always use the correct EventBus instance
+   */
+  private get eventBus(): EventBus {
+    return this.executionContext.getEventBus();
   }
 
   /**

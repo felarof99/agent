@@ -13,7 +13,7 @@ export const ExecutionContextOptionsSchema = z.object({
   messageManager: z.instanceof(MessageManager),  // Message manager for communication
   abortController: z.instanceof(AbortController),  // Abort controller for task cancellation
   debugMode: z.boolean().default(false),  // Whether to enable debug logging
-  eventBus: z.instanceof(EventBus)  // Event bus for streaming updates
+  eventBus: z.instanceof(EventBus).optional()  // Event bus for streaming updates (set later via setEventBus)
 })
 
 export type ExecutionContextOptions = z.infer<typeof ExecutionContextOptionsSchema>
@@ -40,7 +40,8 @@ export class ExecutionContext {
     this.browserContext = validatedOptions.browserContext
     this.messageManager = validatedOptions.messageManager
     this.debugMode = validatedOptions.debugMode || false
-    this.eventBus = validatedOptions.eventBus
+    // EventBus is optional and will be set via setEventBus() when needed
+    this.eventBus = validatedOptions.eventBus || new EventBus()
     this.userInitiatedCancel = false
   }
   
