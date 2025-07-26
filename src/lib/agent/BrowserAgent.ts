@@ -276,14 +276,14 @@ export class BrowserAgent {
       reasoning: "Direct execution of simple task with explicit completion"
     };
     
-    // Log that we're skipping planning
-    this.events.progress('Simple task - executing directly without planning');
-    this.messageManager.addAI('Classified as simple task - executing directly without planning');
-    
-    // Yield the same step indefinitely for simple tasks
-    while (true) {
+    // Yield the same step up to 5 times as a failsafe
+    const MAX_SIMPLE_TASK_ATTEMPTS = 5;
+    for (let i = 0; i < MAX_SIMPLE_TASK_ATTEMPTS; i++) {
       yield step;
     }
+
+    // If we get here, the simple task failed to complete
+    this.events.error('Simple task did not complete after maximum attempts');
   }
 
   private async *_multiStepPlanGenerator(task: string): AsyncGenerator<PlanStep> {
