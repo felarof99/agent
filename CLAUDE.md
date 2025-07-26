@@ -205,6 +205,9 @@ class MyAgent {
 ### What to Avoid
 
 - **Don't test mocks** - If you're only verifying mock behavior, delete the test
+  - ❌ Bad: Mocking LLM to return 2 steps, then testing that you got 2 steps
+  - ❌ Bad: Testing that your mock was called with certain parameters
+  - ✅ Good: Testing how your code handles when the LLM throws an error
 - **Don't test implementation details** - Test outcomes, not the steps taken
 - **Don't test external dependencies** - Test your code's handling of them instead
 - **Don't write tests just for coverage** - Quality over quantity
