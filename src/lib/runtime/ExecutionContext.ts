@@ -13,7 +13,7 @@ export const ExecutionContextOptionsSchema = z.object({
   messageManager: z.instanceof(MessageManager),  // Message manager for communication
   abortController: z.instanceof(AbortController),  // Abort controller for task cancellation
   debugMode: z.boolean().default(false),  // Whether to enable debug logging
-  eventBus: z.instanceof(EventBus).optional()  // Event bus for streaming updates
+  eventBus: z.instanceof(EventBus)  // Event bus for streaming updates
 })
 
 export type ExecutionContextOptions = z.infer<typeof ExecutionContextOptionsSchema>
@@ -26,7 +26,7 @@ export class ExecutionContext {
   browserContext: BrowserContext  // Browser context for page operations
   messageManager: MessageManager  // Message manager for communication
   debugMode: boolean  // Whether debug logging is enabled
-  eventBus: EventBus | null  // Event bus for streaming updates
+  eventBus: EventBus  // Event bus for streaming updates
   selectedTabIds: number[] | null = null  // Selected tab IDs
   private userInitiatedCancel: boolean = false  // Track if cancellation was user-initiated
   private _isExecuting: boolean = false  // Track actual execution state
@@ -40,7 +40,7 @@ export class ExecutionContext {
     this.browserContext = validatedOptions.browserContext
     this.messageManager = validatedOptions.messageManager
     this.debugMode = validatedOptions.debugMode || false
-    this.eventBus = validatedOptions.eventBus || null
+    this.eventBus = validatedOptions.eventBus
     this.userInitiatedCancel = false
   }
   
@@ -62,9 +62,9 @@ export class ExecutionContext {
 
   /**
    * Get the current event bus
-   * @returns The event bus or null if not set
+   * @returns The event bus
    */
-  public getEventBus(): EventBus | null {
+  public getEventBus(): EventBus {
     return this.eventBus;
   }
 

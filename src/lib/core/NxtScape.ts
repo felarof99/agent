@@ -55,6 +55,7 @@ export class NxtScape {
   private abortController: AbortController; // Track current execution for cancellation
   private messageManager: MessageManager; // Clean conversation history management using MessageManager
   private browserAgent: BrowserAgent | null = null; // The browser agent for task execution
+  private eventBus: EventBus; // EventBus for all executions
 
   private currentQuery: string | null = null; // Track current query for better cancellation messages
 
@@ -77,12 +78,16 @@ export class NxtScape {
     // create new abort controller for this execution
     this.abortController = new AbortController();
 
+    // Create event bus for all executions
+    this.eventBus = new EventBus();
+
     // Create new execution context
     this.executionContext = new ExecutionContext({
       browserContext: this.browserContext,
       messageManager: this.messageManager,
       debugMode: this.config.debug || false,
       abortController: this.abortController,
+      eventBus: this.eventBus,
     });
 
     // Initialize logging
@@ -193,7 +198,7 @@ export class NxtScape {
     // Mark execution as started
     this.executionContext.startExecution(currentTabId);
 
-    // Set the event bus for this execution
+    // Update the event bus for this execution (replace the default one)
     this.executionContext.setEventBus(eventBus);
 
     // Set selected tab IDs for context (e.g., for summarizing multiple tabs)
@@ -345,12 +350,13 @@ export class NxtScape {
     this.executionContext.resetAbortController();
     this.abortController = this.executionContext.abortController;
 
-    // Update executionContext with new message manager (eventBus will be set during run)
+    // Update executionContext with new message manager and eventBus
     this.executionContext = new ExecutionContext({
       browserContext: this.browserContext,
       messageManager: this.messageManager,
       debugMode: this.config.debug || false,
       abortController: this.abortController,
+      eventBus: this.eventBus,
     });
     
     // Recreate browser agent with new execution context

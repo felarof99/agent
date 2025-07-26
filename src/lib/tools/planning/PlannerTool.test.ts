@@ -3,6 +3,7 @@ import { createPlannerTool } from './PlannerTool'
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
+import { EventBus } from '@/lib/events'
 
 describe('PlannerTool', () => {
   it('should be created with required dependencies', () => {
@@ -11,11 +12,13 @@ describe('PlannerTool', () => {
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
     
+    const eventBus = new EventBus()
     const executionContext = new ExecutionContext({
       browserContext,
       messageManager,
       abortController,
-      debugMode: false
+      debugMode: false,
+      eventBus
     })
     
     const tool = createPlannerTool(executionContext)
@@ -32,11 +35,13 @@ describe('PlannerTool', () => {
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
     
+    const eventBus = new EventBus()
     const executionContext = new ExecutionContext({
       browserContext,
       messageManager,
       abortController,
-      debugMode: false
+      debugMode: false,
+      eventBus
     })
     
     // Override getLLM to throw error

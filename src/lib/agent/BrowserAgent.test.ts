@@ -3,6 +3,7 @@ import { BrowserAgent } from './BrowserAgent'
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
+import { EventBus } from '@/lib/events'
 
 describe('BrowserAgent', () => {
   it('should be created with required dependencies', () => {
@@ -10,11 +11,13 @@ describe('BrowserAgent', () => {
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
     
+    const eventBus = new EventBus()
     const executionContext = new ExecutionContext({
       browserContext,
       messageManager,
       abortController,
-      debugMode: false
+      debugMode: false,
+      eventBus
     })
     
     const browserAgent = new BrowserAgent(executionContext)
@@ -28,11 +31,13 @@ describe('BrowserAgent', () => {
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
     
+    const eventBus = new EventBus()
     const executionContext = new ExecutionContext({
       browserContext,
       messageManager,
       abortController,
-      debugMode: false
+      debugMode: false,
+      eventBus
     })
     
     // Mock LLM that never calls done tool
@@ -60,11 +65,13 @@ describe('BrowserAgent', () => {
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
     
+    const eventBus = new EventBus()
     const executionContext = new ExecutionContext({
       browserContext,
       messageManager,
       abortController,
-      debugMode: false
+      debugMode: false,
+      eventBus
     })
     
     const browserAgent = new BrowserAgent(executionContext)

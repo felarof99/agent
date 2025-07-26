@@ -3,6 +3,7 @@ import { ClassificationTool } from './ClassificationTool'
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
+import { EventBus } from '@/lib/events'
 
 /**
  * Simple integration test for ClassificationTool
@@ -16,11 +17,13 @@ describe('ClassificationTool Integration Test', () => {
       const browserContext = new BrowserContext()
       const abortController = new AbortController()
       
+      const eventBus = new EventBus()
       const executionContext = new ExecutionContext({
         browserContext,
         messageManager,
         abortController,
-        debugMode: false
+        debugMode: false,
+        eventBus
       })
       
       const toolDescriptions = 'Available tools: tab operations, bookmarks, history, browser navigation'

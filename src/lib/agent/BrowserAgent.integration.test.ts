@@ -3,6 +3,7 @@ import { BrowserAgent } from './BrowserAgent'
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
+import { EventBus } from '@/lib/events'
 
 /**
  * Simple integration test for BrowserAgent
@@ -16,11 +17,13 @@ describe('BrowserAgent Integration Test', () => {
       const browserContext = new BrowserContext()
       const abortController = new AbortController()
       
+      const eventBus = new EventBus()
       const executionContext = new ExecutionContext({
         browserContext,
         messageManager,
         abortController,
-        debugMode: false
+        debugMode: false,
+        eventBus
       })
       
       const browserAgent = new BrowserAgent(executionContext)

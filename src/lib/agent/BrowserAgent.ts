@@ -60,7 +60,7 @@ export class BrowserAgent {
   private executionContext: ExecutionContext;
   private messageManager: MessageManager;
   private toolManager: ToolManager;
-  private events: EventProcessor | null = null;
+  private events: EventProcessor;
   private currentPlan: any[] = [];
   private currentStepOfPlan: number = 0;  // NTN: Using this variable name as requested
   private classificationResult: { is_simple_task: boolean; is_followup_task: boolean } | null = null;
@@ -69,6 +69,7 @@ export class BrowserAgent {
     this.executionContext = executionContext;
     this.messageManager = executionContext.messageManager;
     this.toolManager = new ToolManager(executionContext);
+    this.events = new EventProcessor(executionContext.getEventBus());
     this._registerTools();
   }
 
@@ -90,12 +91,6 @@ export class BrowserAgent {
   }
 
   async execute(task: string): Promise<void> {
-    // Initialize EventProcessor
-    const eventBus = this.executionContext.getEventBus();
-    if (!eventBus) {
-      throw new Error('EventBus not available in ExecutionContext');
-    }
-    this.events = new EventProcessor(eventBus);
 
     try {
       // Initialize with system prompt
@@ -155,25 +150,25 @@ export class BrowserAgent {
     } catch (error) {
       // Handle any unhandled errors
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.events?.error(errorMessage, true);
+      this.events.error(errorMessage, true);
       throw error;
     }
   }
 
   // Private helper methods
   private async _classifyTask(task: string): Promise<void> {
-    this.events?.analyzingTask();
+    this.events.analyzingTask();
     
     const classificationTool = this.toolManager.get('classification_tool');
     if (!classificationTool) {
       // If classification tool not found, assume complex task
       this.classificationResult = { is_simple_task: false, is_followup_task: false };
-      this.events?.taskClassified(false);
+      this.events.taskClassified(false);
       return;
     }
 
     try {
-      this.events?.executingTool('classification_tool', { task });
+      this.events.executingTool('classification_tool', { task });
       const args = { task };
       const result = await classificationTool.func(args);
       this._updateMessageManagerWithToolCall('classification_tool', args, result);
@@ -182,19 +177,19 @@ export class BrowserAgent {
       if (parsedResult.ok) {
         const classification = JSON.parse(parsedResult.output);
         this.classificationResult = classification;
-        this.events?.toolResult('classification_tool', true, 'Task analyzed');
-        this.events?.taskClassified(classification.is_simple_task);
+        this.events.toolResult('classification_tool', true, 'Task analyzed');
+        this.events.taskClassified(classification.is_simple_task);
       } else {
         // If classification fails, assume complex task
         this.classificationResult = { is_simple_task: false, is_followup_task: false };
-        this.events?.toolResult('classification_tool', false, parsedResult.error || 'Classification failed');
-        this.events?.taskClassified(false);
+        this.events.toolResult('classification_tool', false, parsedResult.error || 'Classification failed');
+        this.events.taskClassified(false);
       }
     } catch (error) {
       // If any error occurs, assume complex task
       this.classificationResult = { is_simple_task: false, is_followup_task: false };
-      this.events?.toolResult('classification_tool', false, error instanceof Error ? error.message : 'Classification error');
-      this.events?.taskClassified(false);
+      this.events.toolResult('classification_tool', false, error instanceof Error ? error.message : 'Classification error');
+      this.events.taskClassified(false);
     }
   }
 
@@ -209,13 +204,13 @@ export class BrowserAgent {
       this.currentStepOfPlan = 0;
       
       // Log that we're skipping planning
-      this.events?.progress('Simple task - executing directly without planning');
+      this.events.progress('Simple task - executing directly without planning');
       this.messageManager.addAI('Classified as simple task - executing directly without planning');
       return;
     }
 
     // Complex task - use planner as normal
-    this.events?.planningSteps(NUM_STEPS_SHORT_PLAN);
+    this.events.planningSteps(NUM_STEPS_SHORT_PLAN);
     
     const plannerTool = this.toolManager.get('planner_tool')!;  // Always exists
     const args = { 
@@ -224,7 +219,7 @@ export class BrowserAgent {
     };
 
     try {
-      this.events?.executingTool('planner_tool', args);
+      this.events.executingTool('planner_tool', args);
       const planResult = await plannerTool.func(args);
       this._updateMessageManagerWithToolCall('planner_tool', args, planResult);
       
@@ -232,14 +227,14 @@ export class BrowserAgent {
       if (parsedResult.ok && parsedResult.plan) {
         this.currentPlan = parsedResult.plan.steps;
         this.currentStepOfPlan = 0;
-        this.events?.toolResult('planner_tool', true, `Created ${this.currentPlan.length}-step plan`);
+        this.events.toolResult('planner_tool', true, `Created ${this.currentPlan.length}-step plan`);
       } else {
-        this.events?.toolResult('planner_tool', false, parsedResult.error || 'Planning failed');
-        this.events?.error('Failed to create plan', false);
+        this.events.toolResult('planner_tool', false, parsedResult.error || 'Planning failed');
+        this.events.error('Failed to create plan', false);
       }
     } catch (error) {
-      this.events?.toolResult('planner_tool', false, error instanceof Error ? error.message : 'Planning error');
-      this.events?.error('Planning failed', false);
+      this.events.toolResult('planner_tool', false, error instanceof Error ? error.message : 'Planning error');
+      this.events.error('Planning failed', false);
     }
   }
 
@@ -253,7 +248,7 @@ export class BrowserAgent {
       
       if (!tool) {
         result = { ok: false, error: `Tool ${toolName} not found` };
-        this.events?.error(`Tool ${toolName} not found`);
+        this.events.error(`Tool ${toolName} not found`);
         this._updateMessageManagerWithToolCall(toolName, args, result, toolCallId);
         this.currentPlan = [];  // Trigger re-planning
         continue;
@@ -261,7 +256,7 @@ export class BrowserAgent {
 
       // Emit tool execution start (except for classification and planner which are already handled)
       if (toolName !== 'classification_tool' && toolName !== 'planner_tool') {
-        this.events?.executingTool(toolName, args);
+        this.events.executingTool(toolName, args);
       }
 
       try {
@@ -271,14 +266,14 @@ export class BrowserAgent {
         // Emit tool success (except for classification and planner)
         if (toolName !== 'classification_tool' && toolName !== 'planner_tool') {
           const summary = toolName === 'done_tool' ? 'Task marked as complete' : undefined;
-          this.events?.toolResult(toolName, result.ok, summary || result.message);
+          this.events.toolResult(toolName, result.ok, summary || result.message);
         }
       } catch (error) {
         result = { ok: false, error: error instanceof Error ? error.message : String(error) };
         
         // Emit tool failure
         if (toolName !== 'classification_tool' && toolName !== 'planner_tool') {
-          this.events?.toolResult(toolName, false, result.error);
+          this.events.toolResult(toolName, false, result.error);
         }
       }
 
@@ -287,13 +282,13 @@ export class BrowserAgent {
 
       // Check if done
       if (toolName === 'done_tool' && result.ok) {
-        this.events?.complete('Task completed successfully');
+        this.events.complete('Task completed successfully');
         return true;
       }
 
       // Check if we need to replan
       if (!result.ok || result.error?.includes('page changed')) {
-        this.events?.progress('Replanning due to: ' + (result.error || 'execution failure'));
+        this.events.progress('Replanning due to: ' + (result.error || 'execution failure'));
         this.currentPlan = [];
       }
     }
@@ -319,7 +314,7 @@ export class BrowserAgent {
     const llmWithTools = llm.bindTools(tools);
     
     // Start thinking event
-    this.events?.startThinking();
+    this.events.startThinking();
     
     // Create messages for this step
     const messages = [
@@ -337,7 +332,7 @@ export class BrowserAgent {
       // Chunk.content is the text content of the chunk, accumulate this so we can add 
       // final text content to message manager.
       if (chunk.content && typeof chunk.content === 'string') {
-        this.events?.streamThought(chunk.content);
+        this.events.streamThought(chunk.content);
         accumulatedTextContent += chunk.content;
       }
       
@@ -351,7 +346,7 @@ export class BrowserAgent {
     }
     
     // Finish thinking event
-    this.events?.finishThinking(accumulatedTextContent);
+    this.events.finishThinking(accumulatedTextContent);
     
     // Update message manager with accumulated text content if any
     if (accumulatedTextContent) {
