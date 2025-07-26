@@ -36,49 +36,4 @@ export class ToolManager {
 
     return `Available tools:\n${toolDescriptions}`;
   }
-
-  _registerPlannerTool(): void {
-    if (!this.executionContext) {
-      throw new Error("ExecutionContext required for planner tool");
-    }
-    
-    // Placeholder planner tool until actual implementation
-    const plannerTool = new DynamicStructuredTool({
-      name: "planner_tool",
-      description: "Generate 3-5 upcoming steps for the task",
-      schema: z.object({
-        task: z.string(),
-        max_steps: z.number().default(3)
-      }),
-      func: async () => {
-        // Placeholder implementation
-        return JSON.stringify({
-          ok: true,
-          plan: { steps: [] },
-          output: "Planner tool placeholder"
-        });
-      }
-    });
-    
-    this.register(plannerTool);
-  }
-
-  _registerDoneTool(): void {
-    // Placeholder done tool until actual implementation
-    const doneTool = new DynamicStructuredTool({
-      name: "done",
-      description: "Mark task as complete",
-      schema: z.object({
-        summary: z.string().optional()
-      }),
-      func: async (args) => {
-        return JSON.stringify({
-          ok: true,
-          output: args.summary || "Task completed successfully"
-        });
-      }
-    });
-    
-    this.register(doneTool);
-  }
 }
