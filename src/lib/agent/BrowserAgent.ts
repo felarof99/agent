@@ -73,7 +73,7 @@ export class BrowserAgent {
     this.executionContext = executionContext;
     this.messageManager = executionContext.messageManager;
     this.toolManager = new ToolManager(executionContext);
-    this.events = new EventProcessor(executionContext);
+    this.events = new EventProcessor(executionContext.getEventBus());
     this._registerTools();
   }
 
