@@ -1,4 +1,4 @@
-import { StreamEventBus, StreamEvent } from './EventBus';
+import { StreamEventBus, StreamEvent } from './StreamEventBus';
 import { MessageType } from '@/lib/types/messaging';
 
 /**
