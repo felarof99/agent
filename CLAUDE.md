@@ -15,11 +15,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run lint:fix` - Fix eslint issues automatically
 
 ### Testing Commands
-- `npm run test` - Run all tests with Jest
+- `npm run test` - Run all tests with Vitest in watch mode
+- `npm run test:run` - Run all tests once and exit
 - `npm run test:watch` - Run tests in watch mode for development
 - `npm run test:coverage` - Generate code coverage report
-- `npm run test:unit` - Run unit tests only (files matching *.unit.test.ts)
-- `npm run test:integration` - Run integration tests only (files matching *.integration.test.ts)
+- `npm run test:ui` - Open Vitest UI for interactive testing
+- To run a single test file: `npm test -- path/to/file.test.ts`
+- For integration tests with API key: `LITELLM_API_KEY=your-key npm test -- file.integration.test.ts`
 
 ## Environment Setup
 
@@ -44,11 +46,11 @@ To debug:
 ### Core Framework
 This is a Chrome extension that provides AI-powered web automation using LLM agents. The architecture is built around:
 
-1. **NxtScape Core** (`src/lib/core/NxtScape.ts`) - Main orchestration layer that coordinates ProductivityAgent execution
-2. **Agent System** - LLM-powered agents that execute natural language tasks
+1. **NxtScape Core** (`src/lib/core/NxtScape.ts`) - Main orchestration layer that manages execution context and delegates to BrowserAgent
+2. **BrowserAgent** (`src/lib/agent/BrowserAgent.ts`) - Unified agent that handles all task execution through planning and tool invocation
 3. **Browser Context** - Puppeteer-core integration for Chrome extension tab control
-4. **Tool Registry** - Modular browser automation tools
-5. **Workflow Engine** - DAG-based workflow execution system
+4. **Tool System** - Modular browser automation tools registered with ToolManager
+5. **Execution Context** - Runtime state management including message history, browser context, and abort handling
 
 ### Key Components
 
@@ -58,25 +60,24 @@ This is a Chrome extension that provides AI-powered web automation using LLM age
 - Uses Chrome Extension APIs for tab management and debugger attachment
 
 #### Agent Architecture
-- **BaseAgent** (`src/lib/agent/BaseAgent.ts`) - Abstract base class implementing IAgent interface with LangChain integration
-- **ProductivityAgent** - Primary agent for tab management and productivity tasks
-- **BrowseAgent** - Specialized agent for web browsing and navigation
-- **ClassificationAgent** - Routes tasks to appropriate agents based on classification
-- **PlannerAgent** - Creates step-by-step plans for complex browse tasks
-- **ValidatorAgent** - Validates task completion and determines retry needs
-- **IntentPredictionAgent** - Predicts user intent from webpage context for proactive assistance
-- **Orchestrator** (`src/lib/agent/Orchestrator.ts`) - Coordinates agent graph execution
-- **AgentGraph** (`src/lib/graph/AgentGraph.ts`) - LangGraph-based workflow with classification routing
-- Agents use LangChain for LLM integration (Claude/OpenAI/Ollama support)
+- **BrowserAgent** (`src/lib/agent/BrowserAgent.ts`) - The single unified agent that handles all tasks
+  - Uses ClassificationTool to determine task complexity (simple vs complex)
+  - Uses PlannerTool to create multi-step plans for complex tasks
+  - Executes tools via LangChain LLM with tool binding
+  - Manages conversation history via MessageManager
+  - Supports iterative re-planning when execution fails
+- Uses LangChain for LLM integration (Claude/OpenAI/Ollama support)
 
 #### Tool System
-- **Tool Registry** (`src/lib/tools/base/ToolRegistry.ts`) - Centralized tool management
-- **Categories**: tab operations, bookmarks, history, browser navigation, extraction, sessions, utility
-- Tools implement NxtscapeTool interface with Zod schema validation
-- **Browser Navigation**: InteractionTool, NavigationTool, PlannerTool, ScrollTool, SearchTool
-- **Tab Management**: TabOperationsTool, GroupTabsTool, GetSelectedTabsTool
-- **Bookmarks**: BookmarkManagementTool, BookmarkSearchTool, SaveBookmarkTool
-- **Utility**: AnswerTool, DoneTool, TerminateTool, WaitTool
+- **ToolManager** (`src/lib/tools/ToolManager.ts`) - Centralized tool management and registration
+- Tools are implemented as LangChain DynamicStructuredTool instances
+- **Core Tools**:
+  - **ClassificationTool** - Classifies tasks as simple/complex
+  - **PlannerTool** - Creates multi-step execution plans
+  - **NavigationTool** - Handles web navigation
+  - **TabOperationsTool** - Manages browser tabs
+  - **DoneTool** - Marks task completion
+- Additional tools can be registered based on task requirements
 
 ### UI Components
 - **Side Panel** (`src/sidepanel/`) - Chrome side panel integration with React
@@ -102,16 +103,19 @@ This is a Chrome extension that provides AI-powered web automation using LLM age
 - SCSS modules for component styling
 
 ### Agent Development
-- Extend BaseAgent interface
-- Implement execute method with proper error handling
-- Use StreamingCallbacks for progress updates
-- Register agents in WorkflowEngine agent registry
+- BrowserAgent is the single unified agent handling all tasks
+- To extend functionality, add new tools rather than new agents
+- BrowserAgent handles classification, planning, and execution internally
+- Uses MessageManager for conversation history
+- Supports iterative re-planning on failures
 
 ### Tool Development
-- Extend NxtscapeTool base class
-- Define Zod schema for tool parameters
-- Implement execute method returning tool results
-- Register in appropriate tool category index
+- Create tools using LangChain's DynamicStructuredTool
+- Define Zod schema for tool input parameters
+- Implement tool function that returns JSON string results
+- Use factory functions (e.g., `createPlannerTool`) for tool creation
+- Register tools with ToolManager in BrowserAgent
+- Return results in format: `{ ok: boolean, output?: any, error?: string }`
 
 ### Browser Context Usage
 - Always use BrowserContext for tab operations
@@ -149,7 +153,7 @@ async processData() { }
 #### TraceDecorator (`src/lib/utils/TraceDecorator.ts`)
 - Lightweight method-level tracing with `@trace` decorator
 - Exports Perfetto-compatible traces for visualization
-- Already integrated in BaseAgent, ProductivityAgent, and BrowseAgent
+- Already integrated in BrowserAgent for automatic performance tracking
 - Access trace data via `window.__traceCollector.getTraces()`
 
 ```typescript
@@ -163,7 +167,7 @@ class MyAgent {
 
 ### Testing Guidelines
 - Place test files next to source files with `.test.ts` or `.spec.ts` extension
-- Use Jest with ts-jest for TypeScript support
+- Use Vitest with TypeScript support and happy-dom environment
 - Mock Chrome Extension APIs as needed for unit tests
 - Follow AAA pattern: Arrange, Act, Assert
 - Use descriptive test names that explain the expected behavior
@@ -263,11 +267,11 @@ describe('MyTool', () => {
 ## Key Files Reference
 
 - `src/lib/core/NxtScape.ts` - Main orchestration class
-- `src/lib/agent/BaseAgent.ts` - Abstract base class for all agents
-- `src/lib/agent/Orchestrator.ts` - Agent graph execution coordinator
-- `src/lib/graph/AgentGraph.ts` - LangGraph workflow with classification routing
+- `src/lib/agent/BrowserAgent.ts` - Unified agent handling all task execution
 - `src/lib/browser/BrowserContext.ts` - Multi-tab browser management with puppeteer-core
-- `src/lib/tools/base/ToolRegistry.ts` - Tool management system
+- `src/lib/tools/ToolManager.ts` - Tool registration and management system
+- `src/lib/tools/classification/ClassificationTool.ts` - Task classification logic
+- `src/lib/tools/planning/PlannerTool.ts` - Multi-step plan generation
 - `src/lib/llm/LangChainProviderFactory.ts` - LLM provider abstraction
 - `src/lib/runtime/ExecutionContext.ts` - Runtime state and context management
 - `src/lib/runtime/MessageManager.ts` - Conversation history management
@@ -521,11 +525,31 @@ export function Button({ label, onClick }: ButtonProps) {
 ## Additional Architecture Notes
 
 ### Execution Flow
-1. **NxtScape.run()** - Main entry point that delegates to Orchestrator
-2. **Orchestrator.execute()** - Initializes and runs AgentGraph
-3. **AgentGraph** - LangGraph workflow: classify → [productivity OR (plan → browse → validate)] → complete
-4. **Classification** determines routing: simple tasks go to ProductivityAgent, complex browsing goes through planning pipeline
-5. **StreamProcessor** handles real-time progress updates throughout execution
+
+```
+User Query → NxtScape.run() → BrowserAgent.execute()
+                                        ↓
+                              ClassificationTool
+                                   ↙        ↘
+                            Simple Task   Complex Task
+                                ↓              ↓
+                          Direct Tool     PlannerTool
+                           Execution      (3 steps)
+                                ↓              ↓
+                              Tool         Execute Each
+                             Result      Step with Tools
+                                ↓              ↓
+                            DoneTool    Check & Re-plan
+                                           if needed
+```
+
+1. **NxtScape.run()** - Main entry point that initializes execution context and calls BrowserAgent
+2. **BrowserAgent.execute()** - The unified agent that handles all tasks through a planning and execution loop
+3. **ClassificationTool** - Determines if task is simple (direct execution) or complex (needs planning)
+4. **PlannerTool** - Creates multi-step plans for complex tasks (typically 3 steps at a time)
+5. **Tool Execution** - BrowserAgent executes tools via LLM with tool binding, processing results iteratively
+6. **Message Manager** - Maintains conversation history throughout execution
+7. **Event Bus** - Streams real-time updates to the UI during execution
 
 ### Chrome Extension Structure
 - **Background Script** (`src/background/`) - Service worker handling extension lifecycle

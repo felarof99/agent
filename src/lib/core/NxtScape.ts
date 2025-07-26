@@ -45,8 +45,8 @@ export const NxtScapeResultSchema = z.object({
 export type NxtScapeResult = z.infer<typeof NxtScapeResultSchema>;
 
 /**
- * Main orchestration agent for the NxtScape framework.
- * Delegates agent graph execution to Orchestrator for clean separation of concerns.
+ * Main orchestration class for the NxtScape framework.
+ * Manages execution context and delegates task execution to BrowserAgent.
  */
 export class NxtScape {
   private readonly config: NxtScapeConfig;
