@@ -12,7 +12,7 @@ type DoneInput = z.infer<typeof DoneInputSchema>;
 // Factory function to create DoneTool
 export function createDoneTool(): DynamicStructuredTool {
   return new DynamicStructuredTool({
-    name: 'done',
+    name: 'done_tool',
     description: 'Mark task as complete',
     schema: DoneInputSchema,
     func: async (args: DoneInput): Promise<string> => {

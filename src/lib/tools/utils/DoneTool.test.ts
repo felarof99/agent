@@ -6,7 +6,7 @@ describe('DoneTool', () => {
     // Test that the tool is created with correct name, description, and schema
     const tool = createDoneTool();
     
-    expect(tool.name).toBe('done');
+    expect(tool.name).toBe('done_tool');
     expect(tool.description).toBe('Mark task as complete');
     expect(tool.schema).toBeDefined();
     expect(typeof tool.func).toBe('function');

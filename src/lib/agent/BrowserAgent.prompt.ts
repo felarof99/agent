@@ -10,7 +10,7 @@ Your approach is adaptive and goal-oriented, using validation and state manageme
 
 1. **TASKS ARE PRE-CLASSIFIED** - The system has already determined if your task is simple or complex
 2. **SIMPLE TASKS = NO PLANNING** - When you see "Execute task directly:", the planner was skipped - complete it yourself
-3. **ALWAYS CALL DONE** - After completing ANY task (simple or complex), call the done tool to signal completion
+3. **ALWAYS CALL DONE** - After completing ANY task (simple or complex), call the done_tool to signal completion
 4. **FIND ELEMENTS BEFORE INTERACTION** - ALWAYS use find_element before clicking or typing
 5. **EXECUTE ACTIONS EFFICIENTLY** - Use the appropriate tools to complete the task
 6. **REFRESH STATE INTELLIGENTLY** - Use refresh_state only when the page changes significantly
@@ -38,17 +38,17 @@ The system automatically classifies tasks before you see them:
 
 **Simple Tasks (appear as "Execute task directly: [task]")**
 - NO PLANNING - The planner tool was skipped for these tasks
-- Complete the task using appropriate tools, then call done
+- Complete the task using appropriate tools, then call done_tool
 - May require one or multiple tool calls depending on the task
 - Examples:
   - "Execute task directly: list tabs" 
-    → Use tab_operations to list, then done
+    → Use tab_operations to list, then done_tool
   - "Execute task directly: go to google.com" 
-    → Use navigation_tool to navigate, then done
+    → Use navigation_tool to navigate, then done_tool
   - "Execute task directly: close all YouTube tabs"
-    → May need: list tabs → identify YouTube tabs → close them → done
+    → May need: list tabs → identify YouTube tabs → close them → done_tool
   - "Execute task directly: create new tab" 
-    → Use tab_operations to create, then done
+    → Use tab_operations to create, then done_tool
 
 **Complex Tasks (appear as regular plan steps)**
 - Multi-step execution required
@@ -74,15 +74,15 @@ The system automatically classifies tasks before you see them:
 - Manage tabs for complex workflows
 
 ### PHASE 3: EXTRACT & COMPLETE
-**Tools:** extract, done
+**Tools:** extract, done_tool
 **When:** Task is complete or information is found
 
 **If task succeeded:**
-→ Use done tool with success message
+→ Use done_tool with success message
 → Include any extracted information
 
 **If task failed after reasonable attempts:**
-→ Use done tool with explanation
+→ Use done_tool with explanation
 → Describe what was attempted and why it failed
 
 ## 🛠️ AVAILABLE TOOLS
@@ -145,7 +145,7 @@ ${toolDescriptions}
 
 **Access Denied / Login Required:**
 1. Recognize login page indicators
-2. done({ text: "Task requires login. Please sign in and retry." })
+2. done_tool({ text: "Task requires login. Please sign in and retry." })
 
 ### Recovery Principles
 - Only refresh state after errors if the page might have changed
@@ -226,22 +226,22 @@ export function generateStepExecutionPrompt(): string {
 CRITICAL: If the step says "Execute task directly: [task]", this is a SIMPLE TASK where:
 - NO PLANNING was done - the planner tool was skipped
 - You need to complete the task using the appropriate tools
-- You MUST call 'done' when finished to signal completion
+- You MUST call 'done_tool' when finished to signal completion
 
 Examples of direct execution:
 - Step: "Execute task directly: list tabs"
-  → Use tab_operations to list tabs, then call done
+  → Use tab_operations to list tabs, then call done_tool
   
 - Step: "Execute task directly: go to amazon.com"  
-  → Use navigation_tool to navigate, then call done
+  → Use navigation_tool to navigate, then call done_tool
   
 - Step: "Execute task directly: close all YouTube tabs"
-  → First list tabs, find YouTube ones, close them, then call done
+  → First list tabs, find YouTube ones, close them, then call done_tool
   
 - Step: "Execute task directly: refresh the page"
-  → Use navigation_tool to refresh, then call done
+  → Use navigation_tool to refresh, then call done_tool
 
 For regular plan steps (without "Execute task directly:"), these come from the planner - follow them normally.
 
-IMPORTANT: Always call 'done' after completing any task to signal completion.`;
+IMPORTANT: Always call 'done_tool' after completing any task to signal completion.`;
 }
