@@ -120,7 +120,7 @@ export type EventFilter = (event: StreamEvent) => boolean;
 /**
  * EventBus for streaming events with replay capability
  */
-export class StreamEventBus extends EventEmitter {
+export class EventBus extends EventEmitter {
   private eventBuffer: StreamEvent[] = [];
   private bufferSize: number;
   private debugMode: boolean;
@@ -423,7 +423,7 @@ export class ReplayBuffer {
   private buffer: StreamEvent[] = [];
   private maxSize: number;
 
-  constructor(private eventBus: StreamEventBus, maxSize: number = 100) {
+  constructor(private eventBus: EventBus, maxSize: number = 100) {
     this.maxSize = maxSize;
     
     // Start recording events

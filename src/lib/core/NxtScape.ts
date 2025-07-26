@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { StreamEventBus } from "@/lib/events";
+import { EventBus } from "@/lib/events";
 import { Logging } from "@/lib/utils/Logging";
 import { BrowserContext } from "@/lib/browser/BrowserContext";
 import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
@@ -26,7 +26,7 @@ export type NxtScapeConfig = z.infer<typeof NxtScapeConfigSchema>;
 export const RunOptionsSchema = z.object({
   query: z.string(), // Natural language user query
   tabIds: z.array(z.number()).optional(), // Optional array of tab IDs for context (e.g., which tabs to summarize) - NOT for agent operation
-  eventBus: z.instanceof(StreamEventBus), // EventBus for streaming updates
+  eventBus: z.instanceof(EventBus), // EventBus for streaming updates
 });
 
 export type RunOptions = z.infer<typeof RunOptionsSchema>;

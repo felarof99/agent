@@ -1,15 +1,15 @@
-import { StreamEventBus } from '@/lib/events/StreamEventBus';
+import { EventBus } from '@/lib/events/EventBus';
 
 /**
  * High-level event processor for BrowserAgent
  * Provides clear, semantic methods for agent operations
  */
 export class EventProcessor {
-  private eventBus: StreamEventBus;
+  private eventBus: EventBus;
   private currentSegmentId: number = 0;
   private currentMessageId: string = '';
 
-  constructor(eventBus: StreamEventBus) {
+  constructor(eventBus: EventBus) {
     this.eventBus = eventBus;
   }
 

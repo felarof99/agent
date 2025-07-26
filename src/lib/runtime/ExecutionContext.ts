@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import BrowserContext from '../browser/BrowserContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
-import { StreamEventBus } from '@/lib/events'
+import { EventBus } from '@/lib/events'
 import { getLLM as getLLMFromProvider } from '@/lib/llm/LangChainProvider'
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
@@ -13,7 +13,7 @@ export const ExecutionContextOptionsSchema = z.object({
   messageManager: z.instanceof(MessageManager),  // Message manager for communication
   abortController: z.instanceof(AbortController),  // Abort controller for task cancellation
   debugMode: z.boolean().default(false),  // Whether to enable debug logging
-  eventBus: z.instanceof(StreamEventBus).optional()  // Event bus for streaming updates
+  eventBus: z.instanceof(EventBus).optional()  // Event bus for streaming updates
 })
 
 export type ExecutionContextOptions = z.infer<typeof ExecutionContextOptionsSchema>
@@ -26,7 +26,7 @@ export class ExecutionContext {
   browserContext: BrowserContext  // Browser context for page operations
   messageManager: MessageManager  // Message manager for communication
   debugMode: boolean  // Whether debug logging is enabled
-  eventBus: StreamEventBus | null  // Event bus for streaming updates
+  eventBus: EventBus | null  // Event bus for streaming updates
   selectedTabIds: number[] | null = null  // Selected tab IDs
   private userInitiatedCancel: boolean = false  // Track if cancellation was user-initiated
   private _isExecuting: boolean = false  // Track actual execution state
@@ -56,7 +56,7 @@ export class ExecutionContext {
    * Set the event bus for streaming updates
    * @param eventBus - The event bus to use
    */
-  public setEventBus(eventBus: StreamEventBus): void {
+  public setEventBus(eventBus: EventBus): void {
     this.eventBus = eventBus;
   }
 
@@ -64,7 +64,7 @@ export class ExecutionContext {
    * Get the current event bus
    * @returns The event bus or null if not set
    */
-  public getEventBus(): StreamEventBus | null {
+  public getEventBus(): EventBus | null {
     return this.eventBus;
   }
 

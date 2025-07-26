@@ -2,7 +2,7 @@ import { MessageType, LogMessage, ExecuteQueryMessage, AgentStreamUpdateMessage,
 import { PortName, PortMessage } from '@/lib/runtime/PortMessaging'
 import { Logging } from '@/lib/utils/Logging'
 import { NxtScape } from '@/lib/core/NxtScape'
-import { StreamEventBus } from '@/lib/events'
+import { EventBus } from '@/lib/events'
 import { UIEventHandler } from '@/lib/events/UIEventHandler'
 // Removed deprecated IStreamingCallbacks import
 import posthog from 'posthog-js'
@@ -350,8 +350,8 @@ function getStatusFromAction(action: string): 'thinking' | 'executing' | 'comple
  * Create EventBus and UIEventHandler for streaming
  * @returns EventBus and cleanup function
  */
-function createStreamingEventBus(): { eventBus: StreamEventBus; cleanup: () => void } {
-  const eventBus = new StreamEventBus();
+function createStreamingEventBus(): { eventBus: EventBus; cleanup: () => void } {
+  const eventBus = new EventBus();
   
   // Create UI event handler that converts events to messages
   const uiHandler = new UIEventHandler(eventBus, (type: MessageType, payload: any) => {
