@@ -72,17 +72,20 @@ describe('BrowserAgent', () => {
     // Access private method for testing
     const agent = browserAgent as any
     
-    // Test recording tool call
-    agent._updateMessageManagerWithToolCall('navigation_tool', { url: 'https://example.com' }, 'test_id')
+    // Test recording tool call and result with the new combined method
+    const toolResult = { ok: true, output: 'Successfully navigated' }
+    agent._updateMessageManagerWithToolCall('navigation_tool', { url: 'https://example.com' }, toolResult, 'test_id')
     
     const messages = messageManager.getMessages()
-    expect(messages.some(m => m.content === 'Using navigation_tool')).toBe(true)
     
-    // Test recording tool result
-    const toolResult = { ok: true, output: 'Successfully navigated' }
-    agent._updateMessageManagerWithToolResult('navigation_tool', toolResult, false, 'test_id')
+    // Check that the combined message was added
+    expect(messages.some(m => 
+      m.content.includes('Called navigation_tool tool and got result:') && 
+      m.content.includes(JSON.stringify(toolResult))
+    )).toBe(true)
     
-    const updatedMessages = messageManager.getMessages()
-    expect(updatedMessages.some(m => m.tool_call_id === 'test_id')).toBe(true)
+    // Check that the tool call id was set correctly
+    expect(messages.some(m => m.tool_call_id === 'test_id')).toBe(true)
   })
+
 })

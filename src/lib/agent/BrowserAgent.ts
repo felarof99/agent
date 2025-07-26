@@ -1,5 +1,5 @@
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext';
-import { MessageManager, MessageManagerReadOnly } from '@/lib/runtime/MessageManager';
+import { MessageManager } from '@/lib/runtime/MessageManager';
 import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
@@ -7,8 +7,6 @@ import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
 import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
 import { generateSystemPrompt, generateStepExecutionPrompt } from './BrowserAgent.prompt';
-import { DynamicStructuredTool } from '@langchain/core/tools';
-import { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { AIMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 
 const MAX_ITERATIONS = 20;
@@ -108,9 +106,8 @@ export class BrowserAgent {
 
     try {
       const args = { task };
-      this._updateMessageManagerWithToolCall('classification_tool', args);
       const result = await classificationTool.func(args);
-      this._updateMessageManagerWithToolResult('classification_tool', result, false);
+      this._updateMessageManagerWithToolCall('classification_tool', args, result);
       
       const parsedResult = JSON.parse(result);
       if (parsedResult.ok) {
@@ -148,9 +145,8 @@ export class BrowserAgent {
       max_steps: NUM_STEPS_SHORT_PLAN
     };
 
-    this._updateMessageManagerWithToolCall('planner_tool', args);
     const planResult = await plannerTool.func(args);
-    this._updateMessageManagerWithToolResult('planner_tool', planResult, false);
+    this._updateMessageManagerWithToolCall('planner_tool', args, planResult);
     
     const parsedResult = JSON.parse(planResult);
     if (parsedResult.ok && parsedResult.plan) {
@@ -163,18 +159,17 @@ export class BrowserAgent {
     for (const toolCall of toolCalls) {
       const { name: toolName, args, id: toolCallId } = toolCall;
       
-      // Record tool call
-      this._updateMessageManagerWithToolCall(toolName, args, toolCallId);
-      
       // Execute the tool
       const tool = this.toolManager.get(toolName);
+      let result: any;
+      
       if (!tool) {
-        this._updateMessageManagerWithToolResult(toolName, { ok: false, error: `Tool ${toolName} not found` }, true, toolCallId);
+        result = { ok: false, error: `Tool ${toolName} not found` };
+        this._updateMessageManagerWithToolCall(toolName, args, result, toolCallId);
         this.currentPlan = [];  // Trigger re-planning
         continue;
       }
 
-      let result: any;
       try {
         const toolResult = await tool.func(args);
         result = typeof toolResult === 'string' ? JSON.parse(toolResult) : toolResult;
@@ -182,11 +177,11 @@ export class BrowserAgent {
         result = { ok: false, error: error instanceof Error ? error.message : String(error) };
       }
 
-      // Record result
-      this._updateMessageManagerWithToolResult(toolName, result, !result.ok, toolCallId);
+      // Record tool call and result
+      this._updateMessageManagerWithToolCall(toolName, args, result, toolCallId);
 
       // Check if done
-      if (toolName === 'done' && result.ok) {
+      if (toolName === 'done_tool' && result.ok) {
         return true;
       }
 
@@ -198,17 +193,11 @@ export class BrowserAgent {
     return false;
   }
 
-  // Helper method to record tool call in message manager
-  private _updateMessageManagerWithToolCall(toolName: string, args: any, toolCallId?: string): void {
-    // Keep minimal logging - just tool name and key args
-    const toolCallMessage = `Using ${toolName}`;
-    this.messageManager.addAI(toolCallMessage);
-  }
-
-  // Helper method to record tool result in message manager
-  private _updateMessageManagerWithToolResult(toolName: string, result: any, isError: boolean = false, toolCallId?: string): void {
+  // Helper method to record tool call and result in message manager
+  private _updateMessageManagerWithToolCall(toolName: string, args: any, result: any, toolCallId?: string): void {
     const resultString = typeof result === 'string' ? result : JSON.stringify(result);
-    this.messageManager.addTool(resultString, toolCallId || `${toolName}_result`);
+    const message = `Called ${toolName} tool and got result: ${resultString}`;
+    this.messageManager.addTool(message, toolCallId || `${toolName}_result`);
   }
 
   // Execute a single step from the plan using LLM with tool binding
