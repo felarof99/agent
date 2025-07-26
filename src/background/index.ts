@@ -2,7 +2,7 @@ import { MessageType, LogMessage, ExecuteQueryMessage, AgentStreamUpdateMessage,
 import { PortName, PortMessage } from '@/lib/runtime/PortMessaging'
 import { Logging } from '@/lib/utils/Logging'
 import { NxtScape } from '@/lib/core/NxtScape'
-import { EventBus } from '@/lib/events'
+import { EventBus, EventProcessor } from '@/lib/events'
 import { UIEventHandler } from '@/lib/events/UIEventHandler'
 // Removed deprecated IStreamingCallbacks import
 import posthog from 'posthog-js'
@@ -347,11 +347,12 @@ function getStatusFromAction(action: string): 'thinking' | 'executing' | 'comple
 }
 
 /**
- * Create EventBus and UIEventHandler for streaming
- * @returns EventBus and cleanup function
+ * Create EventBus, EventProcessor and UIEventHandler for streaming
+ * @returns EventBus, EventProcessor and cleanup function
  */
-function createStreamingEventBus(): { eventBus: EventBus; cleanup: () => void } {
+function createStreamingComponents(): { eventBus: EventBus; eventProcessor: EventProcessor; cleanup: () => void } {
   const eventBus = new EventBus();
+  const eventProcessor = new EventProcessor(eventBus);
   
   // Create UI event handler that converts events to messages
   const uiHandler = new UIEventHandler(eventBus, (type: MessageType, payload: any) => {
@@ -407,6 +408,7 @@ function createStreamingEventBus(): { eventBus: EventBus; cleanup: () => void } 
   
   return {
     eventBus,
+    eventProcessor,
     cleanup: () => {
       uiHandler.destroy();
       eventBus.removeAllListeners();
@@ -439,17 +441,18 @@ async function handleExecuteQueryPort(
     await ensureNxtScapeInitialized()
     
     
-    // Create EventBus for streaming
-    const { eventBus, cleanup: cleanupFn } = createStreamingEventBus()
+    // Create streaming components
+    const { eventBus, eventProcessor, cleanup: cleanupFn } = createStreamingComponents()
     cleanup = cleanupFn
     
-    // Execute the query using NxtScape with EventBus
+    // Execute the query using NxtScape with EventBus and EventProcessor
     // Starting NxtScape execution
     
     const result = await nxtScape.run({
       query: payload.query,
       tabIds: payload.tabIds,
-      eventBus: eventBus
+      eventBus: eventBus,
+      eventProcessor: eventProcessor
     })
     
     // NxtScape execution completed

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import BrowserContext from '../browser/BrowserContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
-import { EventBus } from '@/lib/events'
+import { EventBus, EventProcessor } from '@/lib/events'
 import { getLLM as getLLMFromProvider } from '@/lib/llm/LangChainProvider'
 import { BaseChatModel } from '@langchain/core/language_models/chat_models'
 
@@ -13,7 +13,8 @@ export const ExecutionContextOptionsSchema = z.object({
   messageManager: z.instanceof(MessageManager),  // Message manager for communication
   abortController: z.instanceof(AbortController),  // Abort controller for task cancellation
   debugMode: z.boolean().default(false),  // Whether to enable debug logging
-  eventBus: z.instanceof(EventBus)  // Event bus for streaming updates
+  eventBus: z.instanceof(EventBus).optional(),  // Event bus for streaming updates (set via setEventBus)
+  eventProcessor: z.instanceof(EventProcessor).optional()  // Event processor for high-level events (set via setEventProcessor)
 })
 
 export type ExecutionContextOptions = z.infer<typeof ExecutionContextOptionsSchema>
@@ -26,7 +27,8 @@ export class ExecutionContext {
   browserContext: BrowserContext  // Browser context for page operations
   messageManager: MessageManager  // Message manager for communication
   debugMode: boolean  // Whether debug logging is enabled
-  eventBus: EventBus  // Event bus for streaming updates
+  eventBus: EventBus | null = null  // Event bus for streaming updates
+  eventProcessor: EventProcessor | null = null  // Event processor for high-level events
   selectedTabIds: number[] | null = null  // Selected tab IDs
   private userInitiatedCancel: boolean = false  // Track if cancellation was user-initiated
   private _isExecuting: boolean = false  // Track actual execution state
@@ -40,7 +42,8 @@ export class ExecutionContext {
     this.browserContext = validatedOptions.browserContext
     this.messageManager = validatedOptions.messageManager
     this.debugMode = validatedOptions.debugMode || false
-    this.eventBus = validatedOptions.eventBus
+    this.eventBus = validatedOptions.eventBus || null
+    this.eventProcessor = validatedOptions.eventProcessor || null
     this.userInitiatedCancel = false
   }
   
@@ -63,9 +66,33 @@ export class ExecutionContext {
   /**
    * Get the current event bus
    * @returns The event bus
+   * @throws Error if event bus is not set
    */
   public getEventBus(): EventBus {
+    if (!this.eventBus) {
+      throw new Error('EventBus not set. Call setEventBus first.');
+    }
     return this.eventBus;
+  }
+
+  /**
+   * Set the event processor for high-level event handling
+   * @param eventProcessor - The event processor to use
+   */
+  public setEventProcessor(eventProcessor: EventProcessor): void {
+    this.eventProcessor = eventProcessor;
+  }
+
+  /**
+   * Get the current event processor
+   * @returns The event processor
+   * @throws Error if event processor is not set
+   */
+  public getEventProcessor(): EventProcessor {
+    if (!this.eventProcessor) {
+      throw new Error('EventProcessor not set. Call setEventProcessor first.');
+    }
+    return this.eventProcessor;
   }
 
   /**

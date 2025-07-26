@@ -65,7 +65,6 @@ export class BrowserAgent {
   private executionContext: ExecutionContext;
   private messageManager: MessageManager;
   private toolManager: ToolManager;
-  private events: EventProcessor;
   private currentPlan: any[] = [];
   private classificationResult: { is_simple_task: boolean; is_followup_task: boolean } | null = null;
 
@@ -73,8 +72,15 @@ export class BrowserAgent {
     this.executionContext = executionContext;
     this.messageManager = executionContext.messageManager;
     this.toolManager = new ToolManager(executionContext);
-    this.events = new EventProcessor(executionContext.getEventBus());
     this._registerTools();
+  }
+
+  /**
+   * Get EventProcessor from ExecutionContext when needed
+   * This ensures we always use the correct EventProcessor instance
+   */
+  private get events(): EventProcessor {
+    return this.executionContext.getEventProcessor();
   }
 
   private _registerTools(): void {

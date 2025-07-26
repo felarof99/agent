@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { EventBus } from "@/lib/events";
+import { EventBus, EventProcessor } from "@/lib/events";
 import { Logging } from "@/lib/utils/Logging";
 import { BrowserContext } from "@/lib/browser/BrowserContext";
 import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
@@ -27,6 +27,7 @@ export const RunOptionsSchema = z.object({
   query: z.string(), // Natural language user query
   tabIds: z.array(z.number()).optional(), // Optional array of tab IDs for context (e.g., which tabs to summarize) - NOT for agent operation
   eventBus: z.instanceof(EventBus), // EventBus for streaming updates
+  eventProcessor: z.instanceof(EventProcessor), // EventProcessor for high-level event handling
 });
 
 export type RunOptions = z.infer<typeof RunOptionsSchema>;
@@ -55,7 +56,6 @@ export class NxtScape {
   private abortController: AbortController; // Track current execution for cancellation
   private messageManager: MessageManager; // Clean conversation history management using MessageManager
   private browserAgent: BrowserAgent | null = null; // The browser agent for task execution
-  private eventBus: EventBus; // EventBus for all executions
 
   private currentQuery: string | null = null; // Track current query for better cancellation messages
 
@@ -78,16 +78,13 @@ export class NxtScape {
     // create new abort controller for this execution
     this.abortController = new AbortController();
 
-    // Create event bus for all executions
-    this.eventBus = new EventBus();
-
-    // Create new execution context
+    // Create new execution context without EventBus
+    // EventBus and EventProcessor will be set during run()
     this.executionContext = new ExecutionContext({
       browserContext: this.browserContext,
       messageManager: this.messageManager,
       debugMode: this.config.debug || false,
       abortController: this.abortController,
-      eventBus: this.eventBus,
     });
 
     // Initialize logging
@@ -151,7 +148,7 @@ export class NxtScape {
    */
   public async run(options: RunOptions): Promise<NxtScapeResult> {
     const parsedOptions = RunOptionsSchema.parse(options);
-    const { query, tabIds, eventBus } = parsedOptions;
+    const { query, tabIds, eventBus, eventProcessor } = parsedOptions;
 
     profileStart("NxtScape.run");
     const runStartTime = Date.now();
@@ -198,8 +195,9 @@ export class NxtScape {
     // Mark execution as started
     this.executionContext.startExecution(currentTabId);
 
-    // Update the event bus for this execution (replace the default one)
+    // Update the event bus and event processor for this execution
     this.executionContext.setEventBus(eventBus);
+    this.executionContext.setEventProcessor(eventProcessor);
 
     // Set selected tab IDs for context (e.g., for summarizing multiple tabs)
     // These are NOT the tabs the agent operates on, just context for tools like ExtractTool
@@ -350,13 +348,13 @@ export class NxtScape {
     this.executionContext.resetAbortController();
     this.abortController = this.executionContext.abortController;
 
-    // Update executionContext with new message manager and eventBus
+    // Update executionContext with new message manager
+    // EventBus and EventProcessor will be set during next run()
     this.executionContext = new ExecutionContext({
       browserContext: this.browserContext,
       messageManager: this.messageManager,
       debugMode: this.config.debug || false,
       abortController: this.abortController,
-      eventBus: this.eventBus,
     });
     
     // Recreate browser agent with new execution context
