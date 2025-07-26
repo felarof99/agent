@@ -20,6 +20,7 @@ export class BrowserAgent {
   private toolManager: ToolManager;
   private currentPlan: any[] = [];
   private currentStepOfPlan: number = 0;  // NTN: Using this variable name as requested
+  private classificationResult: { is_simple_task: boolean; is_followup_task: boolean } | null = null;
 
   constructor(executionContext: ExecutionContext) {
     this.executionContext = executionContext;
@@ -50,6 +51,9 @@ export class BrowserAgent {
     const systemPrompt = generateSystemPrompt(this.toolManager.getDescriptions());
     this.messageManager.addSystem(systemPrompt);
     this.messageManager.addHuman(task);
+
+    // Classify the task first
+    await this._classifyTask(task);
 
     let taskComplete = false;
 
@@ -94,7 +98,50 @@ export class BrowserAgent {
   }
 
   // Private helper methods
+  private async _classifyTask(task: string): Promise<void> {
+    const classificationTool = this.toolManager.get('classification_tool');
+    if (!classificationTool) {
+      // If classification tool not found, assume complex task
+      this.classificationResult = { is_simple_task: false, is_followup_task: false };
+      return;
+    }
+
+    try {
+      const args = { task };
+      this._updateMessageManagerWithToolCall('classification_tool', args);
+      const result = await classificationTool.func(args);
+      this._updateMessageManagerWithToolResult('classification_tool', result, false);
+      
+      const parsedResult = JSON.parse(result);
+      if (parsedResult.ok) {
+        const classification = JSON.parse(parsedResult.output);
+        this.classificationResult = classification;
+      } else {
+        // If classification fails, assume complex task
+        this.classificationResult = { is_simple_task: false, is_followup_task: false };
+      }
+    } catch (error) {
+      // If any error occurs, assume complex task
+      this.classificationResult = { is_simple_task: false, is_followup_task: false };
+    }
+  }
+
   private async _createNewPlan(task: string): Promise<void> {
+    // Check if it's a simple task
+    if (this.classificationResult?.is_simple_task) {
+      // Create a direct execution plan for simple tasks
+      this.currentPlan = [{
+        action: `Execute task directly: ${task}`,
+        reasoning: `This is a simple task that can be executed directly without planning`
+      }];
+      this.currentStepOfPlan = 0;
+      
+      // Log that we're skipping planning
+      this.messageManager.addAI('Classified as simple task - executing directly without planning');
+      return;
+    }
+
+    // Complex task - use planner as normal
     const plannerTool = this.toolManager.get('planner_tool')!;  // Always exists
     const args = { 
       task: `Based on the history, continue with the main goal: ${task}`,
