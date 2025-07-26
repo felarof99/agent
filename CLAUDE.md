@@ -170,6 +170,63 @@ class MyAgent {
 - Group related tests using `describe` blocks
 - Test file structure mirrors source file structure
 
+## Unit Testing Guidelines
+
+### What Makes a Good Unit Test
+
+**Good unit tests should test actual behavior, not mock implementations.** Focus on testing what your code does, not how it does it.
+
+### Core Principles
+
+1. **Test the Contract, Not the Implementation**
+   - Test what the code promises to do, not internal details
+   - Don't test that mocks return what you told them to return
+
+2. **Test Edge Cases and Error Handling**
+   - Focus on what could go wrong and how your code handles it
+   - Test error scenarios, invalid inputs, and boundary conditions
+
+3. **Test Public API and Integration Points**
+   - Test factory functions, constructors, and public methods
+   - Verify that components can be created and configured properly
+
+4. **Keep It Simple - 3-4 Tests Maximum**
+   - Creation/Setup Test: Can the component be created?
+   - Happy Path Test: Does the main functionality work?
+   - Error Handling Test: Does it handle errors gracefully?
+   - Edge Case Test (optional): Does it handle boundary conditions?
+
+### What's OK in Unit Tests
+
+- **Access private fields and methods** - It's fine to access private methods or variables from the original implementation for verification
+- **Use simple mocks** - Mock external dependencies but test your code's reaction to them
+- **Test one thing at a time** - Each test should verify a single behavior
+
+### What to Avoid
+
+- **Don't test mocks** - If you're only verifying mock behavior, delete the test
+- **Don't test implementation details** - Test outcomes, not the steps taken
+- **Don't test external dependencies** - Test your code's handling of them instead
+- **Don't write tests just for coverage** - Quality over quantity
+
+### Example Test Structure
+
+```typescript
+describe('MyTool', () => {
+  it('should be created with required dependencies', () => {
+    const tool = new MyTool(dependencies)
+    expect(tool).toBeDefined()
+  })
+
+  it('should handle errors gracefully', async () => {
+    mockDependency.method.mockRejectedValue(new Error('Failed'))
+    const result = await tool.execute(input)
+    expect(result.ok).toBe(false)
+    expect(result.output).toContain('Failed')
+  })
+})
+```
+
 ## Integration Testing
 
 ### Core Principles
