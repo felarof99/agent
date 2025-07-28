@@ -59,6 +59,7 @@ import { createValidatorTool } from '@/lib/tools/validation/ValidatorTool';
 import { generateSystemPrompt } from './BrowserAgent.prompt';
 import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
 import { EventProcessor } from '@/lib/events/EventProcessor';
+import { PLANNING_CONFIG } from '@/lib/tools/planning/PlannerTool.config';
 
 // Type Definitions
 interface Plan {
@@ -78,7 +79,7 @@ export class BrowserAgent {
   // Constants for explicit control
   private static readonly MAX_SIMPLE_ATTEMPTS = 3;
   private static readonly MAX_TOTAL_STEPS = 20;
-  private static readonly STEPS_PER_PLAN = 3;
+  private static readonly STEPS_PER_PLAN = PLANNING_CONFIG.STEPS_PER_PLAN;
 
   private readonly executionContext: ExecutionContext;
   private readonly toolManager: ToolManager;
@@ -225,7 +226,7 @@ export class BrowserAgent {
       if (plan.steps.length === 0) {
         throw new Error('Planning failed. Could not generate next steps.');
       }
-      this.events.info(`Created new ${plan.steps.length}-step plan.`);
+      this.events.info(`Created new plan: ${JSON.stringify(plan, null, 2)}`);
 
       // 2. EXECUTE: Execute the steps from the current plan
       for (const step of plan.steps) {

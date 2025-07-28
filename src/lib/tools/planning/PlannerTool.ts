@@ -5,11 +5,12 @@ import { MessageManagerReadOnly } from '@/lib/runtime/MessageManager';
 import { generatePlannerSystemPrompt, generatePlannerTaskPrompt } from './PlannerTool.prompt';
 import { toolError } from '@/lib/tools/Tool.interface';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { PLANNING_CONFIG } from './PlannerTool.config';
 
 // Input schema - simple so LLM can generate and pass it
 const PlannerInputSchema = z.object({
   task: z.string(),  // Task to plan for
-  max_steps: z.number().default(3),  // Number of steps to plan
+  max_steps: z.number().default(PLANNING_CONFIG.STEPS_PER_PLAN),  // Number of steps to plan
 });
 
 // Plan schema - simple structure for each step
@@ -26,7 +27,7 @@ type PlannerInput = z.infer<typeof PlannerInputSchema>;
 export function createPlannerTool(executionContext: ExecutionContext): DynamicStructuredTool {
   return new DynamicStructuredTool({
     name: 'planner_tool',
-    description: 'Generate upto to 3 steps for the task',
+    description: `Generate up to ${PLANNING_CONFIG.STEPS_PER_PLAN} steps for the task`,
     schema: PlannerInputSchema,
     func: async (args: PlannerInput): Promise<string> => {
       try {
