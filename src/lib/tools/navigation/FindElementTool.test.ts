@@ -4,14 +4,12 @@ import { ExecutionContext } from '@/lib/runtime/ExecutionContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
 import { EventBus, EventProcessor } from '@/lib/events'
-import { withFlexibleStructuredOutput } from '@/lib/llm/utils/structuredOutput'
 
-// Mock the structured output utility
-vi.mock('@/lib/llm/utils/structuredOutput')
-
+// ===================================================================
+//  Unit Tests
+// ===================================================================
 describe('FindElementTool', () => {
-  // Unit Test 1: Tool creation
-  it('should be created with required dependencies', () => {
+  it('tests that find element tool can be created', () => {
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
     const eventBus = new EventBus()
@@ -31,7 +29,7 @@ describe('FindElementTool', () => {
   })
 
   // Unit Test 2: Handle empty page
-  it('should handle page with no interactive elements', async () => {
+  it('tests that find element tool can handle page with no interactive elements', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -44,13 +42,16 @@ describe('FindElementTool', () => {
     
     // Mock empty browser state
     vi.spyOn(browserContext, 'getBrowserState').mockResolvedValue({
+      tabId: 1,
+      tabs: [{ id: 1, url: 'https://example.com', title: 'Test Page' }],
       clickableElements: [],
       typeableElements: [],
       clickableElementsString: '',
       typeableElementsString: '',
       url: 'https://example.com',
       title: 'Test Page',
-      screenshot: null
+      screenshot: null,
+      hierarchicalStructure: null
     })
     
     const tool = new FindElementTool(executionContext)
@@ -59,11 +60,11 @@ describe('FindElementTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('No interactive elements found on the current page')
+    expect(result.output).toBe('No interactive elements found on the current page')
   })
 
   // Unit Test 3: Handle LLM errors
-  it('should handle LLM invocation errors gracefully', async () => {
+  it('tests that find element tool can handle LLM invocation errors gracefully', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -76,18 +77,25 @@ describe('FindElementTool', () => {
     
     // Mock browser state with elements
     vi.spyOn(browserContext, 'getBrowserState').mockResolvedValue({
+      tabId: 1,
+      tabs: [{ id: 1, url: 'https://example.com', title: 'Test Page' }],
       clickableElements: [{ nodeId: 1, text: 'Submit', tag: 'button' }],
       typeableElements: [],
-      clickableElementsString: '[1] <C> <button> "Submit"',
+      clickableElementsString: '[1] <C> <button> "Submit" ctx:"Submit form" path:"form>button"',
       typeableElementsString: '',
       url: 'https://example.com',
       title: 'Test Page',
-      screenshot: null
+      screenshot: null,
+      hierarchicalStructure: null
     })
     
     // Mock LLM to throw error
-    const mockInvoke = vi.fn().mockRejectedValue(new Error('LLM failed'))
-    vi.mocked(withFlexibleStructuredOutput).mockResolvedValue({ invoke: mockInvoke })
+    const mockLLM = {
+      withStructuredOutput: vi.fn().mockReturnValue({
+        invoke: vi.fn().mockRejectedValue(new Error('LLM failed'))
+      })
+    }
+    vi.spyOn(executionContext, 'getLLM').mockResolvedValue(mockLLM as any)
     
     const tool = new FindElementTool(executionContext)
     const result = await tool.execute({
@@ -95,14 +103,16 @@ describe('FindElementTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toContain('Failed to find element: LLM failed')
+    expect(result.output).toContain('Failed to find element: LLM failed')
   })
 })
 
-// Integration test
+// ===================================================================
+//  Integration Tests
+// ===================================================================
 describe('FindElementTool-integration', () => {
   it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
-    'should find element using real LLM',
+    'tests that find element tool can find element using real LLM call',
     async () => {
       // Setup with real dependencies
       const browserContext = new BrowserContext()
@@ -121,19 +131,22 @@ describe('FindElementTool-integration', () => {
       
       // Mock browser state with realistic elements
       vi.spyOn(browserContext, 'getBrowserState').mockResolvedValue({
+        tabId: 1,
+        tabs: [{ id: 1, url: 'https://example.com', title: 'Test Page' }],
         clickableElements: [
-          { nodeId: 1, text: 'Home', tag: 'a' },
+          { nodeId: 1, text: '', tag: 'a' },
           { nodeId: 2, text: 'Submit', tag: 'button' },
-          { nodeId: 3, text: 'Cancel', tag: 'button' }
+          { nodeId: 3, text: '', tag: 'button' }
         ],
         typeableElements: [
-          { nodeId: 10, text: '', tag: 'input', attributes: { type: 'email', placeholder: 'Enter email' } }
+          { nodeId: 10, text: '', tag: 'input' }
         ],
-        clickableElementsString: '[1] <C> <a> "Home"\n[2] <C> <button> "Submit"\n[3] <C> <button> "Cancel"',
-        typeableElementsString: '[10] <T> <input> "" attr:"type=email placeholder=Enter email"',
+        clickableElementsString: '[1] <C> <a> "Home" ctx:"Navigation" path:"nav>a"\n[2] <C> <button> "Submit" ctx:"Submit form" path:"form>button"\n[3] <C> <button> "Cancel" ctx:"Cancel action" path:"form>button"',
+        typeableElementsString: '[10] <T> <input> "" ctx:"Email input" path:"form>input" attr:"type=email placeholder=Enter email"',
         url: 'https://example.com',
         title: 'Test Page',
-        screenshot: null
+        screenshot: null,
+        hierarchicalStructure: null
       })
       
       const tool = new FindElementTool(executionContext)
@@ -146,9 +159,13 @@ describe('FindElementTool-integration', () => {
       // Verify result
       expect(result.ok).toBe(true)
       expect(result.output).toBeDefined()
-      expect(result.output.index).toBe(2)
-      expect(result.output.tag).toBe('button')
-      expect(result.output.text).toBe('Submit')
+      
+      // Parse the JSON output
+      const parsedOutput = JSON.parse(result.output)
+      expect(parsedOutput.found).toBe(true)
+      expect(parsedOutput.index).toBe(2)
+      expect(parsedOutput.confidence).toBeDefined()
+      expect(parsedOutput.reasoning).toBeDefined()
     },
     30000 // 30 second timeout for LLM call
   )
