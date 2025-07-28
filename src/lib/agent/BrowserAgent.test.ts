@@ -10,7 +10,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 // ===================================================================
 describe('BrowserAgent-unit-test', () => {
   // Unit Test 1: Creation and initialization
-  it('should be created with required dependencies', () => {
+  it('tests that browser agent can be created with required dependencies', () => {
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
@@ -36,7 +36,7 @@ describe('BrowserAgent-unit-test', () => {
   })
 
   // Unit Test 2: Error handling
-  it('should handle errors gracefully', async () => {
+  it('tests that errors are handled gracefully', async () => {
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
     const abortController = new AbortController()
@@ -75,7 +75,7 @@ describe('BrowserAgent-unit-test', () => {
 describe('BrowserAgent-integration-test', () => {
   // Integration Test: Simple task flow - "list tabs"
   it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
-    'should execute simple task flow for "list tabs"',
+    'tests that simple task flow executes for "list tabs"',
     async () => {
       // Setup with real dependencies
       const messageManager = new MessageManager()
@@ -118,7 +118,7 @@ describe('BrowserAgent-integration-test', () => {
 
   // Integration Test: Complex task flow - "go to amazon and order toothpaste"
   it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
-    'should execute complex task flow for multi-step task',
+    'tests that complex task flow executes for multi-step task',
     async () => {
       // Setup with real dependencies
       const messageManager = new MessageManager()

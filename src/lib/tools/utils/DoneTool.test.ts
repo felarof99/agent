@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createDoneTool } from './DoneTool';
 
 describe('DoneTool', () => {
-  it('should create a DynamicStructuredTool with correct properties', () => {
+  it('tests that DynamicStructuredTool is created with correct properties', () => {
     // Test that the tool is created with correct name, description, and schema
     const tool = createDoneTool();
     
@@ -12,7 +12,7 @@ describe('DoneTool', () => {
     expect(typeof tool.func).toBe('function');
   });
 
-  it('should return success result with default summary when no summary provided', async () => {
+  it('tests that success result is returned with default summary when no summary provided', async () => {
     // Test default behavior when no summary is provided
     const tool = createDoneTool();
     const result = await tool.func({});
@@ -22,7 +22,7 @@ describe('DoneTool', () => {
     expect(parsedResult.output).toBe('Task completed successfully');
   });
 
-  it('should return success result with custom summary when provided', async () => {
+  it('tests that success result is returned with custom summary when provided', async () => {
     // Test that custom summary is used when provided
     const tool = createDoneTool();
     const customSummary = 'Successfully logged into the application';
@@ -33,7 +33,7 @@ describe('DoneTool', () => {
     expect(parsedResult.output).toBe(customSummary);
   });
 
-  it('should always return ok:true indicating successful completion', async () => {
+  it('tests that tool always returns ok:true indicating successful completion', async () => {
     // Test that the tool always indicates successful completion
     // This is by design - DoneTool marks task as complete, not failed
     const tool = createDoneTool();

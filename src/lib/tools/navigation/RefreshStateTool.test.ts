@@ -7,7 +7,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 
 describe('RefreshStateTool', () => {
   // Unit Test 1: Tool creation
-  it('should be created with required dependencies', () => {
+  it('tests that refresh state tool can be created with required dependencies', () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -22,7 +22,7 @@ describe('RefreshStateTool', () => {
   })
 
   // Unit Test 2: Successful refresh
-  it('should refresh browser state successfully', async () => {
+  it('tests that browser state refreshes successfully', async () => {
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
@@ -59,7 +59,7 @@ describe('RefreshStateTool', () => {
   })
 
   // Unit Test 3: Handle no active page
-  it('should handle no active page error', async () => {
+  it('tests that no active page error is handled', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -81,7 +81,7 @@ describe('RefreshStateTool', () => {
   })
 
   // Unit Test 4: Count actions correctly
-  it('should count actions since last refresh', async () => {
+  it('tests that actions are counted since last refresh', async () => {
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({

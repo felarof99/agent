@@ -30,7 +30,7 @@ describe('NavigationTool', () => {
     navigationTool = new NavigationTool(mockExecutionContext)
   })
 
-  it('should navigate to URL with proper normalization', async () => {
+  it('tests that navigation to URL works with proper normalization', async () => {
     // Test 1: Navigate with full URL
     const result1 = await navigationTool.execute({ 
       action: 'navigate', 
@@ -62,7 +62,7 @@ describe('NavigationTool', () => {
     )
   })
 
-  it('should handle all navigation actions correctly', async () => {
+  it('tests that all navigation actions are handled correctly', async () => {
     // Test back navigation
     const backResult = await navigationTool.execute({ action: 'back' })
     expect(backResult.ok).toBe(true)

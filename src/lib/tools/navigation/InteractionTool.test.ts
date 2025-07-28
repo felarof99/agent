@@ -7,7 +7,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 
 describe('InteractionTool', () => {
   // Unit Test 1: Tool creation
-  it('should be created with required dependencies', () => {
+  it('tests that interaction tool can be created with required dependencies', () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -22,7 +22,7 @@ describe('InteractionTool', () => {
   })
 
   // Unit Test 2: Input validation
-  it('should validate inputs correctly', async () => {
+  it('tests that inputs are validated correctly', async () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -51,7 +51,7 @@ describe('InteractionTool', () => {
   })
 
   // Unit Test 3: Handle element not found
-  it('should handle element not found errors', async () => {
+  it('tests that element not found errors are handled', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -79,7 +79,7 @@ describe('InteractionTool', () => {
   })
 
   // Unit Test 4: File upload detection
-  it('should detect and reject file upload elements', async () => {
+  it('tests that file upload elements are detected and rejected', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,

@@ -4,7 +4,7 @@ import { ExecutionContext } from '@/lib/runtime/ExecutionContext'
 import { MessageManager } from '@/lib/runtime/MessageManager'
 
 describe('ClassificationTool', () => {
-  it('should be created with proper tool descriptions', () => {
+  it('tests that classification tool can be created with proper tool descriptions', () => {
     // Setup
     const mockExecutionContext = {
       getLLM: vi.fn(),
@@ -20,7 +20,7 @@ describe('ClassificationTool', () => {
     expect(tool).toBeDefined()
   })
 
-  it('should handle JSON parsing errors from LLM response', async () => {
+  it('tests that JSON parsing errors from LLM response are handled', async () => {
     // Setup
     const mockLLM = {
       invoke: vi.fn().mockResolvedValue({
@@ -44,7 +44,7 @@ describe('ClassificationTool', () => {
     expect(parsed.output).toContain('Classification failed')
   })
 
-  it('should create a proper factory function', () => {
+  it('tests that factory function creates tool properly', () => {
     // Setup
     const mockExecutionContext = {} as any
     const toolDescriptions = 'test tools'

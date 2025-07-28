@@ -24,7 +24,7 @@ describe('LangChainProvider', () => {
   })
 
   describe('getLLM', () => {
-    it('should create and cache OpenAI model based on settings', async () => {
+    it('tests that LLM provider creates and caches OpenAI model based on settings', async () => {
       // Mock settings
       const mockSettings = {
         defaultProvider: 'openai',
@@ -60,7 +60,7 @@ describe('LangChainProvider', () => {
       expect(ChatOpenAI).toHaveBeenCalledTimes(1)
     })
 
-    it('should create different instances for different temperatures', async () => {
+    it('tests that LLM provider creates different instances for different temperatures', async () => {
       // Mock settings
       const mockSettings = {
         defaultProvider: 'anthropic',

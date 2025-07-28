@@ -7,7 +7,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 
 describe('SearchTool', () => {
   // Unit Test 1: Tool creation
-  it('should be created with required dependencies', () => {
+  it('tests that search tool can be created with required dependencies', () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -22,7 +22,7 @@ describe('SearchTool', () => {
   })
 
   // Unit Test 2: URL building
-  it('should build correct search URLs for each provider', async () => {
+  it('tests that correct search URLs are built for each provider', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -64,7 +64,7 @@ describe('SearchTool', () => {
   })
 
   // Unit Test 3: Successful search execution
-  it('should execute search successfully', async () => {
+  it('tests that search executes successfully', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -96,7 +96,7 @@ describe('SearchTool', () => {
   })
 
   // Unit Test 4: Handle navigation errors
-  it('should handle navigation errors gracefully', async () => {
+  it('tests that navigation errors are handled gracefully', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,

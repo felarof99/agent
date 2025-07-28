@@ -7,7 +7,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 
 describe('ScrollTool', () => {
   // Unit Test 1: Tool creation
-  it('should be created with required dependencies', () => {
+  it('tests that scroll tool can be created with required dependencies', () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -22,7 +22,7 @@ describe('ScrollTool', () => {
   })
 
   // Unit Test 2: Input validation
-  it('should validate scroll_to_element requires index', async () => {
+  it('tests that scroll_to_element validates index requirement', async () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -42,7 +42,7 @@ describe('ScrollTool', () => {
   })
 
   // Unit Test 3: Scroll operations
-  it('should execute scroll operations correctly', async () => {
+  it('tests that scroll operations execute correctly', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
@@ -91,7 +91,7 @@ describe('ScrollTool', () => {
   })
 
   // Unit Test 4: Handle element not found
-  it('should handle element not found for scroll_to_element', async () => {
+  it('tests that element not found is handled for scroll_to_element', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,

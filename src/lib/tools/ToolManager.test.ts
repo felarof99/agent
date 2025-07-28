@@ -27,7 +27,7 @@ describe("ToolManager", () => {
   });
 
   // Test 1: Tool registration and retrieval
-  test("should register and retrieve tools by name", () => {
+  test("tests that tools can be registered and retrieved by name", () => {
     // Act
     toolManager.register(mockTool1);
     toolManager.register(mockTool2);
@@ -39,7 +39,7 @@ describe("ToolManager", () => {
   });
 
   // Test 2: Get all tools functionality
-  test("should return all registered tools", () => {
+  test("tests that all registered tools are returned", () => {
     // Act
     toolManager.register(mockTool1);
     toolManager.register(mockTool2);
@@ -52,7 +52,7 @@ describe("ToolManager", () => {
   });
 
   // Test 3: Tool descriptions generation for system prompt
-  test("should generate formatted descriptions of all tools", () => {
+  test("tests that formatted descriptions are generated for all tools", () => {
     // Act
     toolManager.register(mockTool1);
     toolManager.register(mockTool2);
@@ -66,7 +66,7 @@ describe("ToolManager", () => {
   });
 
   // Test 4: Prevent duplicate tool registration
-  test("should overwrite tool if registered with same name", () => {
+  test("tests that tools are overwritten when registered with same name", () => {
     // Arrange
     const updatedMockTool1 = new DynamicStructuredTool({
       name: "navigate",

@@ -9,7 +9,7 @@ describe("MessageManager", () => {
   });
 
   describe("Core message operations", () => {
-    it("should add and retrieve messages", () => {
+    it("tests that messages can be added and retrieved", () => {
       manager.addHuman("Hello");
       manager.addAI("Hi there");
       
@@ -21,7 +21,7 @@ describe("MessageManager", () => {
       expect(messages[1].content).toBe("Hi there");
     });
 
-    it("should handle system messages (only one allowed)", () => {
+    it("tests that system messages are handled with only one allowed", () => {
       manager.addSystem("System 1");
       manager.addHuman("Hello");
       manager.addSystem("System 2");
@@ -32,7 +32,7 @@ describe("MessageManager", () => {
       expect(systemMessages[0].content).toBe("System 2");
     });
 
-    it("should handle tool messages", () => {
+    it("tests that tool messages are handled correctly", () => {
       manager.addTool("Tool result", "tool-123");
       
       const messages = manager.getMessages();
@@ -41,7 +41,7 @@ describe("MessageManager", () => {
       expect((messages[0] as ToolMessage).tool_call_id).toBe("tool-123");
     });
 
-    it("should clear all messages", () => {
+    it("tests that all messages can be cleared", () => {
       manager.addHuman("Hello");
       manager.addAI("Hi");
       manager.clear();
@@ -50,7 +50,7 @@ describe("MessageManager", () => {
       expect(manager.getTokenCount()).toBe(0);
     });
 
-    it("should remove last message", () => {
+    it("tests that last message can be removed", () => {
       manager.addHuman("First");
       manager.addAI("Second");
       
@@ -62,7 +62,7 @@ describe("MessageManager", () => {
   });
 
   describe("Token management", () => {
-    it("should track token count", () => {
+    it("tests that token count is tracked accurately", () => {
       const initialCount = manager.getTokenCount();
       expect(initialCount).toBe(0);
       
@@ -72,7 +72,7 @@ describe("MessageManager", () => {
       expect(count).toBeLessThan(20); // Reasonable upper bound
     });
 
-    it("should calculate remaining tokens", () => {
+    it("tests that remaining tokens are calculated correctly", () => {
       const initial = manager.remaining();
       expect(initial).toBe(1000);
       
@@ -82,7 +82,7 @@ describe("MessageManager", () => {
       expect(remaining).toBeGreaterThan(980); // Should only use a few tokens
     });
 
-    it("should auto-trim when exceeding token limit", async () => {
+    it("tests that messages auto-trim when exceeding token limit", async () => {
       // Add messages until we exceed the limit
       for (let i = 0; i < 50; i++) {
         manager.addHuman(`This is a long message number ${i} with some content to use up tokens`);
@@ -97,7 +97,7 @@ describe("MessageManager", () => {
       expect(lastMessage.content).toContain("49"); // Last message should be preserved
     });
 
-    it("should preserve system messages during trimming", async () => {
+    it("tests that system messages are preserved during trimming", async () => {
       manager.addSystem("Important system prompt");
       
       // Add many messages to trigger trimming
@@ -115,14 +115,14 @@ describe("MessageManager", () => {
 
 
   describe("Edge cases", () => {
-    it("should handle empty message manager", () => {
+    it("tests that empty message manager is handled correctly", () => {
       expect(manager.getMessages()).toHaveLength(0);
       expect(manager.getTokenCount()).toBe(0);
       expect(manager.remaining()).toBe(1000);
       expect(manager.removeLast()).toBe(false);
     });
 
-    it("should handle complex content types", () => {
+    it("tests that complex content types are handled correctly", () => {
       const complexContent = [
         { type: "text", text: "Check this image:" },
         { type: "image_url", image_url: { url: "https://example.com/image.png" } }
@@ -135,7 +135,7 @@ describe("MessageManager", () => {
       expect(manager.getTokenCount()).toBeGreaterThan(0);
     });
 
-    it("should handle very small token limits", () => {
+    it("tests that very small token limits are handled correctly", () => {
       const tinyManager = new MessageManager(10); // Very small limit
       tinyManager.addHuman("This is a message");
       
@@ -162,7 +162,7 @@ describe("MessageManagerReadOnly", () => {
   });
 
   // Test 1: Verify read-only access to messages
-  it("should provide read-only access to all messages", () => {
+  it("tests that read-only access is provided to all messages", () => {
     // Arrange
     messageManager.addHuman("Hello");
     messageManager.addAI("Hi there!");
@@ -182,7 +182,7 @@ describe("MessageManagerReadOnly", () => {
   });
 
   // Test 2: Verify changes in MessageManager are reflected in read-only view
-  it("should reflect changes made to the underlying MessageManager", () => {
+  it("tests that changes to MessageManager are reflected in read-only view", () => {
     // Arrange
     messageManager.addHuman("First message");
     const initialMessages = readOnlyView.getAll();
@@ -200,7 +200,7 @@ describe("MessageManagerReadOnly", () => {
   });
 
   // Test 3: Verify getAll returns a copy, not the original array
-  it("should return a copy of messages array to prevent external modifications", () => {
+  it("tests that getAll returns a copy to prevent external modifications", () => {
     // Arrange
     messageManager.addHuman("Test message");
     
@@ -229,7 +229,7 @@ describe("MessageManager.fork", () => {
   });
 
   // Test 4: Verify fork creates independent copy with history
-  it("should create independent copy with history when includeHistory is true", () => {
+  it("tests that fork creates independent copy with history", () => {
     // Act
     const forked = messageManager.fork(true);
     

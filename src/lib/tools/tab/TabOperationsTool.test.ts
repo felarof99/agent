@@ -35,7 +35,7 @@ describe('TabOperationsTool', () => {
     tool = new TabOperationsTool(mockExecutionContext)
   })
 
-  it('should route operations correctly based on action type', async () => {
+  it('tests that operations are routed correctly based on action type', async () => {
     // Mock tab data
     const mockTabs = [
       { id: 1, title: 'Google', url: 'https://google.com', active: true },
@@ -63,7 +63,7 @@ describe('TabOperationsTool', () => {
     expect(mockBrowserContext.openTab).toHaveBeenCalledWith('chrome://newtab/')
   })
 
-  it('should validate required parameters for operations', async () => {
+  it('tests that required parameters are validated for operations', async () => {
     // Test switch without tabIds
     const switchResult = await tool.execute({ action: 'switch' })
     expect(switchResult.ok).toBe(false)
@@ -82,7 +82,7 @@ describe('TabOperationsTool', () => {
     expect(mockBrowserContext.switchTab).toHaveBeenCalledWith(2)
   })
 
-  it('should handle Chrome API errors gracefully', async () => {
+  it('tests that Chrome API errors are handled gracefully', async () => {
     // Mock Chrome API error for list operation
     vi.mocked(chrome.tabs.query).mockRejectedValue(new Error('Permission denied'))
     const listResult = await tool.execute({ action: 'list' })
@@ -105,7 +105,7 @@ describe('TabOperationsTool', () => {
     expect(closeResult.output).toContain('Failed to close')
   })
 
-  it('should handle tab close operations with partial failures', async () => {
+  it('tests that tab close operations handle partial failures', async () => {
     // Mock existing tabs
     vi.mocked(chrome.tabs.query).mockResolvedValue([
       { id: 1 }, { id: 2 }, { id: 3 }

@@ -6,7 +6,7 @@ import { BrowserContext } from '@/lib/browser/BrowserContext'
 import { EventBus } from '@/lib/events'
 
 describe('PlannerTool', () => {
-  it('should be created with required dependencies', () => {
+  it('tests that planner tool can be created with required dependencies', () => {
     // Setup minimal execution context
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
@@ -29,7 +29,7 @@ describe('PlannerTool', () => {
     expect(typeof tool.func).toBe('function')
   })
 
-  it('should handle errors gracefully', async () => {
+  it('tests that errors are handled gracefully', async () => {
     // Create execution context with failing LLM
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
