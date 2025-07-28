@@ -425,6 +425,7 @@ class MyAgent {
 - Mock Chrome Extension APIs as needed for unit tests
 - Follow AAA pattern: Arrange, Act, Assert
 - Use descriptive test names that explain the expected behavior
+- Test descriptions in `it()` blocks MUST start with "tests ..." (e.g., `it('tests that the tool handles errors gracefully')`)
 - Group related tests using `describe` blocks
 - Test file structure mirrors source file structure
 
@@ -474,12 +475,12 @@ class MyAgent {
 
 ```typescript
 describe('MyTool', () => {
-  it('should be created with required dependencies', () => {
+  it('tests that the tool can be created with required dependencies', () => {
     const tool = new MyTool(dependencies)
     expect(tool).toBeDefined()
   })
 
-  it('should handle errors gracefully', async () => {
+  it('tests that the tool handles errors gracefully', async () => {
     mockDependency.method.mockRejectedValue(new Error('Failed'))
     const result = await tool.execute(input)
     expect(result.ok).toBe(false)
