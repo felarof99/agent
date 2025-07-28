@@ -50,6 +50,7 @@ import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
 import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
 import { createRefreshStateTool } from '@/lib/tools/navigation/RefreshStateTool';
+import { createValidatorTool } from '@/lib/tools/validation/ValidatorTool';
 import { generateSystemPrompt } from './BrowserAgent.prompt';
 import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
 import { EventProcessor } from '@/lib/events/EventProcessor';
@@ -134,6 +135,7 @@ export class BrowserAgent {
     this.toolManager.register(createNavigationTool(this.executionContext));
     this.toolManager.register(createTabOperationsTool(this.executionContext));
     this.toolManager.register(createRefreshStateTool(this.executionContext));
+    this.toolManager.register(createValidatorTool(this.executionContext));
     
     // Register classification tool last with all tool descriptions
     const toolDescriptions = this.toolManager.getDescriptions();
@@ -223,9 +225,24 @@ export class BrowserAgent {
           return;  // SUCCESS
         }
       }
-      this.events.info('Current plan segment complete. Re-planning for next steps.');
+      
+      // 3. VALIDATE: Check if task is complete after plan segment
+      const validationResult = await this._validateTaskCompletion(task);
+      if (validationResult.isComplete) {
+        this.events.complete(`Task validated as complete: ${validationResult.reasoning}`);
+        return;
+      }
+      
+      // 4. CONTINUE: Add validation result to message manager for planner
+      if (validationResult.suggestions.length > 0) {
+        const validationMessage = `Validation result: ${validationResult.reasoning}\nSuggestions: ${validationResult.suggestions.join(', ')}`;
+        this.messageManager.addAI(validationMessage);
+        
+        // Emit validation result to debug events
+        this.events.debug(`Validation result: ${JSON.stringify(validationResult, null, 2)}`);
+      }
+      
     }
-
     throw new Error(`Task did not complete within the maximum of ${BrowserAgent.MAX_TOTAL_STEPS} steps.`);
   }
 
@@ -340,5 +357,46 @@ export class BrowserAgent {
       return { steps: parsedResult.plan.steps };
     }
     return { steps: [] };  // Return an empty plan on failure
+  }
+
+  private async _validateTaskCompletion(task: string): Promise<{
+    isComplete: boolean;
+    reasoning: string;
+    suggestions: string[];
+  }> {
+    const validatorTool = this.toolManager.get('validator_tool');
+    if (!validatorTool) {
+      return {
+        isComplete: true,
+        reasoning: 'Validation skipped - tool not available',
+        suggestions: []
+      };
+    }
+
+    const args = { task };
+    try {
+      this.events.executingTool('validator_tool', args);
+      const result = await validatorTool.func(args);
+      const parsedResult = JSON.parse(result);
+      this.events.toolResult('validator_tool', parsedResult.ok, 'Validation complete');
+      
+      if (parsedResult.ok) {
+        // Parse the validation data from output
+        const validationData = JSON.parse(parsedResult.output);
+        return {
+          isComplete: validationData.isComplete,
+          reasoning: validationData.reasoning,
+          suggestions: validationData.suggestions || []
+        };
+      }
+    } catch (error) {
+      this.events.toolResult('validator_tool', false, 'Validation failed');
+    }
+    
+    return {
+      isComplete: true,
+      reasoning: 'Validation failed - continuing execution',
+      suggestions: []
+    };
   }
 }
