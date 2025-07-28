@@ -254,6 +254,12 @@ export class BrowserAgent {
 
   private async _invokeLLMWithStreaming(): Promise<AIMessage> {
     const llm = await this.executionContext.getLLM();
+    
+    // Check if bindTools is available
+    if (!llm.bindTools || typeof llm.bindTools !== 'function') {
+      throw new Error('LLM does not support tool binding');
+    }
+    
     const llmWithTools = llm.bindTools(this.toolManager.getAll());
     
     this.events.startThinking();
