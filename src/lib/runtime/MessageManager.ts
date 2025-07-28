@@ -1,3 +1,4 @@
+// NOTE: We use LangChain's messages because they already keep track of token counts.
 import {
   type BaseMessage,
   HumanMessage,
@@ -6,9 +7,27 @@ import {
   ToolMessage,
 } from "@langchain/core/messages";
 
+// Message type enum
+export enum MessageType {
+  SYSTEM = 'system',
+  AI = 'ai', 
+  HUMAN = 'human',
+  TOOL = 'tool',
+  BROWSER_STATE = 'browser_state'
+}
+
 // Constants for token approximation
 const CHARS_PER_TOKEN = 4;
 const TOKENS_PER_MESSAGE = 3;
+
+// Create a new custom message type for browser state by extending LangChain's AIMessage.
+// The langchain messages have messageType which can be set set to a custom value.
+export class BrowserStateMessage extends AIMessage {
+  constructor(content: string) {
+    super(content);
+    this.additional_kwargs = { messageType: MessageType.BROWSER_STATE };
+  }
+}
 
 // Read-only view for tools
 export class MessageManagerReadOnly {
@@ -17,8 +36,16 @@ export class MessageManagerReadOnly {
   getAll(): BaseMessage[] {
     return this.messageManager.getMessages();
   }
-  
-  // NTN: Only minimal methods added as requested
+
+  getRecentBrowserState(): string | null {
+    const messages = this.messageManager.getMessages();
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i] instanceof BrowserStateMessage) {
+        return messages[i].content as string;
+      }
+    }
+    return null;
+  }
 }
 
 export class MessageManager {
@@ -52,6 +79,13 @@ export class MessageManager {
     this._trimIfNeeded();
   }
 
+  addBrowserState(content: string): void {
+    // Remove existing browser state messages before adding new one
+    this.removeMessagesByType(MessageType.BROWSER_STATE);
+    this.add(new BrowserStateMessage(content));
+    this._trimIfNeeded();
+  }
+
   addTool(content: string, toolCallId: string): void {
     this.add(new ToolMessage(content, toolCallId));
     this._trimIfNeeded();
@@ -60,6 +94,23 @@ export class MessageManager {
   // Get messages
   getMessages(): BaseMessage[] {
     return [...this.messages];
+  }
+
+  // Get message type
+  private _getMessageType(message: BaseMessage): MessageType {
+    if (message.additional_kwargs?.messageType === MessageType.BROWSER_STATE) {
+      return MessageType.BROWSER_STATE;
+    }
+    if (message instanceof HumanMessage) return MessageType.HUMAN;
+    if (message instanceof AIMessage) return MessageType.AI;
+    if (message instanceof SystemMessage) return MessageType.SYSTEM;
+    if (message instanceof ToolMessage) return MessageType.TOOL;
+    return MessageType.AI;
+  }
+
+  // Remove messages by type
+  removeMessagesByType(type: MessageType): void {
+    this.messages = this.messages.filter(msg => this._getMessageType(msg) !== type);
   }
 
   // Get current token count - simple approximation
@@ -112,7 +163,7 @@ export class MessageManager {
   }
 
   removeSystemMessages(): void {
-    this.messages = this.messages.filter(msg => !(msg instanceof SystemMessage));
+    this.removeMessagesByType(MessageType.SYSTEM);
   }
 
   // Fork the message manager with optional history
@@ -126,13 +177,17 @@ export class MessageManager {
 
   // Private: Auto-trim to fit token budget
   private _trimIfNeeded(): void {
-    // Simple trimming by removing oldest non-system messages
+    // Simple trimming by removing oldest non-system and non-browser-state messages
     while (this.getTokenCount() > this.maxTokens && this.messages.length > 1) {
-      const indexToRemove = this.messages.findIndex(msg => !(msg instanceof SystemMessage));
+      const indexToRemove = this.messages.findIndex(msg => {
+        const type = this._getMessageType(msg);
+        return type !== MessageType.SYSTEM;
+      });
+      
       if (indexToRemove !== -1) {
         this.messages.splice(indexToRemove, 1);
       } else {
-        // All remaining messages are system messages, remove the oldest one
+        // All remaining messages are system/browser state messages, remove the oldest one
         this.messages.shift();
       }
     }

@@ -1,5 +1,6 @@
 import { HumanMessage, AIMessage, SystemMessage, ToolMessage } from "@langchain/core/messages";
-import { MessageManager, MessageManagerReadOnly } from "./MessageManager";
+import { MessageManager, MessageManagerReadOnly, MessageType } from "./MessageManager";
+import { describe, it, expect, beforeEach } from 'vitest';
 
 describe("MessageManager", () => {
   let manager: MessageManager;
@@ -39,6 +40,51 @@ describe("MessageManager", () => {
       expect(messages[0]).toBeInstanceOf(ToolMessage);
       expect(messages[0].content).toBe("Tool result");
       expect((messages[0] as ToolMessage).tool_call_id).toBe("tool-123");
+    });
+
+    it("tests that browser state messages are handled correctly", () => {
+      // Add initial messages
+      manager.addHuman("Test");
+      manager.addBrowserState("First browser state");
+      manager.addAI("Response");
+      
+      let messages = manager.getMessages();
+      expect(messages).toHaveLength(3);
+      
+      // Adding new browser state should replace old one
+      manager.addBrowserState("Second browser state");
+      messages = manager.getMessages();
+      expect(messages).toHaveLength(3); // Still 3 messages
+      
+      // Check that only the new browser state exists
+      const browserStateMessages = messages.filter(msg => 
+        msg.additional_kwargs?.messageType === MessageType.BROWSER_STATE
+      );
+      expect(browserStateMessages).toHaveLength(1);
+      expect(browserStateMessages[0].content).toBe("Second browser state");
+    });
+
+    it("tests that messages can be removed by type", () => {
+      // Add various message types
+      manager.addSystem("System");
+      manager.addHuman("Human");
+      manager.addAI("AI");
+      manager.addBrowserState("Browser state");
+      manager.addTool("Tool result", "tool_123");
+      
+      expect(manager.getMessages()).toHaveLength(5);
+      
+      // Remove AI messages
+      manager.removeMessagesByType(MessageType.AI);
+      expect(manager.getMessages()).toHaveLength(4);
+      
+      // Remove browser state messages
+      manager.removeMessagesByType(MessageType.BROWSER_STATE);
+      expect(manager.getMessages()).toHaveLength(3);
+      
+      // Remove system messages
+      manager.removeMessagesByType(MessageType.SYSTEM);
+      expect(manager.getMessages()).toHaveLength(2);
     });
 
     it("tests that all messages can be cleared", () => {
@@ -128,7 +174,7 @@ describe("MessageManager", () => {
         { type: "image_url", image_url: { url: "https://example.com/image.png" } }
       ];
       
-      manager.add(new HumanMessage(complexContent));
+      manager.add(new HumanMessage({ content: complexContent }));
       
       const messages = manager.getMessages();
       expect(messages).toHaveLength(1);

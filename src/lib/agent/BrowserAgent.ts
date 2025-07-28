@@ -305,7 +305,7 @@ export class BrowserAgent {
 
       // Special handling for refresh_browser_state tool, add the browser state to the message history
       if (toolName === 'refresh_browser_state' && parsedResult.ok) {
-        this.messageManager.addAI(parsedResult.output);
+        this.messageManager.addBrowserState(parsedResult.output);
       }
 
       // Add the result back to the message history for context
