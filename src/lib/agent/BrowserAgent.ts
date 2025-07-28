@@ -47,9 +47,14 @@ import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
-import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
-import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
+import { createFindElementTool } from '@/lib/tools/navigation/FindElementTool';
+import { createInteractionTool } from '@/lib/tools/navigation/InteractionTool';
+import { createScrollTool } from '@/lib/tools/navigation/ScrollTool';
+import { createSearchTool } from '@/lib/tools/navigation/SearchTool';
 import { createRefreshStateTool } from '@/lib/tools/navigation/RefreshStateTool';
+import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
+import { createGroupTabsTool } from '@/lib/tools/tab/GroupTabsTool';
+import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
 import { createValidatorTool } from '@/lib/tools/validation/ValidatorTool';
 import { generateSystemPrompt } from './BrowserAgent.prompt';
 import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
@@ -132,9 +137,20 @@ export class BrowserAgent {
     // Register all tools first
     this.toolManager.register(createPlannerTool(this.executionContext));
     this.toolManager.register(createDoneTool());
+    
+    // Navigation tools
     this.toolManager.register(createNavigationTool(this.executionContext));
-    this.toolManager.register(createTabOperationsTool(this.executionContext));
+    this.toolManager.register(createFindElementTool(this.executionContext));
+    this.toolManager.register(createInteractionTool(this.executionContext));
+    this.toolManager.register(createScrollTool(this.executionContext));
+    this.toolManager.register(createSearchTool(this.executionContext));
     this.toolManager.register(createRefreshStateTool(this.executionContext));
+    
+    // Tab tools
+    this.toolManager.register(createTabOperationsTool(this.executionContext));
+    this.toolManager.register(createGroupTabsTool(this.executionContext));
+    
+    // Validation tool
     this.toolManager.register(createValidatorTool(this.executionContext));
     
     // Register classification tool last with all tool descriptions
