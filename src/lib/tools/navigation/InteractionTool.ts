@@ -12,7 +12,6 @@ export const InteractionInputSchema = z.object({
   index: z.number().optional(),  // Element index for click/input_text/clear
   text: z.string().optional(),  // Text for input_text operation
   keys: z.string().optional(),  // Keys for send_keys operation
-  intent: z.string().optional(),  // Optional description of intent
 })
 
 export type InteractionInput = z.infer<typeof InteractionInputSchema>
@@ -74,83 +73,36 @@ export class InteractionTool {
       return toolError(`Element ${index} opens a file upload dialog. File uploads are not supported.`)
     }
 
-    // Track initial state
-    const initialTabIds = await this.executionContext.browserContext.getAllTabIds()
-    
     // Click element
     await page.clickElement(element.nodeId)
     await new Promise(resolve => setTimeout(resolve, INTERACTION_WAIT_MS))
-    
-    // Check for new tabs
-    const currentTabIds = await this.executionContext.browserContext.getAllTabIds()
-    const newTabOpened = currentTabIds.size > initialTabIds.size
-    
-    if (newTabOpened) {
-      const newTabId = Array.from(currentTabIds).find(id => !initialTabIds.has(id))
-      if (newTabId) {
-        await this.executionContext.browserContext.switchTab(newTabId)
-      }
-    }
-
-    return toolSuccess({
-      operationType: "click",
-      message: `Clicked element ${index}`,
-      element: {
-        tag: element.attributes?.["html-tag"] || element.tag || "unknown",
-        text: element.name || element.text || ""
-      },
-      newTabOpened
-    })
+    return toolSuccess(`Clicked element ${index}`)
   }
 
   private async _inputText(index: number, text: string): Promise<ToolOutput> {
     const page = await this.executionContext.browserContext.getCurrentPage()
     const element = await page.getElementByIndex(index)
-    
     if (!element) {
       return toolError(`Element with index ${index} not found`)
     }
-
     await page.inputText(element.nodeId, text)
-    
-    return toolSuccess({
-      operationType: "input_text",
-      message: `Entered text into element ${index}`,
-      element: {
-        tag: element.attributes?.["html-tag"] || element.tag || "unknown",
-        value: text
-      }
-    })
+    return toolSuccess(`Entered text into element ${index}`)
   }
 
   private async _clearElement(index: number): Promise<ToolOutput> {
     const page = await this.executionContext.browserContext.getCurrentPage()
     const element = await page.getElementByIndex(index)
-    
     if (!element) {
       return toolError(`Element with index ${index} not found`)
     }
-
     await page.clearElement(element.nodeId)
-    
-    return toolSuccess({
-      operationType: "clear",
-      message: `Cleared element ${index}`,
-      element: {
-        tag: element.attributes?.["html-tag"] || element.tag || "unknown",
-        value: ""
-      }
-    })
+    return toolSuccess(`Cleared element ${index}`)
   }
 
   private async _sendKeys(keys: string): Promise<ToolOutput> {
     const page = await this.executionContext.browserContext.getCurrentPage()
     await page.sendKeys(keys)
-    
-    return toolSuccess({
-      operationType: "send_keys",
-      message: `Sent keys: ${keys}`
-    })
+    return toolSuccess(`Sent keys: ${keys}`)
   }
 }
 
@@ -160,7 +112,7 @@ export function createInteractionTool(executionContext: ExecutionContext): Dynam
   
   return new DynamicStructuredTool({
     name: "interact",
-    description: "Perform element interactions: click, input_text (type text), clear (clear field), or send_keys (keyboard keys). For dropdowns, click to open then click the option.",
+    description: "Perform element interactions: click, input_text (type text), clear (clear field), or send_keys (keyboard keys).",
     schema: InteractionInputSchema,
     func: async (args): Promise<string> => {
       const result = await interactionTool.execute(args)

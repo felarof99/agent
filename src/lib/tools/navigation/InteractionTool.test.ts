@@ -7,7 +7,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 
 describe('InteractionTool', () => {
   // Unit Test 1: Tool creation
-  it('tests that interaction tool can be created with required dependencies', () => {
+  it('tests that interaction tool can be created', () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -37,17 +37,17 @@ describe('InteractionTool', () => {
     // Test missing index for click
     let result = await tool.execute({ operationType: 'click' })
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('click operation requires index parameter')
+    expect(result.output).toBe('click operation requires index parameter')
     
     // Test missing text for input_text
     result = await tool.execute({ operationType: 'input_text', index: 1 })
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('input_text operation requires text parameter')
+    expect(result.output).toBe('input_text operation requires text parameter')
     
     // Test missing keys for send_keys
     result = await tool.execute({ operationType: 'send_keys' })
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('send_keys operation requires keys parameter')
+    expect(result.output).toBe('send_keys operation requires keys parameter')
   })
 
   // Unit Test 3: Handle element not found
@@ -75,7 +75,7 @@ describe('InteractionTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('Element with index 999 not found')
+    expect(result.output).toBe('Element with index 999 not found')
   })
 
   // Unit Test 4: File upload detection
@@ -105,6 +105,6 @@ describe('InteractionTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toContain('file upload dialog')
+    expect(result.output).toContain('file upload dialog')
   })
 })
