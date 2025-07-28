@@ -27,10 +27,9 @@ describe('BrowserAgent-unit-test', () => {
     
     // Verify the agent is created and has proper initial state
     expect(browserAgent).toBeDefined()
-    expect(browserAgent.getPlanSteps()).toEqual([])
     expect(browserAgent['toolManager']).toBeDefined()
     expect(browserAgent['messageManager']).toBe(messageManager)
-    expect(browserAgent['classificationResult']).toBeNull()
+    expect(browserAgent['executionContext']).toBe(executionContext)
   })
 
   // Unit Test 2: Method calls and state changes during execution
@@ -54,29 +53,18 @@ describe('BrowserAgent-unit-test', () => {
     
     // Spy on private methods to verify behavior
     const classifyTaskSpy = vi.spyOn(browserAgent as any, '_classifyTask')
-      .mockResolvedValue({ is_simple_task: true, reasoning: 'Simple task' })
-    const createPlanGeneratorSpy = vi.spyOn(browserAgent as any, '_createPlanGenerator')
-      .mockImplementation(async function* () {
-        yield { action: 'done', reasoning: 'Task complete' }
-      })
-    
-    // Mock done tool to exist
-    browserAgent['toolManager'].register({
-      name: 'done_tool',
-      description: 'Done tool',
-      schema: {} as any,
-      func: vi.fn().mockResolvedValue(JSON.stringify({ ok: true, output: 'Done' }))
-    } as any)
+      .mockResolvedValue({ is_simple_task: true })
+    const executeSimpleTaskSpy = vi.spyOn(browserAgent as any, '_executeSimpleTaskStrategy')
+      .mockResolvedValue(undefined)
     
     // Execute task
     await browserAgent.execute('simple test task')
     
     // Verify methods were called
     expect(classifyTaskSpy).toHaveBeenCalledWith('simple test task')
-    expect(createPlanGeneratorSpy).toHaveBeenCalledWith('simple test task')
+    expect(executeSimpleTaskSpy).toHaveBeenCalledWith('simple test task')
     
     // Verify state changes
-    expect(browserAgent['classificationResult']).toBeDefined()
     expect(messageManager.getMessages().length).toBeGreaterThan(0)
   })
 
@@ -145,7 +133,6 @@ describe('BrowserAgent-integration-test', () => {
       
       // High-level verification - verify major things happened
       expect(messageManager.getMessages().length).toBeGreaterThanOrEqual(2)  // System prompt + task added
-      expect(browserAgent['classificationResult']).toBeDefined()  // Task was classified
       expect(browserAgent['toolManager'].getAll().length).toBeGreaterThan(0)  // Tools are registered
       
       // Cleanup
