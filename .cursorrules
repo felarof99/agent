@@ -19,6 +19,20 @@ alwaysApply: true
 - Use JSDoc to document public classes and methods.
 - For interfaces, class properties, and smaller logic use inline comments, give two spaces and "// <comment>".
 - DO NOT use JSDoc-style comments (`/** ... */`) for class properties or schema definitions, use inline comments instead.
+- IMPORTANT: Follow this commenting style for clean, readable code:
+  - Keep related code blocks compact and grouped together
+  - Add brief comments only at the top of logical sections (e.g., "// Get the tool", "// Execute tool and handle result")
+  - Avoid obvious comments - let the code be self-documenting
+  - Comment spacing: Add comments to separate logical blocks within longer methods (5-10 lines per block)
+  - Only comment where intent isn't immediately clear from the code
+  - Examples of good comments:
+    - Section separators: "// Check for task completion"
+    - Non-obvious logic: "// Re-plan if execution failed"
+    - TODO items or warnings about gotchas
+  - Examples of bad comments to avoid:
+    - "// Log tool call" (obvious from code)
+    - "// Set result" (self-evident)
+    - "// Call function" (redundant)
 - Favor loops and small helper modules over duplicate code.
 - Use descriptive names with auxiliary verbs (e.g. isLoading, hasError).
 - File layout: exported component → subcomponents → hooks/helpers → static content.
