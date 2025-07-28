@@ -38,19 +38,23 @@ export class MessageManager {
   // Convenience methods
   addHuman(content: string): void {
     this.add(new HumanMessage(content));
+    this._trimIfNeeded();
   }
 
   addAI(content: string): void {
     this.add(new AIMessage(content));
+    this._trimIfNeeded();
   }
 
-  addSystem(content: string): void {
-    this._removeSystemMessages();
-    this.add(new SystemMessage(content));
+  addSystem(content: string, position?: number): void {
+    this.removeSystemMessages();
+    this.messages.splice(position ?? this.messages.length, 0, new SystemMessage(content));
+    this._trimIfNeeded();
   }
 
   addTool(content: string, toolCallId: string): void {
     this.add(new ToolMessage(content, toolCallId));
+    this._trimIfNeeded();
   }
 
   // Get messages
@@ -107,6 +111,19 @@ export class MessageManager {
     return this.messages.pop() !== undefined;
   }
 
+  removeSystemMessages(): void {
+    this.messages = this.messages.filter(msg => !(msg instanceof SystemMessage));
+  }
+
+  // Fork the message manager with optional history
+  fork(includeHistory: boolean = true): MessageManager {
+    const newMM = new MessageManager(this.maxTokens);
+    if (includeHistory) {
+      newMM.messages = [...this.messages];
+    }
+    return newMM;
+  }
+
   // Private: Auto-trim to fit token budget
   private _trimIfNeeded(): void {
     // Simple trimming by removing oldest non-system messages
@@ -119,19 +136,5 @@ export class MessageManager {
         this.messages.shift();
       }
     }
-  }
-
-  // Private: Remove system messages
-  private _removeSystemMessages(): void {
-    this.messages = this.messages.filter(msg => !(msg instanceof SystemMessage));
-  }
-
-  // Fork the message manager with optional history
-  fork(includeHistory: boolean = true): MessageManager {
-    const newMM = new MessageManager(this.maxTokens);
-    if (includeHistory) {
-      newMM.messages = [...this.messages];
-    }
-    return newMM;
   }
 }

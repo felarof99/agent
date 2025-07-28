@@ -34,7 +34,7 @@ export function createPlannerTool(executionContext: ExecutionContext): DynamicSt
         const llm = await executionContext.getLLM();
         
         // Create message reader inline
-        const reader = new MessageManagerReadOnly(executionContext.messageManager);
+        const read_only_message_manager = new MessageManagerReadOnly(executionContext.messageManager);
         
         // Get browser state using BrowserContext's method
         const browserState = await executionContext.browserContext.getBrowserStateString();
@@ -44,7 +44,7 @@ export function createPlannerTool(executionContext: ExecutionContext): DynamicSt
         const taskPrompt = generatePlannerTaskPrompt(
           args.task,
           args.max_steps,
-          reader.getAll().map(m => `${m._getType()}: ${m.content}`).join('\n'),
+          read_only_message_manager.getAll().map(m => `${m._getType()}: ${m.content}`).join('\n'),
           browserState
         );
         
