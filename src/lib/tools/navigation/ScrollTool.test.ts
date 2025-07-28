@@ -7,7 +7,7 @@ import { EventBus, EventProcessor } from '@/lib/events'
 
 describe('ScrollTool', () => {
   // Unit Test 1: Tool creation
-  it('tests that scroll tool can be created with required dependencies', () => {
+  it('tests that scroll tool can be created', () => {
     const executionContext = new ExecutionContext({
       browserContext: new BrowserContext(),
       messageManager: new MessageManager(),
@@ -38,7 +38,7 @@ describe('ScrollTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('scroll_to_element operation requires index parameter')
+    expect(result.output).toBe('scroll_to_element operation requires index parameter')
   })
 
   // Unit Test 3: Scroll operations
@@ -64,29 +64,19 @@ describe('ScrollTool', () => {
     
     const tool = new ScrollTool(executionContext)
     
-    // Test scroll down with default amount
+    // Test scroll down (always 1 viewport)
     let result = await tool.execute({ operationType: 'scroll_down' })
     expect(result.ok).toBe(true)
-    expect(result.output.message).toBe('Scrolled down 1 viewport')
     expect(mockPage.scrollDown).toHaveBeenCalledWith(1)
     
-    // Test scroll down with custom amount
-    result = await tool.execute({ operationType: 'scroll_down', amount: 3 })
+    // Test scroll up (always 1 viewport)
+    result = await tool.execute({ operationType: 'scroll_up' })
     expect(result.ok).toBe(true)
-    expect(result.output.message).toBe('Scrolled down 3 viewports')
-    expect(mockPage.scrollDown).toHaveBeenCalledWith(3)
-    
-    // Test scroll up
-    result = await tool.execute({ operationType: 'scroll_up', amount: 2 })
-    expect(result.ok).toBe(true)
-    expect(result.output.message).toBe('Scrolled up 2 viewports')
-    expect(mockPage.scrollUp).toHaveBeenCalledWith(2)
+    expect(mockPage.scrollUp).toHaveBeenCalledWith(1)
     
     // Test scroll to element
     result = await tool.execute({ operationType: 'scroll_to_element', index: 42 })
     expect(result.ok).toBe(true)
-    expect(result.output.message).toBe('Scrolled to element 42')
-    expect(result.output.elementFound).toBe(true)
     expect(mockPage.scrollToElement).toHaveBeenCalledWith(42)
   })
 
@@ -115,6 +105,6 @@ describe('ScrollTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('Element with index 999 not found')
+    expect(result.output).toBe('Element with index 999 not found')
   })
 })

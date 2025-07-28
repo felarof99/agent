@@ -9,9 +9,7 @@ const DEFAULT_VIEWPORT_COUNT = 1
 // Input schema for scroll operations
 export const ScrollInputSchema = z.object({
   operationType: z.enum(["scroll_down", "scroll_up", "scroll_to_element"]),  // Operation to perform
-  amount: z.number().optional(),  // Number of viewports for scroll_down/up
   index: z.number().optional(),  // Element index for scroll_to_element
-  intent: z.string().optional(),  // Optional description of intent
 })
 
 export type ScrollInput = z.infer<typeof ScrollInputSchema>
@@ -30,9 +28,9 @@ export class ScrollTool {
       
       switch (input.operationType) {
         case "scroll_down":
-          return await this._scrollDown(page, input.amount)
+          return await this._scrollDown(page)
         case "scroll_up":
-          return await this._scrollUp(page, input.amount)
+          return await this._scrollUp(page)
         case "scroll_to_element":
           return await this._scrollToElement(page, input.index!)
       }
@@ -41,26 +39,14 @@ export class ScrollTool {
     }
   }
 
-  private async _scrollDown(page: any, amount?: number): Promise<ToolOutput> {
-    const viewports = amount || DEFAULT_VIEWPORT_COUNT
-    await page.scrollDown(viewports)
-    
-    return toolSuccess({
-      operationType: "scroll_down",
-      message: `Scrolled down ${viewports} viewport${viewports > 1 ? 's' : ''}`,
-      viewports
-    })
+  private async _scrollDown(page: any): Promise<ToolOutput> {
+    await page.scrollDown(DEFAULT_VIEWPORT_COUNT)
+    return toolSuccess(`Scrolled down ${DEFAULT_VIEWPORT_COUNT} viewport`)
   }
 
-  private async _scrollUp(page: any, amount?: number): Promise<ToolOutput> {
-    const viewports = amount || DEFAULT_VIEWPORT_COUNT
-    await page.scrollUp(viewports)
-    
-    return toolSuccess({
-      operationType: "scroll_up",
-      message: `Scrolled up ${viewports} viewport${viewports > 1 ? 's' : ''}`,
-      viewports
-    })
+  private async _scrollUp(page: any): Promise<ToolOutput> {
+    await page.scrollUp(DEFAULT_VIEWPORT_COUNT)
+    return toolSuccess(`Scrolled up ${DEFAULT_VIEWPORT_COUNT} viewport`)
   }
 
   private async _scrollToElement(page: any, index: number): Promise<ToolOutput> {
@@ -76,15 +62,8 @@ export class ScrollTool {
       return toolError(`Could not scroll to element ${index}`)
     }
 
-    return toolSuccess({
-      operationType: "scroll_to_element",
-      message: `Scrolled to element ${index}`,
-      elementFound: true,
-      element: {
-        tag: element.tag || "unknown",
-        text: element.text || ""
-      }
-    })
+    const elementInfo = `${element.tag || "unknown"} "${element.text || ""}"`.trim()
+    return toolSuccess(`Scrolled to element ${index} (${elementInfo})`)
   }
 }
 
