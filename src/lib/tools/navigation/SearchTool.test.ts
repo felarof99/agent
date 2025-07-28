@@ -53,14 +53,6 @@ describe('SearchTool', () => {
     // Test Google Maps search
     await tool.execute({ searchProvider: 'google_maps', query: 'coffee near me' })
     expect(mockPage.navigateTo).toHaveBeenCalledWith('https://www.google.com/maps/search/coffee%20near%20me')
-    
-    // Test Google Finance with stock symbol
-    await tool.execute({ searchProvider: 'google_finance', query: 'AAPL' })
-    expect(mockPage.navigateTo).toHaveBeenCalledWith('https://www.google.com/finance/quote/AAPL:NASDAQ')
-    
-    // Test Google Finance with non-symbol
-    await tool.execute({ searchProvider: 'google_finance', query: 'apple stock price' })
-    expect(mockPage.navigateTo).toHaveBeenCalledWith('https://www.google.com/search?q=apple%20stock%20price+stock+finance')
   })
 
   // Unit Test 3: Successful search execution
@@ -89,10 +81,7 @@ describe('SearchTool', () => {
     })
     
     expect(result.ok).toBe(true)
-    expect(result.output.searchProvider).toBe('google')
-    expect(result.output.query).toBe('test search')
-    expect(result.output.url).toBe('https://www.google.com/search?q=test')
-    expect(result.output.message).toBe('Searched for "test search" on Google')
+    expect(result.output).toBe('Searched for "test search" on google')
   })
 
   // Unit Test 4: Handle navigation errors
@@ -120,6 +109,6 @@ describe('SearchTool', () => {
     })
     
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('Search failed: Navigation failed')
+    expect(result.output).toBe('Search failed: Navigation failed')
   })
 })

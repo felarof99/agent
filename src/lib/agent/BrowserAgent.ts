@@ -42,7 +42,7 @@
  */
 
 import { ExecutionContext } from '@/lib/runtime/ExecutionContext';
-import { MessageManager } from '@/lib/runtime/MessageManager';
+import { MessageManager, MessageType } from '@/lib/runtime/MessageManager';
 import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
@@ -305,6 +305,8 @@ export class BrowserAgent {
 
       // Special handling for refresh_browser_state tool, add the browser state to the message history
       if (toolName === 'refresh_browser_state' && parsedResult.ok) {
+        // Remove previous browser state messages
+        this.messageManager.removeMessagesByType(MessageType.BROWSER_STATE);
         this.messageManager.addBrowserState(parsedResult.output);
       }
 
