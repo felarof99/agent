@@ -394,9 +394,6 @@ export class EventBus extends EventEmitter {
     this.emitError(error, errorObj?.name, false, source);
   }
 
-  emitDebugMessage(message: string, data?: unknown, source?: string): void {
-    this.emitDebug(message, data, source);
-  }
 
   /**
    * Private helper methods

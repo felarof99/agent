@@ -152,6 +152,13 @@ export class EventProcessor {
     this.eventBus.emitError(message, undefined, fatal, 'BrowserAgent');
   }
 
+  /**
+   * Emit debug message (only shown when debug mode is enabled)
+   */
+  debug(message: string, data?: any): void {
+    this.eventBus.emitDebug(message, data, 'BrowserAgent');
+  }
+
   // Private helper methods
   private _generateMessageId(): string {
     return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
