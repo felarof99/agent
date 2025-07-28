@@ -5,6 +5,9 @@ import { MessageManager } from '@/lib/runtime/MessageManager'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
 import { EventBus, EventProcessor } from '@/lib/events'
 
+// ===================================================================
+//  Unit Tests
+// ===================================================================
 describe('BrowserAgent-unit-test', () => {
   // Unit Test 1: Creation and initialization
   it('should be created with required dependencies', () => {
@@ -32,43 +35,7 @@ describe('BrowserAgent-unit-test', () => {
     expect(browserAgent['executionContext']).toBe(executionContext)
   })
 
-  // Unit Test 2: Method calls and state changes during execution
-  it('should call classification and process steps correctly', async () => {
-    const messageManager = new MessageManager()
-    const browserContext = new BrowserContext()
-    const abortController = new AbortController()
-    const eventBus = new EventBus()
-    const eventProcessor = new EventProcessor(eventBus)
-    
-    const executionContext = new ExecutionContext({
-      browserContext,
-      messageManager,
-      abortController,
-      debugMode: false,
-      eventBus,
-      eventProcessor
-    })
-    
-    const browserAgent = new BrowserAgent(executionContext)
-    
-    // Spy on private methods to verify behavior
-    const classifyTaskSpy = vi.spyOn(browserAgent as any, '_classifyTask')
-      .mockResolvedValue({ is_simple_task: true })
-    const executeSimpleTaskSpy = vi.spyOn(browserAgent as any, '_executeSimpleTaskStrategy')
-      .mockResolvedValue(undefined)
-    
-    // Execute task
-    await browserAgent.execute('simple test task')
-    
-    // Verify methods were called
-    expect(classifyTaskSpy).toHaveBeenCalledWith('simple test task')
-    expect(executeSimpleTaskSpy).toHaveBeenCalledWith('simple test task')
-    
-    // Verify state changes
-    expect(messageManager.getMessages().length).toBeGreaterThan(0)
-  })
-
-  // Unit Test 3: Error handling
+  // Unit Test 2: Error handling
   it('should handle errors gracefully', async () => {
     const messageManager = new MessageManager()
     const browserContext = new BrowserContext()
@@ -102,10 +69,13 @@ describe('BrowserAgent-unit-test', () => {
   })
 })
 
+// ===================================================================
+//  Integration Tests
+// ===================================================================
 describe('BrowserAgent-integration-test', () => {
-  // Integration Test: Real LLM call with simple flow verification
+  // Integration Test: Simple task flow - "list tabs"
   it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
-    'should work with real LLM',
+    'should execute simple task flow for "list tabs"',
     async () => {
       // Setup with real dependencies
       const messageManager = new MessageManager()
@@ -125,15 +95,64 @@ describe('BrowserAgent-integration-test', () => {
       
       const browserAgent = new BrowserAgent(executionContext)
       
+      // Spy on private methods to verify flow (not mocking, just observing)
+      const simpleStrategySpy = vi.spyOn(browserAgent as any, '_executeSimpleTaskStrategy')
+      const complexStrategySpy = vi.spyOn(browserAgent as any, '_executeMultiStepStrategy')
+      
       // Start execution (don't await)
-      browserAgent.execute('what is 2 + 2?')
+      browserAgent.execute('list tabs')
       
       // Wait for initial processing
       await new Promise(resolve => setTimeout(resolve, 5000))
       
-      // High-level verification - verify major things happened
-      expect(messageManager.getMessages().length).toBeGreaterThanOrEqual(2)  // System prompt + task added
-      expect(browserAgent['toolManager'].getAll().length).toBeGreaterThan(0)  // Tools are registered
+      // High-level verification - verify simple task flow was chosen
+      expect(simpleStrategySpy).toHaveBeenCalled()
+      expect(complexStrategySpy).not.toHaveBeenCalled()
+      expect(messageManager.getMessages().length).toBeGreaterThan(2)  // System + user + AI responses
+      
+      // Cleanup
+      abortController.abort()
+    },
+    30000
+  )
+
+  // Integration Test: Complex task flow - "go to amazon and order toothpaste"
+  it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
+    'should execute complex task flow for multi-step task',
+    async () => {
+      // Setup with real dependencies
+      const messageManager = new MessageManager()
+      const browserContext = new BrowserContext()
+      const abortController = new AbortController()
+      const eventBus = new EventBus()
+      const eventProcessor = new EventProcessor(eventBus)
+      
+      const executionContext = new ExecutionContext({
+        browserContext,
+        messageManager,
+        abortController,
+        debugMode: false,
+        eventBus,
+        eventProcessor
+      })
+      
+      const browserAgent = new BrowserAgent(executionContext)
+      
+      // Spy on private methods to verify flow (not mocking, just observing)
+      const simpleStrategySpy = vi.spyOn(browserAgent as any, '_executeSimpleTaskStrategy')
+      const complexStrategySpy = vi.spyOn(browserAgent as any, '_executeMultiStepStrategy')
+      const plannerSpy = vi.spyOn(browserAgent as any, '_createMultiStepPlan')
+      
+      // Start execution (don't await)
+      browserAgent.execute('go to amazon and order toothpaste')
+      
+      // Wait for initial processing
+      await new Promise(resolve => setTimeout(resolve, 5000))
+      
+      // High-level verification - verify complex task flow was chosen and planning happened
+      expect(complexStrategySpy).toHaveBeenCalled()
+      expect(simpleStrategySpy).not.toHaveBeenCalled()
+      expect(plannerSpy).toHaveBeenCalled()
       
       // Cleanup
       abortController.abort()
