@@ -277,6 +277,12 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 - To run a single test file: `npm test -- path/to/file.test.ts`
 - For integration tests with API key: `LITELLM_API_KEY=your-key npm test -- file.integration.test.ts`
 
+### Testing Framework
+- **ALWAYS use Vitest** for all tests, never Jest or other frameworks
+- Import from `vitest` not `@jest/globals`
+- Use `describe`, `it`, `expect`, `vi` from vitest
+- Mock with `vi.spyOn()` and `vi.fn()`, not jest methods
+
 ## Environment Setup
 
 ### Required Environment Variables
