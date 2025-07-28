@@ -50,11 +50,17 @@ import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
 import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
 import { generateSystemPrompt, generateStepExecutionPrompt } from './BrowserAgent.prompt';
-import { AIMessage, AIMessageChunk, HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { AIMessage, AIMessageChunk, BaseMessage, HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { EventProcessor } from '@/lib/events/EventProcessor';
 
 const MAX_ITERATIONS = 20;
 const NUM_STEPS_SHORT_PLAN = 3;
+const DEFAULT_CLASSIFICATION_RESULT = { is_simple_task: false, is_followup_task: false };
+
+interface ClassificationResult {
+  is_simple_task: boolean;
+  is_followup_task: boolean;
+}
 
 interface PlanStep {
   action: string;
@@ -107,14 +113,18 @@ export class BrowserAgent {
       this.messageManager.addSystem(systemPrompt);
       this.messageManager.addHuman(task);
 
+      // Classify the task
+      this.classificationResult = await this._classifyTask(task);
+      this.events.taskClassified(this.classificationResult.is_simple_task);
+
       // Create appropriate plan generator based on task complexity
       const planGenerator = await this._createPlanGenerator(task);
-      let taskComplete = false;  // Set to true when done_tool is called
+      let was_done_tool_called = false;  // Set to true when done_tool is called
       let stepNumber = 0;
 
       for (let i = 0; i < MAX_ITERATIONS; i++) {
         // Check if task is already complete before getting next step
-        if (taskComplete) break;
+        if (was_done_tool_called) break;
         
         const plan_generated = await planGenerator.next();
         
@@ -123,38 +133,36 @@ export class BrowserAgent {
         // next_step_of_plan: the actual PlanStep object with action and reasoning
         const did_plan_generated_finish = plan_generated.done;
         const next_step_of_plan = plan_generated.value;
-        
         if (did_plan_generated_finish || !next_step_of_plan) break;
-        
-        stepNumber++;
-        this.events.executingStep(stepNumber, next_step_of_plan.action);
-
+ 
         // Execute the step and get AI response for the step
+        this.messageManager.addSystem(generateStepExecutionPrompt());
+        this.messageManager.addHuman(`Step: ${next_step_of_plan.action}`);
+
         let llm_response_for_step: AIMessage;
         try {
-          llm_response_for_step = await this._executeStep(next_step_of_plan);
+          stepNumber++;
+          this.events.executingStep(stepNumber, next_step_of_plan.action);
+          const messages = this.messageManager.getMessages();
+          llm_response_for_step = await this._executeStep(next_step_of_plan, messages);
         } catch (error) {
           this.events.error(`Step execution failed: ${error instanceof Error ? error.message : String(error)}`);
-          // Continue to next iteration, generator will handle re-planning if needed
           continue;
         }
 
         // Process any tool calls in the response
         if (llm_response_for_step.tool_calls && llm_response_for_step.tool_calls?.length > 0) {
           // If done tool is called, task is marked as complete.
-          taskComplete = await this._processToolCalls(llm_response_for_step.tool_calls);
+          was_done_tool_called = await this._processToolCalls(llm_response_for_step.tool_calls);
         } else if (llm_response_for_step.content) {
-          // Log AI content if no tools were called
-          const content = typeof llm_response_for_step.content === 'string' 
-            ? llm_response_for_step.content 
-            : JSON.stringify(llm_response_for_step.content);
+          const content = JSON.stringify(llm_response_for_step.content);
           this.messageManager.addAI(content);
         }
       }
 
-      if (!taskComplete) {
+      if (!was_done_tool_called) {
         this.events.error('Max iterations reached without completing task');
-        this.messageManager.addAI('Max iterations reached');
+        this.messageManager.addAI('Max iterations reached without completing the task');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -164,109 +172,87 @@ export class BrowserAgent {
   }
 
   // Private helper methods
-  private async _classifyTask(task: string): Promise<void> {
+  private async _classifyTask(task: string): Promise<ClassificationResult> {
     this.events.analyzingTask();
     
     const classificationTool = this.toolManager.get('classification_tool');
-    if (!classificationTool) {
-      // If classification tool not found, assume complex task
-      this.classificationResult = { is_simple_task: false, is_followup_task: false };
-      this.events.taskClassified(false);
-      return;
+    if (!classificationTool) {  // If classification tool not found, assume complex task
+      return DEFAULT_CLASSIFICATION_RESULT;
     }
 
+    const args = { task };
+    let classification = DEFAULT_CLASSIFICATION_RESULT;
+    let errorMessage = '';
+
     try {
-      this.events.executingTool('classification_tool', { task });
-      const args = { task };
+      this.events.executingTool('classification_tool', args);
       const result = await classificationTool.func(args);
       this._updateMessageManagerWithToolCall('classification_tool', args, result);
       
       const parsedResult = JSON.parse(result);
       if (parsedResult.ok) {
-        const classification = JSON.parse(parsedResult.output);
-        this.classificationResult = classification;
+        classification = JSON.parse(parsedResult.output);
         this.events.toolResult('classification_tool', true, 'Task analyzed');
-        this.events.taskClassified(classification.is_simple_task);
       } else {
-        // If classification fails, assume complex task
-        this.classificationResult = { is_simple_task: false, is_followup_task: false };
-        this.events.toolResult('classification_tool', false, parsedResult.error || 'Classification failed');
-        this.events.taskClassified(false);
+        errorMessage = parsedResult.error || 'Classification failed';
       }
     } catch (error) {
-      // If any error occurs, assume complex task
-      this.classificationResult = { is_simple_task: false, is_followup_task: false };
-      this.events.toolResult('classification_tool', false, error instanceof Error ? error.message : 'Classification error');
-      this.events.taskClassified(false);
+      errorMessage = error instanceof Error ? error.message : 'Classification error';
     }
-  }
 
+    if (errorMessage) {
+      this.events.toolResult('classification_tool', false, errorMessage);
+    }
+
+    return classification;
+  }
 
   private async _processToolCalls(toolCalls: any[]): Promise<boolean> {
     for (const toolCall of toolCalls) {
       const { name: toolName, args, id: toolCallId } = toolCall;
       
-      // Execute the tool
+      // Get the tool
       const tool = this.toolManager.get(toolName);
-      let result: any;
-      
       if (!tool) {
-        result = { ok: false, error: `Tool ${toolName} not found` };
-        this.events.error(`Tool ${toolName} not found`);
-        this._updateMessageManagerWithToolCall(toolName, args, result, toolCallId);
+        const error = `Tool ${toolName} not found`;
+        this.events.error(error);
+        this._updateMessageManagerWithToolCall(toolName, args, JSON.stringify({ ok: false, error }), toolCallId);
         continue;
       }
 
-      // Emit tool execution start (except for classification and planner which are already handled)
-      if (toolName !== 'classification_tool' && toolName !== 'planner_tool') {
-        this.events.executingTool(toolName, args);
-      }
-
+      // Execute tool and handle result
+      let result: string;
       try {
-        const toolResult = await tool.func(args);
-        result = typeof toolResult === 'string' ? JSON.parse(toolResult) : toolResult;
-        
-        // Emit tool success (except for classification and planner)
-        if (toolName !== 'classification_tool' && toolName !== 'planner_tool') {
-          const summary = toolName === 'done_tool' ? 'Task marked as complete' : undefined;
-          this.events.toolResult(toolName, result.ok, summary || result.message);
-        }
+        this.events.executingTool(toolName, args);
+        result = await tool.func(args);
       } catch (error) {
-        result = { ok: false, error: error instanceof Error ? error.message : String(error) };
-        
-        // Emit tool failure
-        if (toolName !== 'classification_tool' && toolName !== 'planner_tool') {
-          this.events.toolResult(toolName, false, result.error);
-        }
+        result = JSON.stringify({ 
+          ok: false, 
+          error: error instanceof Error ? error.message : String(error) 
+        });
       }
 
-      // Record tool call and result
+      const parsedResult = JSON.parse(result);
+      this.events.toolResult(toolName, parsedResult.ok, `Called ${toolName}`);
       this._updateMessageManagerWithToolCall(toolName, args, result, toolCallId);
 
-      // Check if done
-      if (toolName === 'done_tool' && result.ok) {
+      // Check for task completion
+      if (toolName === 'done_tool' && parsedResult.ok) {
         this.events.complete('Task completed successfully');
         return true;
       }
-
-      // Note: Re-planning is now handled by the generator pattern
-      // The multiStepPlanGenerator will automatically create new plans when exhausted
     }
     return false;
   }
 
   // Helper method to record tool call and result in message manager
-  private _updateMessageManagerWithToolCall(toolName: string, args: any, result: any, toolCallId?: string): void {
-    const resultString = typeof result === 'string' ? result : JSON.stringify(result);
-    const message = `Called ${toolName} tool and got result: ${resultString}`;
+  private _updateMessageManagerWithToolCall(toolName: string, args: any, result: string, toolCallId?: string): void {
+    const message = `Called ${toolName} tool and got result: ${result}`;
     this.messageManager.addTool(message, toolCallId || `${toolName}_result`);
   }
 
   // Generator methods
   private async _createPlanGenerator(task: string): Promise<AsyncGenerator<PlanStep>> {
-    // Classify the task
-    await this._classifyTask(task);
-    
     if (this.classificationResult?.is_simple_task) {
       // Simple task: infinite generator of the same step
       return this._simplePlanGenerator(task);
@@ -343,7 +329,7 @@ export class BrowserAgent {
   }
 
   // Execute a single step from the plan using LLM with tool binding and streaming
-  private async _executeStep(step: { action: string; reasoning: string }): Promise<AIMessage> {
+  private async _executeStep(step: { action: string; reasoning: string }, messages: BaseMessage[]): Promise<AIMessage> {
     const llm = await this.executionContext.getLLM();
     const tools = this.toolManager.getAll();
     
@@ -355,12 +341,6 @@ export class BrowserAgent {
     
     // Start thinking event
     this.events.startThinking();
-    
-    // Create messages for this step
-    const messages = [
-      new SystemMessage(generateStepExecutionPrompt()),
-      new HumanMessage(`Step: ${step.action}`)
-    ];
     
     // Stream the response - see top of file for streaming documentation
     const stream = await llmWithTools.stream(messages);
@@ -387,11 +367,6 @@ export class BrowserAgent {
     
     // Finish thinking event
     this.events.finishThinking(accumulatedTextContent);
-    
-    // Update message manager with accumulated text content if any
-    if (accumulatedTextContent) {
-      this.messageManager.addAI(accumulatedTextContent);
-    }
     
     // Return the final accumulated message
     if (!accumulatedChunks) {
