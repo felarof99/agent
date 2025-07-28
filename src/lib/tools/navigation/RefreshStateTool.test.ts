@@ -21,13 +21,12 @@ describe('RefreshStateTool', () => {
     expect(tool).toBeDefined()
   })
 
-  // Unit Test 2: Successful refresh
-  it('tests that browser state refreshes successfully', async () => {
-    const messageManager = new MessageManager()
+  // Unit Test 2: Successful refresh returns browser state
+  it('tests that browser state is returned successfully', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
-      messageManager,
+      messageManager: new MessageManager(),
       abortController: new AbortController(),
       debugMode: false,
       eventBus: new EventBus(),
@@ -44,18 +43,11 @@ describe('RefreshStateTool', () => {
     const mockBrowserState = 'Current page: example.com\nClickable elements: [1] Submit'
     vi.spyOn(browserContext, 'getBrowserStateString').mockResolvedValue(mockBrowserState)
     
-    // Spy on message manager methods
-    const removeSpy = vi.spyOn(messageManager, 'removeBrowserStateMessages')
-    const addSpy = vi.spyOn(messageManager, 'addBrowserStateMessage')
-    
     const tool = new RefreshStateTool(executionContext)
     const result = await tool.execute({})
     
     expect(result.ok).toBe(true)
-    expect(result.output.message).toContain('Browser state refreshed successfully')
-    expect(result.output.url).toBe('https://example.com')
-    expect(removeSpy).toHaveBeenCalled()
-    expect(addSpy).toHaveBeenCalledWith(mockBrowserState)
+    expect(result.output).toBe(mockBrowserState)
   })
 
   // Unit Test 3: Handle no active page
@@ -71,44 +63,40 @@ describe('RefreshStateTool', () => {
     })
     
     // Mock no current page
-    vi.spyOn(browserContext, 'getCurrentPage').mockResolvedValue(null)
+    vi.spyOn(browserContext, 'getCurrentPage').mockResolvedValue(null as any)
     
     const tool = new RefreshStateTool(executionContext)
     const result = await tool.execute({})
     
     expect(result.ok).toBe(false)
-    expect(result.error).toBe('No active page to refresh state from')
+    expect(result.output).toBe('No active page to refresh state from')
   })
 
-  // Unit Test 4: Count actions correctly
-  it('tests that actions are counted since last refresh', async () => {
-    const messageManager = new MessageManager()
+  // Unit Test 4: Handle browser context error
+  it('tests that browser state retrieval errors are handled', async () => {
     const browserContext = new BrowserContext()
     const executionContext = new ExecutionContext({
       browserContext,
-      messageManager,
+      messageManager: new MessageManager(),
       abortController: new AbortController(),
       debugMode: false,
       eventBus: new EventBus(),
       eventProcessor: new EventProcessor(new EventBus())
     })
     
-    // Add some tool messages to message manager
-    messageManager.addToolMessage('tool1', 'result1')
-    messageManager.addToolMessage('tool2', 'result2')
-    messageManager.addToolMessage('tool3', 'result3')
-    
     // Mock current page
     const mockPage = {
       url: vi.fn().mockReturnValue('https://example.com')
     }
     vi.spyOn(browserContext, 'getCurrentPage').mockResolvedValue(mockPage as any)
-    vi.spyOn(browserContext, 'getBrowserStateString').mockResolvedValue('Browser state')
+    
+    // Mock browser state error
+    vi.spyOn(browserContext, 'getBrowserStateString').mockRejectedValue(new Error('Failed to get browser state'))
     
     const tool = new RefreshStateTool(executionContext)
     const result = await tool.execute({})
     
-    expect(result.ok).toBe(true)
-    expect(result.output.actionCount).toBe(3)
+    expect(result.ok).toBe(false)
+    expect(result.output).toContain('Failed to refresh browser state: Failed to get browser state')
   })
 })

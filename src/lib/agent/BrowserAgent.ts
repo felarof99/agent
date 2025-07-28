@@ -49,6 +49,7 @@ import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
 import { createClassificationTool } from '@/lib/tools/classification/ClassificationTool';
+import { createRefreshStateTool } from '@/lib/tools/navigation/RefreshStateTool';
 import { generateSystemPrompt } from './BrowserAgent.prompt';
 import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
 import { EventProcessor } from '@/lib/events/EventProcessor';
@@ -132,6 +133,7 @@ export class BrowserAgent {
     this.toolManager.register(createDoneTool());
     this.toolManager.register(createNavigationTool(this.executionContext));
     this.toolManager.register(createTabOperationsTool(this.executionContext));
+    this.toolManager.register(createRefreshStateTool(this.executionContext));
     
     // Register classification tool last with all tool descriptions
     const toolDescriptions = this.toolManager.getDescriptions();
@@ -298,12 +300,18 @@ export class BrowserAgent {
 
       this.events.executingTool(toolName, args);
       const result = await tool.func(args);
-      this.events.toolResult(toolName, JSON.parse(result).ok, `Called ${toolName}`);
+      const parsedResult = JSON.parse(result);
+      this.events.toolResult(toolName, parsedResult.ok, `Called ${toolName}`);
+
+      // Special handling for refresh_browser_state tool, add the browser state to the message history
+      if (toolName === 'refresh_browser_state' && parsedResult.ok) {
+        this.messageManager.addAI(parsedResult.output);
+      }
 
       // Add the result back to the message history for context
       this.messageManager.addTool(result, toolCallId);
 
-      if (toolName === 'done_tool' && JSON.parse(result).ok) {
+      if (toolName === 'done_tool' && parsedResult.ok) {
         wasDoneToolCalled = true;
       }
     }
