@@ -258,12 +258,14 @@ export class BrowserAgent {
       throw new Error('This LLM does not support tool binding');
     }
 
-    const message_history = this.messageManager.getMessages()
+    const message_history = this.messageManager.getMessages();
+
     const llmWithTools = llm.bindTools(this.toolManager.getAll());
     const stream = await llmWithTools.stream(message_history);
     
     let accumulatedChunk: AIMessageChunk | undefined;
     let accumulatedText = '';
+
     this.events.startThinking();
     for await (const chunk of stream) {
       if (chunk.content && typeof chunk.content === 'string') {
@@ -272,7 +274,6 @@ export class BrowserAgent {
       }
       accumulatedChunk = !accumulatedChunk ? chunk : accumulatedChunk.concat(chunk);
     }
-    
     this.events.finishThinking(accumulatedText);
     
     if (!accumulatedChunk) return new AIMessage({ content: '' });
