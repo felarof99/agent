@@ -64,8 +64,8 @@ describe('BrowserAgent-unit-test', () => {
     // Execute should throw error
     await expect(browserAgent.execute('test task')).rejects.toThrow('Classification failed')
     
-    // Verify error was emitted
-    expect(errorSpy).toHaveBeenCalledWith('Classification failed', true)
+    // Verify error was emitted with the wrapped error message
+    expect(errorSpy).toHaveBeenCalledWith('Oops! Got a fatal error when executing task: Classification failed', true)
   })
 })
 

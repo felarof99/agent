@@ -60,6 +60,7 @@ import { generateSystemPrompt } from './BrowserAgent.prompt';
 import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
 import { EventProcessor } from '@/lib/events/EventProcessor';
 import { PLANNING_CONFIG } from '@/lib/tools/planning/PlannerTool.config';
+import { Abortable, AbortError } from '@/lib/utils/Abortable';
 
 // Type Definitions
 interface Plan {
@@ -100,6 +101,16 @@ export class BrowserAgent {
   }
 
   /**
+   * Helper method to check abort signal and throw if aborted.
+   * Use this for manual abort checks inside loops.
+   */
+  private checkIfAborted(): void {
+    if (this.executionContext.abortController.signal.aborted) {
+      throw new AbortError();
+    }
+  }
+
+  /**
    * Main entry point.
    * Orchestrates classification and delegates to the appropriate execution strategy.
    */
@@ -123,7 +134,16 @@ export class BrowserAgent {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.events.error(`Oops! Got a fatal error when executing task: ${errorMessage}`, true);  // Mark as fatal error
+      
+      // Check if this is a user cancellation
+      const isUserCancellation = error instanceof AbortError || 
+                                 this.executionContext.isUserCancellation() || 
+                                 (error instanceof Error && error.name === "AbortError");
+      
+      if (!isUserCancellation) {
+        this.events.error(`Oops! Got a fatal error when executing task: ${errorMessage}`, true);  // Mark as fatal error
+      }
+      
       throw error;
     }
   }
@@ -162,6 +182,7 @@ export class BrowserAgent {
     this.toolManager.register(createClassificationTool(this.executionContext, toolDescriptions));
   }
 
+  @Abortable
   private async _classifyTask(task: string): Promise<ClassificationResult> {
     this.events.info('Analyzing task complexity...');
     
@@ -194,10 +215,13 @@ export class BrowserAgent {
   // ===================================================================
   //  Execution Strategy 1: Simple Tasks (No Planning)
   // ===================================================================
+  @Abortable  // Checks at method start
   private async _executeSimpleTaskStrategy(task: string): Promise<void> {
     this.events.info(`Executing as a simple task. Max attempts: ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}`);
 
     for (let attempt = 1; attempt <= BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS; attempt++) {
+      this.checkIfAborted();  // Manual check in loop
+
       this.events.debug(`Attempt ${attempt}/${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}: Executing task...`);
 
       const instruction = `The user's goal is: "${task}". Please take the next best action to complete this goal and call the 'done_tool' when finished.`;
@@ -219,11 +243,14 @@ export class BrowserAgent {
   // ===================================================================
   //  Execution Strategy 2: Multi-Step Tasks (Plan -> Execute -> Repeat)
   // ===================================================================
+  @Abortable
   private async _executeMultiStepStrategy(task: string): Promise<void> {
     this.events.info('Executing as a multi-step task.');
-    let totalStepsExecuted = 0;
+    let step_index = 0;
 
-    while (totalStepsExecuted < BrowserAgent.MAX_TOTAL_STEPS) {
+    while (step_index < BrowserAgent.MAX_TOTAL_STEPS) {
+      this.checkIfAborted();  // Check if the user has cancelled the task before executing
+
       // 1. PLAN: Create a new plan for the next few steps
       const plan = await this._createMultiStepPlan(task);
       if (plan.steps.length === 0) {
@@ -233,10 +260,12 @@ export class BrowserAgent {
 
       // 2. EXECUTE: Execute the steps from the current plan
       for (const step of plan.steps) {
-        if (totalStepsExecuted >= BrowserAgent.MAX_TOTAL_STEPS) break;  // Exit if we hit the global limit
+        if (step_index >= BrowserAgent.MAX_TOTAL_STEPS) break;  // Exit if we hit the global limit
 
-        totalStepsExecuted++;
-        this.events.info(`Step ${totalStepsExecuted}: ${step.action}`);
+        this.checkIfAborted();  // Check if the user has cancelled the task before executing
+
+        step_index++;
+        this.events.info(`Step ${step_index}: ${step.action}`);
         
         const isTaskCompleted = await this._executeSingleTurn(step.action);
 
@@ -273,6 +302,7 @@ export class BrowserAgent {
    * Executes a single "turn" with the LLM, including streaming and tool processing.
    * @returns {Promise<boolean>} - True if the `done_tool` was successfully called.
    */
+  @Abortable
   private async _executeSingleTurn(instruction: string): Promise<boolean> {
     this.messageManager.addHuman(instruction);
     
@@ -281,7 +311,11 @@ export class BrowserAgent {
 
     let wasDoneToolCalled = false;
     if (llmResponse.tool_calls && llmResponse.tool_calls.length > 0) {
-      this.messageManager.addAI(`Calling tool: ${llmResponse.content}`);
+      // IMPORTANT: We must add the full AIMessage object (not just a string) to maintain proper conversation history.
+      // The AIMessage contains both content and tool_calls. LLMs like Google's API validate that function calls
+      // in the conversation history match with their corresponding ToolMessage responses. If we only add a string
+      // here, we lose the tool_calls information, causing "function calls don't match" errors.
+      this.messageManager.add(llmResponse);
       wasDoneToolCalled = await this._processToolCalls(llmResponse.tool_calls);
       
     } else if (llmResponse.content) {
@@ -292,6 +326,7 @@ export class BrowserAgent {
     return wasDoneToolCalled;
   }
 
+  @Abortable  // Checks at method start
   private async _invokeLLMWithStreaming(): Promise<AIMessage> {
     const llm = await this.executionContext.getLLM();
     if (!llm.bindTools || typeof llm.bindTools !== 'function') {
@@ -301,13 +336,17 @@ export class BrowserAgent {
     const message_history = this.messageManager.getMessages();
 
     const llmWithTools = llm.bindTools(this.toolManager.getAll());
-    const stream = await llmWithTools.stream(message_history);
+    const stream = await llmWithTools.stream(message_history, {
+      signal: this.executionContext.abortController.signal
+    });
     
     let accumulatedChunk: AIMessageChunk | undefined;
     let accumulatedText = '';
 
     this.events.startThinking();
     for await (const chunk of stream) {
+      this.checkIfAborted();  // Manual check during streaming
+
       if (chunk.content && typeof chunk.content === 'string') {
         this.events.streamThought(chunk.content);
         accumulatedText += chunk.content;
@@ -325,9 +364,12 @@ export class BrowserAgent {
     });
   }
 
+  @Abortable  // Checks at method start
   private async _processToolCalls(toolCalls: any[]): Promise<boolean> {
     let wasDoneToolCalled = false;
     for (const toolCall of toolCalls) {
+      this.checkIfAborted();  // Manual check before each tool
+
       const { name: toolName, args, id: toolCallId } = toolCall;
       const tool = this.toolManager.get(toolName);
       
@@ -358,6 +400,7 @@ export class BrowserAgent {
     return wasDoneToolCalled;
   }
 
+  @Abortable
   private async _createMultiStepPlan(task: string): Promise<Plan> {
     const plannerTool = this.toolManager.get('planner_tool')!;
     const args = {
