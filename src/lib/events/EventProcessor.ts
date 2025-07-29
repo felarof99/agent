@@ -125,13 +125,6 @@ export class EventProcessor {
   }
 
   /**
-   * Emit progress message
-   */
-  progress(message: string): void {
-    this.eventBus.emitSystemMessage(message, 'info', 'BrowserAgent');
-  }
-
-  /**
    * Emit completion
    */
   complete(message?: string): void {

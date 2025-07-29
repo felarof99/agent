@@ -239,7 +239,7 @@ export class BrowserAgent {
         const isTaskCompleted = await this._executeSingleTurn(step.action);
 
         if (isTaskCompleted) {
-          this.events.complete('Multi-step task completed successfully.');
+          this.events.complete('Task completed successfully.');
           return;  // SUCCESS
         }
       }
@@ -281,6 +281,7 @@ export class BrowserAgent {
     if (llmResponse.tool_calls && llmResponse.tool_calls.length > 0) {
       this.messageManager.addAI(`Calling tool: ${llmResponse.content}`);
       wasDoneToolCalled = await this._processToolCalls(llmResponse.tool_calls);
+      
     } else if (llmResponse.content) {
       // If the AI responds with text, just add it to the history
       this.messageManager.addAI(llmResponse.content as string);
