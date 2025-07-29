@@ -37,11 +37,11 @@ describe('PlannerTool Integration Test', () => {
       // Verify plan was created
       const parsed = JSON.parse(result)
       expect(parsed.ok).toBe(true)
-      expect(parsed.plan).toBeDefined()
-      expect(parsed.plan.steps).toBeDefined()
-      expect(Array.isArray(parsed.plan.steps)).toBe(true)
-      expect(parsed.plan.steps.length).toBeGreaterThan(0)
-      expect(parsed.plan.steps.length).toBeLessThanOrEqual(3)
+      expect(parsed.output).toBeDefined()
+      expect(parsed.output.steps).toBeDefined()
+      expect(Array.isArray(parsed.output.steps)).toBe(true)
+      expect(parsed.output.steps.length).toBeGreaterThan(0)
+      expect(parsed.output.steps.length).toBeLessThanOrEqual(3)
       
       console.log('✅ Test passed - PlannerTool is working with real LLM')
     },

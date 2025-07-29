@@ -61,6 +61,7 @@ import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
 import { EventProcessor } from '@/lib/events/EventProcessor';
 import { PLANNING_CONFIG } from '@/lib/tools/planning/PlannerTool.config';
 import { Abortable, AbortError } from '@/lib/utils/Abortable';
+import { formatToolOutput } from '@/lib/tools/formatToolOutput';
 
 // Type Definitions
 interface Plan {
@@ -201,11 +202,14 @@ export class BrowserAgent {
       
       if (parsedResult.ok) {
         const classification = JSON.parse(parsedResult.output);
-        this.events.toolResult('classification_tool', true, 'Task analyzed, proceeding with next steps...');
+        const classification_formatted_output = formatToolOutput('classification_tool', parsedResult);
+        this.events.toolResult('classification_tool', true, classification_formatted_output);
         return { is_simple_task: classification.is_simple_task };
       }
     } catch (error) {
-      this.events.toolResult('classification_tool', false, 'Classification failed');
+      const errorResult = { ok: false, error: 'Classification failed' };
+      const error_formatted_output = formatToolOutput('classification_tool', errorResult);
+      this.events.toolResult('classification_tool', false, error_formatted_output);
     }
     
     // Default to complex task on any failure
@@ -381,7 +385,10 @@ export class BrowserAgent {
       this.events.executingTool(toolName, args);
       const result = await tool.func(args);
       const parsedResult = JSON.parse(result);
-      this.events.toolResult(toolName, parsedResult.ok, `Called ${toolName}`);
+      
+      // Format the tool output for display
+      const displayMessage = formatToolOutput(toolName, parsedResult);
+      this.events.toolResult(toolName, parsedResult.ok, displayMessage);
 
       // Special handling for refresh_browser_state tool, add the browser state to the message history
       if (toolName === 'refresh_browser_state' && parsedResult.ok) {
@@ -410,9 +417,12 @@ export class BrowserAgent {
 
     this.events.executingTool('planner_tool', args);
     const result = await plannerTool.func(args);
-    this.events.toolResult('planner_tool', JSON.parse(result).ok, 'Planning complete');
-
     const parsedResult = JSON.parse(result);
+    
+    // Format the planner output
+    const planner_formatted_output = formatToolOutput('planner_tool', parsedResult);
+    this.events.toolResult('planner_tool', parsedResult.ok, planner_formatted_output);
+
     if (parsedResult.ok && parsedResult.plan?.steps) {
       return { steps: parsedResult.plan.steps };
     }
@@ -438,7 +448,10 @@ export class BrowserAgent {
       this.events.executingTool('validator_tool', args);
       const result = await validatorTool.func(args);
       const parsedResult = JSON.parse(result);
-      this.events.toolResult('validator_tool', parsedResult.ok, 'Validation complete');
+      
+      // Format the validator output
+      const validator_formatted_output = formatToolOutput('validator_tool', parsedResult);
+      this.events.toolResult('validator_tool', parsedResult.ok, validator_formatted_output);
       
       if (parsedResult.ok) {
         // Parse the validation data from output
@@ -450,7 +463,9 @@ export class BrowserAgent {
         };
       }
     } catch (error) {
-      this.events.toolResult('validator_tool', false, 'Validation failed');
+      const errorResult = { ok: false, error: 'Validation failed' };
+      const error_formatted_output = formatToolOutput('validator_tool', errorResult);
+      this.events.toolResult('validator_tool', false, error_formatted_output);
     }
     
     return {

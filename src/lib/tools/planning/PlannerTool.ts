@@ -60,8 +60,7 @@ export function createPlannerTool(executionContext: ExecutionContext): DynamicSt
         // Format and return result
         return JSON.stringify({
           ok: true,
-          output: `Created plan with ${plan.steps.length} steps`,
-          plan: plan
+          output: plan
         });
       } catch (error) {
         // Handle error
