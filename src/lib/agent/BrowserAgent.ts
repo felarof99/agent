@@ -77,9 +77,9 @@ interface ClassificationResult {
 
 export class BrowserAgent {
   // Constants for explicit control
-  private static readonly MAX_SIMPLE_ATTEMPTS = 3;
+  private static readonly MAX_STEPS_FOR_SIMPLE_TASKS = 5;
+  private static readonly MAX_STEPS_FOR_COMPLEX_TASKS = PLANNING_CONFIG.STEPS_PER_PLAN;
   private static readonly MAX_TOTAL_STEPS = 20;
-  private static readonly STEPS_PER_PLAN = PLANNING_CONFIG.STEPS_PER_PLAN;
 
   private readonly executionContext: ExecutionContext;
   private readonly toolManager: ToolManager;
@@ -120,7 +120,7 @@ export class BrowserAgent {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      this.events.error(errorMessage, true);  // Mark as fatal error
+      this.events.error(`Oops! Got a fatal error when executing task: ${errorMessage}`, true);  // Mark as fatal error
       throw error;
     }
   }
@@ -177,7 +177,7 @@ export class BrowserAgent {
       
       if (parsedResult.ok) {
         const classification = JSON.parse(parsedResult.output);
-        this.events.toolResult('classification_tool', true, 'Task analyzed');
+        this.events.toolResult('classification_tool', true, 'Task analyzed, proceeding with next steps...');
         return { is_simple_task: classification.is_simple_task };
       }
     } catch (error) {
@@ -192,25 +192,26 @@ export class BrowserAgent {
   //  Execution Strategy 1: Simple Tasks (No Planning)
   // ===================================================================
   private async _executeSimpleTaskStrategy(task: string): Promise<void> {
-    this.events.info(`Executing as a simple task. Max attempts: ${BrowserAgent.MAX_SIMPLE_ATTEMPTS}`);
+    this.events.info(`Executing as a simple task. Max attempts: ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}`);
 
-    for (let attempt = 1; attempt <= BrowserAgent.MAX_SIMPLE_ATTEMPTS; attempt++) {
-      const instruction = `This is attempt ${attempt}/${BrowserAgent.MAX_SIMPLE_ATTEMPTS}. The user's goal is: "${task}". Please take the next best action to complete this goal and call the 'done_tool' when finished.`;
-      this.events.executingStep(attempt, 'Attempting to complete task directly.');
+    for (let attempt = 1; attempt <= BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS; attempt++) {
+      this.events.executingStep(attempt, 'Executing task...');
+      this.events.debug(`Executing simple task attempt ${attempt} of ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}`);
 
+      const instruction = `The user's goal is: "${task}". Please take the next best action to complete this goal and call the 'done_tool' when finished.`;
       const isTaskCompleted = await this._executeSingleTurn(instruction);
 
       if (isTaskCompleted) {
-        this.events.complete('Simple task completed successfully.');
+        this.events.complete('Task completed successfully.');
         return;  // SUCCESS
       }
       
-      if (attempt < BrowserAgent.MAX_SIMPLE_ATTEMPTS) {
-        this.events.info(`Attempt ${attempt} did not complete the task. Retrying.`);
+      if (attempt < BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS) {
+        this.events.info(`Task not completed unfortunately.`); 
       }
     }
 
-    throw new Error(`Simple task failed to complete after ${BrowserAgent.MAX_SIMPLE_ATTEMPTS} attempts.`);
+    throw new Error(`Task failed to complete after ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS} attempts.`);
   }
 
   // ===================================================================
@@ -358,7 +359,7 @@ export class BrowserAgent {
     const plannerTool = this.toolManager.get('planner_tool')!;
     const args = {
       task: `Based on the history, continue with the main goal: ${task}`,
-      max_steps: BrowserAgent.STEPS_PER_PLAN
+      max_steps: BrowserAgent.MAX_STEPS_FOR_COMPLEX_TASKS
     };
 
     this.events.executingTool('planner_tool', args);
