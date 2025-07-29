@@ -357,7 +357,9 @@ export class BrowserAgent {
       }
       accumulatedChunk = !accumulatedChunk ? chunk : accumulatedChunk.concat(chunk);
     }
-    this.events.finishThinking(accumulatedText);
+    if(accumulatedText!='') {
+        this.events.finishThinking(accumulatedText);
+    }
     
     if (!accumulatedChunk) return new AIMessage({ content: '' });
     
