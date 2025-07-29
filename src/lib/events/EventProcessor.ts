@@ -13,44 +13,7 @@ export class EventProcessor {
     this.eventBus = eventBus;
   }
 
-  /**
-   * Emit that agent is analyzing/classifying the task
-   */
-  analyzingTask(): void {
-    this.eventBus.emitThinking('Analyzing task complexity...', 'analysis', 'BrowserAgent');
-  }
 
-  /**
-   * Emit task classification result
-   */
-  taskClassified(isSimple: boolean): void {
-    const message = isSimple 
-      ? 'Task classified as simple - executing directly'
-      : 'Task classified as complex - creating execution plan';
-    this.eventBus.emitSystemMessage(message, 'info', 'BrowserAgent');
-  }
-
-  /**
-   * Emit that agent is planning
-   */
-  planningSteps(numSteps: number = 3): void {
-    this.eventBus.emitThinking(
-      `Creating ${numSteps}-step execution plan...`,
-      'planning',
-      'BrowserAgent'
-    );
-  }
-
-  /**
-   * Emit current step being executed
-   */
-  executingStep(stepNumber: number, action: string): void {
-    this.eventBus.emitSystemMessage(
-      `Step ${stepNumber}: ${action}`,
-      'info',
-      'BrowserAgent'
-    );
-  }
 
   /**
    * Start agent thinking/response (returns messageId for streaming)

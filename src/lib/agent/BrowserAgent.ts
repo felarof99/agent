@@ -110,7 +110,10 @@ export class BrowserAgent {
 
       // 2. CLASSIFY: Determine the task type
       const classification = await this._classifyTask(task);
-      this.events.taskClassified(classification.is_simple_task);
+      const message = classification.is_simple_task 
+        ? 'Executing the task...'
+        : 'Creating a step-by-step plan to complete the task';
+      this.events.info(message);
 
       // 3. DELEGATE: Route to the correct execution strategy
       if (classification.is_simple_task) {
@@ -160,7 +163,7 @@ export class BrowserAgent {
   }
 
   private async _classifyTask(task: string): Promise<ClassificationResult> {
-    this.events.analyzingTask();
+    this.events.info('Analyzing task complexity...');
     
     const classificationTool = this.toolManager.get('classification_tool');
     if (!classificationTool) {
@@ -195,8 +198,7 @@ export class BrowserAgent {
     this.events.info(`Executing as a simple task. Max attempts: ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}`);
 
     for (let attempt = 1; attempt <= BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS; attempt++) {
-      this.events.executingStep(attempt, 'Executing task...');
-      this.events.debug(`Executing simple task attempt ${attempt} of ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}`);
+      this.events.debug(`Attempt ${attempt}/${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}: Executing task...`);
 
       const instruction = `The user's goal is: "${task}". Please take the next best action to complete this goal and call the 'done_tool' when finished.`;
       const isTaskCompleted = await this._executeSingleTurn(instruction);
@@ -234,7 +236,7 @@ export class BrowserAgent {
         if (totalStepsExecuted >= BrowserAgent.MAX_TOTAL_STEPS) break;  // Exit if we hit the global limit
 
         totalStepsExecuted++;
-        this.events.executingStep(totalStepsExecuted, step.action);
+        this.events.info(`Step ${totalStepsExecuted}: ${step.action}`);
         
         const isTaskCompleted = await this._executeSingleTurn(step.action);
 
