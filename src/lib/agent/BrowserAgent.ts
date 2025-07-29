@@ -90,7 +90,7 @@ export class BrowserAgent {
     this._registerTools();
   }
 
-  // Getters to access context components (maintains original structure)
+  // Getters to access context components
   private get messageManager(): MessageManager { 
     return this.executionContext.messageManager; 
   }
@@ -278,7 +278,7 @@ export class BrowserAgent {
 
     let wasDoneToolCalled = false;
     if (llmResponse.tool_calls && llmResponse.tool_calls.length > 0) {
-      this.messageManager.addAI('');  // Add empty AI message when tools are called
+      this.messageManager.addAI(`Calling tool: ${llmResponse.content}`);
       wasDoneToolCalled = await this._processToolCalls(llmResponse.tool_calls);
     } else if (llmResponse.content) {
       // If the AI responds with text, just add it to the history
@@ -364,10 +364,6 @@ export class BrowserAgent {
     this.events.executingTool('planner_tool', args);
     const result = await plannerTool.func(args);
     this.events.toolResult('planner_tool', JSON.parse(result).ok, 'Planning complete');
-
-    // Add the planning action to the message history for full context
-    this.messageManager.addAI('');  // Add empty AI message
-    this.messageManager.addTool(result, 'planner_call');
 
     const parsedResult = JSON.parse(result);
     if (parsedResult.ok && parsedResult.plan?.steps) {

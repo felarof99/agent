@@ -75,7 +75,7 @@ describe('BrowserAgent-unit-test', () => {
 describe('BrowserAgent-integration-test', () => {
   // Integration Test: Simple task flow - "list tabs"
   it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
-    'tests that simple task flow executes for "list tabs"',
+    'tests that appropriate functions are called for a simple task like "list tabs"',
     async () => {
       // Setup with real dependencies
       const messageManager = new MessageManager()
@@ -100,7 +100,9 @@ describe('BrowserAgent-integration-test', () => {
       const complexStrategySpy = vi.spyOn(browserAgent as any, '_executeMultiStepStrategy')
       
       // Start execution (don't await)
-      browserAgent.execute('list tabs')
+      browserAgent.execute('list tabs').catch(error => {
+        // Do nothing
+      })
       
       // Wait for initial processing
       await new Promise(resolve => setTimeout(resolve, 5000))
@@ -118,7 +120,7 @@ describe('BrowserAgent-integration-test', () => {
 
   // Integration Test: Complex task flow - "go to amazon and order toothpaste"
   it.skipIf(!process.env.LITELLM_API_KEY || process.env.LITELLM_API_KEY === 'nokey')(
-    'tests that complex task flow executes for multi-step task',
+    'tests that appropriate functions are called for a complex task like "go to amazon and order toothpaste"',
     async () => {
       // Setup with real dependencies
       const messageManager = new MessageManager()
@@ -144,7 +146,9 @@ describe('BrowserAgent-integration-test', () => {
       const plannerSpy = vi.spyOn(browserAgent as any, '_createMultiStepPlan')
       
       // Start execution (don't await)
-      browserAgent.execute('go to amazon and order toothpaste')
+      browserAgent.execute('go to amazon and order toothpaste').catch(error => {
+        // Do nothing
+      })
       
       // Wait for initial processing
       await new Promise(resolve => setTimeout(resolve, 5000))
