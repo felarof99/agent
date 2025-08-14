@@ -151,15 +151,26 @@ export class ChatAgent {
    */
   private async _getCurrentTabIds(): Promise<Set<number>> {
     const selectedTabIds = this.executionContext.getSelectedTabIds()
-    const hasUserSelectedTabs = selectedTabIds && selectedTabIds.length > 0
     
-    // Get pages to determine actual tab IDs
-    const pages = await this.executionContext.browserContext.getPages(
-      hasUserSelectedTabs ? selectedTabIds : undefined
-    )
+    // Check if user has explicitly selected multiple tabs (using "@" selector)
+    // If only 1 tab or null, it's likely just the default current tab from NxtScape
+    const hasExplicitSelection = selectedTabIds && selectedTabIds.length > 1
     
-    // Extract tab IDs into a Set
-    return new Set(pages.map(page => page.tabId))
+    if (hasExplicitSelection) {
+      // User explicitly selected multiple tabs - use those
+      return new Set(selectedTabIds)
+    }
+    
+    // No explicit multi-tab selection - get the ACTUAL current active tab
+    // This ensures we detect tab changes even when user switches tabs between queries
+    try {
+      const currentPage = await this.executionContext.browserContext.getCurrentPage()
+      return new Set([currentPage.tabId])
+    } catch (error) {
+      // Fallback to ExecutionContext if getCurrentPage fails
+      Logging.log('ChatAgent', `Failed to get current page, using ExecutionContext: ${error}`, 'warning')
+      return new Set(selectedTabIds || [])
+    }
   }
   
   /**

@@ -14,7 +14,16 @@ describe('ChatAgent', () => {
   beforeEach(() => {
     // Create mock instances
     messageManager = new MessageManager()
-    browserContext = {} as BrowserContext
+    
+    // Mock BrowserContext with getCurrentPage
+    browserContext = {
+      getCurrentPage: vi.fn().mockResolvedValue({
+        tabId: 123,
+        url: () => 'https://example.com',
+        title: () => 'Example Page'
+      })
+    } as any
+    
     const pubsub = new PubSub()
     
     // Create execution context with mocks
@@ -23,6 +32,7 @@ describe('ChatAgent', () => {
       browserContext,
       getPubSub: () => pubsub,
       getSelectedTabIds: () => [1],
+      setSelectedTabIds: vi.fn(),
       getCurrentTask: () => 'test task',
       getLLM: vi.fn(),
       abortController: new AbortController()
@@ -69,6 +79,39 @@ describe('ChatAgent', () => {
     // Different size should return true
     const tabIds4 = new Set([1, 2])
     expect(chatAgentWithPrivate._hasTabsChanged(tabIds4)).toBe(true)
+  })
+  
+  it('tests that getCurrentTabIds uses correct source based on selection', async () => {
+    const chatAgentWithPrivate = chatAgent as any
+    
+    // Test 1: Multiple tabs selected (explicit selection) - should use ExecutionContext
+    let mockTabIds: number[] | null = [5, 6, 7]
+    executionContext.getSelectedTabIds = () => mockTabIds
+    
+    const multiTabIds = await chatAgentWithPrivate._getCurrentTabIds()
+    expect(multiTabIds).toEqual(new Set([5, 6, 7]))
+    
+    // Test 2: Single tab (no explicit selection) - should use BrowserContext
+    mockTabIds = [1]  // Only one tab
+    executionContext.getSelectedTabIds = () => mockTabIds
+    
+    const singleTabIds = await chatAgentWithPrivate._getCurrentTabIds()
+    expect(singleTabIds).toEqual(new Set([123]))  // Should get tab ID from getCurrentPage mock
+    
+    // Test 3: No tabs - should use BrowserContext
+    mockTabIds = null
+    executionContext.getSelectedTabIds = () => mockTabIds
+    
+    const noTabIds = await chatAgentWithPrivate._getCurrentTabIds()
+    expect(noTabIds).toEqual(new Set([123]))  // Should get tab ID from getCurrentPage mock
+    
+    // Test 4: getCurrentPage fails - should fallback to ExecutionContext
+    browserContext.getCurrentPage = vi.fn().mockRejectedValue(new Error('Failed'))
+    mockTabIds = [999]
+    executionContext.getSelectedTabIds = () => mockTabIds
+    
+    const fallbackTabIds = await chatAgentWithPrivate._getCurrentTabIds()
+    expect(fallbackTabIds).toEqual(new Set([999]))  // Should fallback to ExecutionContext
   })
   
   it('tests that browser state messages are replaced correctly', () => {
