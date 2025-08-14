@@ -96,7 +96,7 @@ export class MessageManager {
   addSystemReminder(content: string): void {
     // Add system message with system-reminder tags
     // For Anthropic, you can't have SystemMessage after first message
-    this.add(new AIMessage(`<system-reminder>${content}</system-reminder>`));
+    this.add(new AIMessage(`<SystemReminder>${content}</SystemReminder>`));
     this._trimIfNeeded();
   }
 
