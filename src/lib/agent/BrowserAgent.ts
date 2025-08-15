@@ -51,7 +51,6 @@ import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createInteractionTool } from '@/lib/tools/navigation/InteractionTool';
 import { createScrollTool } from '@/lib/tools/navigation/ScrollTool';
 import { createSearchTool } from '@/lib/tools/navigation/SearchTool';
-import { createRefreshStateTool } from '@/lib/tools/navigation/RefreshStateTool';
 import { createTabOperationsTool } from '@/lib/tools/tab/TabOperationsTool';
 import { createGroupTabsTool } from '@/lib/tools/tab/GroupTabsTool';
 import { createGetSelectedTabsTool } from '@/lib/tools/tab/GetSelectedTabsTool';
@@ -101,7 +100,6 @@ export class BrowserAgent {
     'interact_tool',
     'scroll_tool',
     'search_tool',
-    'refresh_browser_state_tool',
     'tab_operations_tool',
     'screenshot_tool',
     'extract_tool'
@@ -214,7 +212,6 @@ export class BrowserAgent {
     this.toolManager.register(createInteractionTool(this.executionContext));
     this.toolManager.register(createScrollTool(this.executionContext));
     this.toolManager.register(createSearchTool(this.executionContext));
-    this.toolManager.register(createRefreshStateTool(this.executionContext));
     
     // Tab tools
     this.toolManager.register(createTabOperationsTool(this.executionContext));
@@ -477,27 +474,15 @@ export class BrowserAgent {
       const parsedResult = JSON.parse(result);
       
       // Publish tool result for UI display
-      // Skip emitting refresh_browser_state_tool to prevent browser state from appearing in UI
-      // Also skip result_tool to avoid duplicating the final summary in the UI
-      if (toolName !== 'refresh_browser_state_tool' && toolName !== 'result_tool') {
+      // Skip result_tool to avoid duplicating the final summary in the UI
+      if (toolName !== 'result_tool') {
         //TODO: nikhil -- see if how to merge formatToolOutput to tools itself
         // const formattedContent = formatToolOutput(toolName, parsedResult);
         // this.pubsub.publishMessage(PubSub.createMessage(formattedContent, 'system'));
       }
 
       // Add the result back to the message history for context
-      // Special handling for refresh_browser_state_tool vs other tools:
-      // - refresh_browser_state_tool: Add simplified tool message AND browser state context
-      // - All other tools: Add as regular tool message for proper conversation flow
-      if (toolName === 'refresh_browser_state_tool' && parsedResult.ok) {
-        // Add proper tool result message with toolCallId for message history continuity
-        const simplifiedResult = JSON.stringify({ ok: true, output: "Browser state refreshed successfully" });
-        this.messageManager.addTool(simplifiedResult, toolCallId);
-        // Also update the browser state context for the agent to use
-        this.messageManager.addBrowserState(parsedResult.output);
-      } else {
-        this.messageManager.addTool(result, toolCallId);
-      }
+      this.messageManager.addTool(result, toolCallId);
 
       // Special handling for todo_manager_tool, add system reminder for mutations
       if (toolName === 'todo_manager_tool' && parsedResult.ok && args.action !== 'list') {
