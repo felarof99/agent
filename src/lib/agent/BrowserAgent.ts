@@ -65,7 +65,6 @@ import { generateSystemPrompt, generateSingleTurnExecutionPrompt } from './Brows
 import { AIMessage, AIMessageChunk } from '@langchain/core/messages';
 import { PLANNING_CONFIG } from '@/lib/tools/planning/PlannerTool.config';
 import { AbortError } from '@/lib/utils/Abortable';
-import { formatTodoList } from '@/lib/tools/utils/formatTodoList';
 import { GlowAnimationService } from '@/lib/services/GlowAnimationService';
 import { PubSub } from '@/lib/pubsub'; // For static helper methods
 
@@ -316,13 +315,20 @@ export class BrowserAgent {
       await this._updateTodosFromPlan(plan);
 
       // Show TODO list after plan creation
-      const todoStore = this.executionContext.todoStore;
-      this.pubsub.publishMessage(PubSub.createMessage(formatTodoList(todoStore.getJson()), 'thinking'));
+      const todoTool = this.toolManager.get('todo_manager_tool');
+      let currentTodos = '';
+      if (todoTool) {
+        const result = await todoTool.func({ action: 'get' });
+        const parsedResult = JSON.parse(result);
+        currentTodos = parsedResult.output || '';
+        this.pubsub.publishMessage(PubSub.createMessage(currentTodos, 'thinking'));
+      }
 
       // 3. EXECUTE: Inner loop with one TODO per turn
       let inner_loop_index = 0;
       
-      while (inner_loop_index < BrowserAgent.MAX_STEPS_INNER_LOOP && !todoStore.isAllDoneOrSkipped()) {
+      // Continue while there are uncompleted tasks (- [ ]) in the markdown
+      while (inner_loop_index < BrowserAgent.MAX_STEPS_INNER_LOOP && currentTodos.includes('- [ ]')) {
         this.checkIfAborted();
         
         // Check for loop before continuing
@@ -341,6 +347,13 @@ export class BrowserAgent {
         
         if (isTaskCompleted) {
           break; // done_tool was called
+        }
+        
+        // Update currentTodos for the next iteration
+        if (todoTool) {
+          const result = await todoTool.func({ action: 'get' });
+          const parsedResult = JSON.parse(result);
+          currentTodos = parsedResult.output || '';
         }
       }
 
@@ -501,13 +514,13 @@ export class BrowserAgent {
       }
 
       // Special handling for todo_manager_tool, add system reminder for mutations
-      if (toolName === 'todo_manager_tool' && parsedResult.ok && args.action !== 'list') {
-        const todoStore = this.executionContext.todoStore;
+      if (toolName === 'todo_manager_tool' && parsedResult.ok && args.action === 'set') {
+        const markdown = args.todos || '';
         this.messageManager.addSystemReminder(
-          `TODO list updated. Current state:\n${todoStore.getXml()}`
+          `TODO list updated:\n${markdown}`
         );
         // Show updated TODO list to user
-        this.pubsub.publishMessage(PubSub.createMessage(formatTodoList(todoStore.getJson()), 'thinking'));
+        this.pubsub.publishMessage(PubSub.createMessage(markdown, 'thinking'));
       }
 
 
@@ -609,7 +622,7 @@ export class BrowserAgent {
       const parsedResult = JSON.parse(result);
       
       if (parsedResult.ok && parsedResult.output) {
-        const { success, message } = parsedResult.output;
+        const { message } = parsedResult.output;
         this.pubsub.publishMessage(PubSub.createMessage(message, 'assistant'));
       } else {
         // Fallback on error
@@ -629,9 +642,12 @@ export class BrowserAgent {
     const todoTool = this.toolManager.get('todo_manager_tool');
     if (!todoTool || plan.steps.length === 0) return;
     
-    // Replace all TODOs with the new plan
-    const todos = plan.steps.map(step => ({ content: step.action }));
-    const args = { action: 'replace_all' as const, todos };
+    // Convert plan steps to markdown TODO list
+    const markdown = plan.steps
+      .map(step => `- [ ] ${step.action}`)
+      .join('\n');
+    
+    const args = { action: 'set' as const, todos: markdown };
     await todoTool.func(args);
   }
 
