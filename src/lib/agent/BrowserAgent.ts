@@ -46,6 +46,7 @@ import { MessageManager } from '@/lib/runtime/MessageManager';
 import { ToolManager } from '@/lib/tools/ToolManager';
 import { createPlannerTool } from '@/lib/tools/planning/PlannerTool';
 import { createTodoManagerTool } from '@/lib/tools/planning/TodoManagerTool';
+import { createRequirePlanningTool } from '@/lib/tools/planning/RequirePlanningTool';
 import { createDoneTool } from '@/lib/tools/utils/DoneTool';
 import { createNavigationTool } from '@/lib/tools/navigation/NavigationTool';
 import { createInteractionTool } from '@/lib/tools/navigation/InteractionTool';
@@ -81,6 +82,11 @@ interface PlanStep {
 interface ClassificationResult {
   is_simple_task: boolean;
   is_followup_task: boolean;
+}
+
+interface SingleTurnResult {
+  doneToolCalled: boolean;
+  requirePlanningCalled: boolean;
 }
 
 export class BrowserAgent {
@@ -205,6 +211,7 @@ export class BrowserAgent {
     // Register all tools first
     this.toolManager.register(createPlannerTool(this.executionContext));
     this.toolManager.register(createTodoManagerTool(this.executionContext));
+    this.toolManager.register(createRequirePlanningTool(this.executionContext));
     this.toolManager.register(createDoneTool(this.executionContext));
     
     // Navigation tools
@@ -288,11 +295,14 @@ export class BrowserAgent {
       // Debug: Attempt ${attempt}/${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS}
 
       const instruction = `The user's goal is: "${task}". Please take the next best action to complete this goal and call the 'done_tool' when finished.`;
-      const isTaskCompleted = await this._executeSingleTurn(instruction);
+      const turnResult = await this._executeSingleTurn(instruction);
 
-      if (isTaskCompleted) {
+      if (turnResult.doneToolCalled) {
         return;  // SUCCESS - task result will be generated in execute()
-      }      
+      }
+      
+      // Note: require_planning_tool doesn't make sense for simple tasks
+      // but if called, we could escalate to complex strategy      
     }
 
     throw new Error(`Task failed to complete after ${BrowserAgent.MAX_STEPS_FOR_SIMPLE_TASKS} attempts.`);
@@ -342,11 +352,17 @@ export class BrowserAgent {
         // Use the generateTodoExecutionPrompt for TODO execution
         const instruction = generateSingleTurnExecutionPrompt(task);
         
-        const isTaskCompleted = await this._executeSingleTurn(instruction);
+        const turnResult = await this._executeSingleTurn(instruction);
         inner_loop_index++;
         
-        if (isTaskCompleted) {
-          break; // done_tool was called
+        if (turnResult.doneToolCalled) {
+          return; // Task fully complete - exit entire strategy
+        }
+        
+        if (turnResult.requirePlanningCalled) {
+          // Agent explicitly requested re-planning
+          console.log('Agent requested re-planning, breaking inner loop');
+          break; // Exit inner loop to trigger re-planning
         }
         
         // Update currentTodos for the next iteration
@@ -380,29 +396,35 @@ export class BrowserAgent {
   // ===================================================================
   /**
    * Executes a single "turn" with the LLM, including streaming and tool processing.
-   * @returns {Promise<boolean>} - True if the `done_tool` was successfully called.
+   * @returns {Promise<SingleTurnResult>} - Information about which tools were called
    */
-  private async _executeSingleTurn(instruction: string): Promise<boolean> {
+  private async _executeSingleTurn(instruction: string): Promise<SingleTurnResult> {
     this.messageManager.addHuman(instruction);
     
     // This method encapsulates the streaming logic
     const llmResponse = await this._invokeLLMWithStreaming();
 
-    let wasDoneToolCalled = false;
+    const result: SingleTurnResult = {
+      doneToolCalled: false,
+      requirePlanningCalled: false
+    };
+
     if (llmResponse.tool_calls && llmResponse.tool_calls.length > 0) {
       // IMPORTANT: We must add the full AIMessage object (not just a string) to maintain proper conversation history.
       // The AIMessage contains both content and tool_calls. LLMs like Google's API validate that function calls
       // in the conversation history match with their corresponding ToolMessage responses. If we only add a string
       // here, we lose the tool_calls information, causing "function calls don't match" errors.
       this.messageManager.add(llmResponse);
-      wasDoneToolCalled = await this._processToolCalls(llmResponse.tool_calls);
+      const toolsResult = await this._processToolCalls(llmResponse.tool_calls);
+      result.doneToolCalled = toolsResult.doneToolCalled;
+      result.requirePlanningCalled = toolsResult.requirePlanningCalled;
       
     } else if (llmResponse.content) {
       // If the AI responds with text, just add it to the history
       this.messageManager.addAI(llmResponse.content as string);
     }
 
-    return wasDoneToolCalled;
+    return result;
   }
 
   private async _invokeLLMWithStreaming(): Promise<AIMessage> {
@@ -461,8 +483,11 @@ export class BrowserAgent {
     });
   }
 
-  private async _processToolCalls(toolCalls: any[]): Promise<boolean> {
-    let wasDoneToolCalled = false;
+  private async _processToolCalls(toolCalls: any[]): Promise<SingleTurnResult> {
+    const result: SingleTurnResult = {
+      doneToolCalled: false,
+      requirePlanningCalled: false
+    };
     
     for (const toolCall of toolCalls) {
       // Check abort before processing each tool
@@ -525,11 +550,15 @@ export class BrowserAgent {
 
 
       if (toolName === 'done_tool' && parsedResult.ok) {
-        wasDoneToolCalled = true;
+        result.doneToolCalled = true;
+      }
+      
+      if (toolName === 'require_planning_tool' && parsedResult.ok) {
+        result.requirePlanningCalled = true;
       }
     }
     
-    return wasDoneToolCalled;
+    return result;
   }
 
   private async _createMultiStepPlan(task: string): Promise<Plan> {
@@ -667,9 +696,20 @@ export class BrowserAgent {
   }
 
   /**
+   * Detect if the agent is stuck in a loop by checking for repeated patterns
+   * Enhanced to detect:
+   * 1. Repeated AI messages
+   * 2. Repeated tool call sequences
+   * 3. Identical consecutive tool calls with same arguments
+   * 
+   * @param lookback - Number of recent messages to check (default: 10)
+   * @param messageThreshold - Number of times a message must appear to be considered a loop (default: 3)
+   * @returns true if a loop is detected
+   */
+  /**
    * Detect if the agent is stuck in a loop by checking for repeated messages
-   * @param lookback - Number of recent messages to check (default: 6)
-   * @param threshold - Number of times a message must appear to be considered a loop (default: 2)
+   * @param lookback - Number of recent messages to check (default: 8)
+   * @param threshold - Number of times a message must appear to be considered a loop (default: 4)
    * @returns true if a loop is detected
    */
   private _detectLoop(lookback: number = 8, threshold: number = 4): boolean {
@@ -689,7 +729,7 @@ export class BrowserAgent {
         const content = typeof msg.content === 'string' ? msg.content : '';
         return content.trim().toLowerCase();
       });
-    
+
     // Count occurrences of each message
     const messageCount = new Map<string, number>();
     for (const msg of recentMessages) {
@@ -704,7 +744,7 @@ export class BrowserAgent {
         }
       }
     }
-    
+
     return false;
   }
 

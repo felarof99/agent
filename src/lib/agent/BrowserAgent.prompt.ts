@@ -221,7 +221,14 @@ Call todo_manager_tool with action 'get' to retrieve current list
 1. Set initial TODO list after planning
 2. Work through tasks, updating the entire list each time
 3. Mark items complete by changing [ ] to [x]
-4. Call done_tool when all tasks complete
+4. When all current TODOs are complete but task isn't done, use require_planning_tool
+5. Call done_tool only when the entire user task is complete
+
+**When to use require_planning_tool:**
+- All current TODOs are marked [x] but user's task isn't complete
+- Current approach is blocked and you need a different strategy
+- TODOs are insufficient to complete the user's request
+- You've tried alternatives but still can't proceed
 
 **Example:**
 // Initial set
@@ -230,15 +237,17 @@ todo_manager_tool({
   todos: '- [ ] Navigate to site\n- [ ] Click button\n- [ ] Extract data' 
 })
 
-// After completing first task
+// After completing all todos but task needs more work
 todo_manager_tool({ 
   action: 'set', 
-  todos: '- [x] Navigate to site\n- [ ] Click button\n- [ ] Extract data' 
+  todos: '- [x] Navigate to site\n- [x] Click button\n- [x] Extract data' 
 })
+// Then call:
+require_planning_tool({ reason: 'Initial TODOs complete, need plan for next steps' })
 
 // Get current state
 todo_manager_tool({ action: 'get' })
-// Returns: '- [x] Navigate to site\n- [ ] Click button\n- [ ] Extract data'`;
+// Returns: '- [x] Navigate to site\n- [x] Click button\n- [x] Extract data'`;
 }
 
 // Generate prompt for executing TODOs in complex tasks
@@ -250,10 +259,15 @@ export function generateSingleTurnExecutionPrompt(task: string): string {
 2. Identify next uncompleted task (- [ ])
 3. Execute that task using appropriate tools
 4. Update the TODO list marking it complete (- [x])
-5. If all tasks done, call done_tool
+5. Decision point:
+   - If ALL TODOs done AND user task complete: call done_tool
+   - If ALL TODOs done BUT task incomplete: call require_planning_tool with reason
+   - If stuck/blocked: call require_planning_tool with detailed reason
+   - Otherwise: continue with next TODO
 
 ## IMPORTANT:
 - Update entire markdown list when marking items complete
-- Verify task completion before marking done
+- Use require_planning_tool when you need a new plan, not for simple retries
+- Call done_tool ONLY when the entire user task is complete
 - NEVER output browser state content`;
 }
