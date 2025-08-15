@@ -257,8 +257,8 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
     if (!providerOk) return 'Provider not configured'
     if (isProcessing) return 'Task running… Press Esc to cancel'
     return chatMode 
-      ? 'Chat mode: Quick Q&A • @ to select tabs • Press Enter to send'
-      : 'Browse mode: Automation • Press Enter to send'
+      ? 'Chat mode is for simple Q&A • @ to select tabs • Press Enter to send'
+      : 'Browse mode is for complex web navigation tasks • Press Enter to send'
   }
 
   
