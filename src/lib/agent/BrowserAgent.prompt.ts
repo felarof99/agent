@@ -145,6 +145,14 @@ If NO relevant MCP server is installed, fall back to browser automation.
 - Use wait times appropriate for page loading
 - Know when to report graceful failure
 
+### 🚨 EMERGENCY LAST RESORT - When Completely Stuck
+**After 2-3 consecutive failures with normal tools:**
+- Consider using refresh_browser_state_tool for EXHAUSTIVE DOM analysis
+- This provides FULL page structure with ALL attributes, styles, and hidden elements
+- Use the detailed information to diagnose why automation is failing
+- ⚠️ WARNING: This is computationally expensive - DO NOT use routinely
+- Only use when you genuinely cannot proceed without understanding the full DOM
+
 ## 💡 COMMON INTERACTION PATTERNS
 ### 🔍 ELEMENT INTERACTION
 - Use interact_tool for ALL element interactions (click, input_text, clear)
