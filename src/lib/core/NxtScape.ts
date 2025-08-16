@@ -134,7 +134,7 @@ export class NxtScape {
    */
   public async run(options: RunOptions): Promise<void> {
     profileStart("NxtScape.run");
-    // Ensure the agent is initialized before running
+
     if (!this.isInitialized()) {
         await this.initialize();
     }
