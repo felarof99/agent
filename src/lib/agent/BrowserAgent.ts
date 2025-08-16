@@ -70,6 +70,7 @@ import { GlowAnimationService } from '@/lib/services/GlowAnimationService';
 import { NarratorService } from '@/lib/services/NarratorService';
 import { PubSub } from '@/lib/pubsub'; // For static helper methods
 import { Subscription } from '@/lib/pubsub/types';
+import { Logging } from '@/lib/utils/Logging';
 
 // Type Definitions
 interface Plan {
@@ -155,19 +156,25 @@ export class BrowserAgent {
   private _subscribeToExecutionStatus(): void {
     this.statusSubscription = this.pubsub.subscribe((event) => {
       if (event.type === 'execution-status') {
-        const { executionId, status } = event.payload;
+        const { status } = event.payload;
         
-        // Check if this status is for the current execution
-        if (executionId === this.executionContext.getExecutionId()) {
-          // If status is cancelled, trigger abort
-          if (status === 'cancelled') {
-            // Publish pause message when cancelled
-            this.pubsub.publishMessage(PubSub.createMessageWithId('pause_message_id','✋ Task paused. To continue this task, just type your next request OR use 🔄 to start a new task!', 'assistant'));
-            this.executionContext.cancelExecution(true);
-          }
+        if (status === 'cancelled') {
+          this.pubsub.publishMessage(PubSub.createMessageWithId('pause_message_id','✋ Task paused. To continue this task, just type your next request OR use 🔄 to start a new task!', 'assistant'));
+          this.executionContext.cancelExecution(true);
         }
       }
     });
+  }
+
+  /**
+   * Cleanup method to properly unsubscribe when agent is being destroyed
+   */
+  public cleanup(): void {
+    if (this.statusSubscription) {
+      this.statusSubscription.unsubscribe();
+      this.statusSubscription = undefined;
+    }
+    this.narrator?.cleanup();
   }
 
   /**
@@ -208,7 +215,7 @@ export class BrowserAgent {
       // 4. FINALISE: Generate final result
       await this._generateTaskResult(task);
     } catch (error) {
-      this._handleExecutionError(error);
+      this._handleExecutionError(error, task);
     } finally {
       // Cleanup narrator service
       this.narrator?.cleanup();
@@ -697,7 +704,7 @@ export class BrowserAgent {
   /**
    * Handle execution errors - tools have already published specific errors
    */
-  private _handleExecutionError(error: unknown): void {
+  private _handleExecutionError(error: unknown, task: string): void {
     // Check if this is a user cancellation - handle silently
     const isUserCancellation = error instanceof AbortError || 
                                this.executionContext.isUserCancellation() || 
@@ -707,6 +714,18 @@ export class BrowserAgent {
       // Don't publish message here - already handled in _subscribeToExecutionStatus
       // when the cancelled status event is received
     } else {
+      // Log error metric with details
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorType = error instanceof Error ? error.name : 'UnknownError';
+      
+      Logging.logMetric('execution_error', {
+        error: errorMessage,
+        error_type: errorType,
+        task: task.substring(0, 200), // Truncate long tasks
+        mode: 'browse',
+        agent: 'BrowserAgent'
+      });
+      
       console.error('Execution error (already reported by tool):', error);
       throw error;
     }
