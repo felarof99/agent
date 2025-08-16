@@ -176,6 +176,22 @@ export class MessageManager {
     this.removeMessagesByType(MessageType.SYSTEM);
   }
 
+  // Get current max tokens limit
+  getMaxTokens(): number {
+    return this.maxTokens;
+  }
+
+  // Update max tokens limit and trim if needed
+  setMaxTokens(newMaxTokens: number): void {
+    const oldMaxTokens = this.maxTokens;
+    this.maxTokens = newMaxTokens;
+    
+    // If new limit is lower, trim messages to fit
+    if (newMaxTokens < oldMaxTokens) {
+      this._trimIfNeeded();
+    }
+  }
+
   // Fork the message manager with optional history
   fork(includeHistory: boolean = true): MessageManager {
     const newMM = new MessageManager(this.maxTokens);
