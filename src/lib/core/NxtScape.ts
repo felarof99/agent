@@ -6,6 +6,7 @@ import { MessageManager } from "@/lib/runtime/MessageManager";
 import { profileStart, profileEnd, profileAsync } from "@/lib/utils/profiler";
 import { BrowserAgent } from "@/lib/agent/BrowserAgent";
 import { ChatAgent } from "@/lib/agent/ChatAgent";
+import { VisualGroundingAgent } from "@/lib/agent/VisualGroundingAgent";
 import { langChainProvider } from "@/lib/llm/LangChainProvider";
 import { PubSub } from "@/lib/pubsub/PubSub";
 import { ExecutionMetadata } from "@/lib/types/messaging";
@@ -35,6 +36,9 @@ export const RunOptionsSchema = z.object({
 
 export type RunOptions = z.infer<typeof RunOptionsSchema>;
 
+// Hardcoded flag for visual grounding mode
+const VISUAL_GROUNDING = true;  // Set to true to enable visual grounding in chat mode
+
 /**
  * Main orchestration class for the NxtScape framework.
  * Manages execution context and delegates task execution to BrowserAgent.
@@ -46,6 +50,7 @@ export class NxtScape {
   private messageManager!: MessageManager; // Will be initialized in initialize()
   private browserAgent: BrowserAgent | null = null; // The browser agent for task execution
   private chatAgent: ChatAgent | null = null; // The chat agent for Q&A mode
+  private visualGroundingAgent: VisualGroundingAgent | null = null; // The visual grounding agent
 
   /**
    * Creates a new NxtScape orchestration agent
@@ -98,6 +103,7 @@ export class NxtScape {
         // Initialize the browser agent with execution context
         this.browserAgent = new BrowserAgent(this.executionContext);
         this.chatAgent = new ChatAgent(this.executionContext);
+        this.visualGroundingAgent = new VisualGroundingAgent(this.executionContext);
         Logging.log(
           "NxtScape",
           "NxtScape initialization completed successfully",
@@ -124,7 +130,7 @@ export class NxtScape {
    * @returns True if initialized, false otherwise
    */
   public isInitialized(): boolean {
-    return this.browserContext !== null && !!this.browserAgent && !!this.chatAgent;
+    return this.browserContext !== null && !!this.browserAgent && !!this.chatAgent && !!this.visualGroundingAgent;
   }
 
   /**
@@ -205,7 +211,15 @@ export class NxtScape {
    * @private
    */
   private async _executeAgent(query: string, mode: 'chat' | 'browse', metadata?: any): Promise<void> {
-    if (mode === 'chat') {
+    // Check for visual grounding mode
+    if (mode === 'chat' && VISUAL_GROUNDING) {
+      // Use VisualGroundingAgent for visual grounding in chat mode
+      if (!this.visualGroundingAgent) {
+        throw new Error('Visual grounding agent not initialized');
+      }
+      Logging.log("NxtScape", "Using VisualGroundingAgent for chat mode with visual grounding");
+      await this.visualGroundingAgent.execute(query);
+    } else if (mode === 'chat') {
       if (!this.chatAgent) {
         throw new Error('Chat agent not initialized');
       }
@@ -415,6 +429,7 @@ export class NxtScape {
     // 6. Recreate agents with fresh state (they will subscribe themselves)
     this.browserAgent = new BrowserAgent(this.executionContext);
     this.chatAgent = new ChatAgent(this.executionContext);
+    this.visualGroundingAgent = new VisualGroundingAgent(this.executionContext);
 
     Logging.log(
       "NxtScape",
