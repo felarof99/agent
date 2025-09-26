@@ -63,7 +63,12 @@ function registerHandlers(): void {
     MessageType.HUMAN_INPUT_RESPONSE,
     (msg, port) => executionHandler.handleHumanInputResponse(msg, port)
   )
-  
+
+  messageRouter.registerHandler(
+    MessageType.EXTRACT_PAGE_CONTENT,
+    (msg, port) => executionHandler.handleExtractPageContent(msg, port)
+  )
+
   // Provider handlers
   messageRouter.registerHandler(
     MessageType.GET_LLM_PROVIDERS,

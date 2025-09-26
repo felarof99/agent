@@ -3,6 +3,8 @@ import { PortMessage } from '@/lib/runtime/PortMessaging'
 import { Execution } from '@/lib/execution/Execution'
 import { Logging } from '@/lib/utils/Logging'
 import { PubSub } from '@/lib/pubsub'
+import { BrowserContext } from '@/lib/browser/BrowserContext'
+import { getBrowserOSAdapter } from '@/lib/browser/BrowserOSAdapter'
 
 /**
  * Handles execution-related messages:
@@ -236,6 +238,72 @@ export class ExecutionHandler {
       Logging.log('ExecutionHandler',
         `Failed to handle newtab query: ${errorMessage}`, 'error')
       sendResponse({ ok: false, error: errorMessage })
+    }
+  }
+
+  /**
+   * Handle EXTRACT_PAGE_CONTENT message
+   * Extracts accessibility tree content from a tab
+   */
+  async handleExtractPageContent(
+    message: PortMessage,
+    port: chrome.runtime.Port
+  ): Promise<void> {
+    // Note: We don't use the tabId from payload anymore
+    // BrowserContext will find the best tab automatically
+
+    Logging.log('ExecutionHandler', 'Extracting page content from active tab')
+
+    const browserContext = new BrowserContext()
+
+    try {
+      // Get current page using BrowserContext's robust fallback logic
+      const page = await browserContext.getCurrentPage()
+      const tabId = page.tabId
+
+      Logging.log('ExecutionHandler', `Found active tab: ${tabId}`)
+
+      // Get accessibility tree for the tab
+      const adapter = getBrowserOSAdapter()
+      const tree = await adapter.getAccessibilityTree(tabId)
+
+      // Format as JSON for now - will enhance later to extract actual text
+      const pageContent = JSON.stringify(tree, null, 2)
+
+      // Send success response with the content
+      port.postMessage({
+        type: MessageType.WORKFLOW_STATUS,
+        payload: {
+          status: 'success',
+          data: {
+            pageContent
+          }
+        },
+        id: message.id
+      })
+
+      Logging.logMetric('page_content_extracted', {
+        tabId: tabId,
+        contentLength: pageContent.length
+      })
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      Logging.log('ExecutionHandler',
+        `Failed to extract page content: ${errorMessage}`, 'error')
+
+      // Send error response
+      port.postMessage({
+        type: MessageType.WORKFLOW_STATUS,
+        payload: {
+          status: 'error',
+          error: errorMessage
+        },
+        id: message.id
+      })
+    } finally {
+      // Always clean up the browser context
+      await browserContext.cleanup()
     }
   }
 

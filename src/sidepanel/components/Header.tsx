@@ -1,4 +1,4 @@
-import React, { memo, useState } from 'react'
+import React, { memo, useState, useCallback } from 'react'
 import { Button } from '@/sidepanel/components/ui/button'
 import { useSidePanelPortMessaging } from '@/sidepanel/hooks'
 import { MessageType } from '@/lib/types/messaging'
@@ -6,7 +6,7 @@ import { useAnalytics } from '../hooks/useAnalytics'
 import { SettingsModal } from './SettingsModal'
 import { HelpSection } from './HelpSection'
 // import { ExperimentModal } from './ExperimentModal'  // Removed - old evals system deprecated
-import { HelpCircle, Settings, Pause, RotateCcw, ChevronDown, Plus, Trash2, Star } from 'lucide-react'
+import { HelpCircle, Settings, Pause, RotateCcw, ChevronDown, Plus, Trash2, Star, Copy } from 'lucide-react'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import { useEffect } from 'react'
 import { z } from 'zod'
@@ -39,6 +39,8 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing }:
   const [providersError, setProvidersError] = useState<string | null>(null)
   const [mcpInstallStatus, setMcpInstallStatus] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
   const [installedServers, setInstalledServers] = useState<any[]>([])
+  const [extracting, setExtracting] = useState(false)
+  const [extractStatus, setExtractStatus] = useState<{ message: string; type: 'error' | 'success' } | null>(null)
   const { theme } = useSettingsStore()
   
   const handleCancel = () => {
@@ -87,6 +89,14 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing }:
     sendMessage(MessageType.MCP_GET_INSTALLED_SERVERS, {})
   }
 
+  const handleExtractPageContent = useCallback(() => {
+    setExtracting(true)
+    trackClick('extract_page_content')
+
+    // Send extraction request - backend will find the active tab
+    sendMessage(MessageType.EXTRACT_PAGE_CONTENT, {})
+  }, [sendMessage, trackClick])
+
   // Close dropdown when clicking outside and fetch servers when opening
   useEffect(() => {
     if (!showMCPDropdown) return
@@ -129,6 +139,45 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing }:
     sendMessage(MessageType.GET_LLM_PROVIDERS as any, {})
     return () => removeMessageListener<any>(MessageType.WORKFLOW_STATUS, handler)
   }, [])
+
+  // Listen for extraction response
+  useEffect(() => {
+    const handler = (payload: any) => {
+      // Check if this is our extraction response
+      if (payload?.data?.pageContent !== undefined) {
+        setExtracting(false)
+
+        if (payload.status === 'success') {
+          // Copy to clipboard
+          navigator.clipboard.writeText(payload.data.pageContent)
+            .then(() => {
+              setExtractStatus({
+                message: 'Page content copied to clipboard!',
+                type: 'success'
+              })
+            })
+            .catch((err) => {
+              console.error('Failed to copy:', err)
+              setExtractStatus({
+                message: 'Failed to copy to clipboard',
+                type: 'error'
+              })
+            })
+        } else if (payload.status === 'error') {
+          setExtractStatus({
+            message: payload.error || 'Failed to extract page content',
+            type: 'error'
+          })
+        }
+
+        // Clear status after 3 seconds
+        setTimeout(() => setExtractStatus(null), 3000)
+      }
+    }
+
+    addMessageListener<any>(MessageType.WORKFLOW_STATUS, handler)
+    return () => removeMessageListener<any>(MessageType.WORKFLOW_STATUS, handler)
+  }, [addMessageListener, removeMessageListener])
 
   // Listen for MCP server installation/deletion status
   useEffect(() => {
@@ -336,6 +385,23 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing }:
             </Button>
           )}
 
+          {/* Extract Page Content button */}
+          <Button
+            onClick={handleExtractPageContent}
+            variant="ghost"
+            size="sm"
+            className="h-9 w-9 p-0 rounded-xl hover:bg-brand/10 hover:text-brand transition-all duration-300"
+            aria-label="Extract page content"
+            title="Extract page content"
+            disabled={extracting}
+          >
+            {extracting ? (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Copy className="w-4 h-4" />
+            )}
+          </Button>
+
           {/* Settings button - Last position (rightmost) */}
           <Button
             onClick={handleSettingsClick}
@@ -361,17 +427,33 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing }:
 
       {/* MCP Installation Status Message */}
       {mcpInstallStatus && (
-        <div 
+        <div
           className={`
             fixed top-14 left-1/2 transform -translate-x-1/2 z-50
             px-4 py-2 rounded-lg shadow-lg
-            ${mcpInstallStatus.type === 'error' 
-              ? 'bg-red-500 text-white' 
+            ${mcpInstallStatus.type === 'error'
+              ? 'bg-red-500 text-white'
               : 'bg-green-500 text-white'}
             animate-in fade-in slide-in-from-top-2 duration-300
           `}
         >
           <p className="text-sm font-medium">{mcpInstallStatus.message}</p>
+        </div>
+      )}
+
+      {/* Extract Page Content Status Message */}
+      {extractStatus && (
+        <div
+          className={`
+            fixed top-14 left-1/2 transform -translate-x-1/2 z-50
+            px-4 py-2 rounded-lg shadow-lg
+            ${extractStatus.type === 'error'
+              ? 'bg-red-500 text-white'
+              : 'bg-[#fbf0e8] text-[#d97706] border border-[#fed7aa]'}
+            animate-in fade-in slide-in-from-top-2 duration-300
+          `}
+        >
+          <p className="text-sm font-medium">{extractStatus.message}</p>
         </div>
       )}
 
