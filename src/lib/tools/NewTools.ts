@@ -744,8 +744,13 @@ export function createExtractTool(
       task: z
         .string()
         .describe("Description of what data to extract from the page"),
+      extractionMode: z
+        .enum(['text', 'text-with-links'])
+        .optional()
+        .default('text')
+        .describe("Extraction mode: 'text' for content only, 'text-with-links' to include links section"),
     }),
-    func: async ({ format, task }: { format: any; task: string }) => {
+    func: async ({ format, task, extractionMode = 'text' }: { format: any; task: string; extractionMode?: 'text' | 'text-with-links' }) => {
       try {
         context.incrementMetric("toolCalls");
         
@@ -757,18 +762,31 @@ export function createExtractTool(
         // Get current page from browserContext
         const page = await context.browserContext.getCurrentPage();
 
-        // Get all page content using simplified string methods
+        // Get page details
         const pageDetails = await page.getPageDetails();
-        const textContent = await page.getTextSnapshotString();
-        const linksContent = await page.getLinksSnapshotString();
 
-        // Merge all content into comprehensive context
-        const pageContext = {
-          url: pageDetails.url,
-          title: pageDetails.title,
-          text: textContent || "No text content",
-          links: linksContent || "No links found",
-        };
+        // Get hierarchical text content
+        const hierarchicalContent = await page.getHierarchicalText();
+
+        // Get links only if extraction mode includes links
+        const linksContent = extractionMode === 'text-with-links'
+          ? await page.getLinksSnapshotString()
+          : null;
+
+        // Determine content limit based on message manager's max tokens
+        const maxTokens = context.messageManager.getMaxTokens();
+        let contentCharLimit: number;
+
+        if (maxTokens >= 1000000) {
+          // 1M+ tokens: no limit
+          contentCharLimit = Number.MAX_SAFE_INTEGER;
+        } else if (maxTokens >= 200000) {
+          // 200K+ tokens: 100K char limit
+          contentCharLimit = 100000;
+        } else {
+          // Less than 200K tokens: 16K char limit (≈4K tokens)
+          contentCharLimit = 16000;
+        }
 
         // Get LLM instance
         const llm = await context.getLLM({
@@ -780,26 +798,36 @@ export function createExtractTool(
         const systemPrompt =
           "You are a data extraction specialist. Extract the requested information from the page content and return it in the exact JSON structure provided.";
 
-        const userPrompt = `Task: ${task}
+        // Prepare content with truncation if needed
+        const preparedContent = contentCharLimit === Number.MAX_SAFE_INTEGER ||
+                                hierarchicalContent.length <= contentCharLimit
+          ? hierarchicalContent
+          : hierarchicalContent.substring(0, contentCharLimit) + "\n...[truncated]";
+
+        // Build prompt with hierarchical content
+        let userPrompt = `Task: ${task}
 
 Desired output format:
 ${JSON.stringify(format, null, 2)}
 
 Page content:
-URL: ${pageContext.url}
-Title: ${pageContext.title}
+URL: ${pageDetails.url}
+Title: ${pageDetails.title}
 
-Text content:
-${pageContext.text.substring(0, 8000)}${pageContext.text.length > 8000 ? "...[truncated]" : ""}
+Content (hierarchical structure with tab indentation):
+${preparedContent}`;
 
-Links found:
-${pageContext.links.substring(0, 2000)}${pageContext.links.length > 2000 ? "\n...[more links]" : ""}
+        // Add links section if requested
+        if (extractionMode === 'text-with-links' && linksContent) {
+          userPrompt += `\n\nLinks found:
+${linksContent.substring(0, 2000)}${linksContent.length > 2000 ? "\n...[more links]" : ""}`;
+        }
 
-Extract the requested data and return it matching the exact structure of the format provided.`;
+        userPrompt += `\n\nExtract the requested data and return it matching the exact structure of the format provided.`;
 
         Logging.log(
           "NewAgent",
-          `Extracting data with format: ${JSON.stringify(format)}`,
+          `Extracting data with format: ${JSON.stringify(format)}, mode: ${extractionMode}`,
           "info",
         );
 

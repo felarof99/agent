@@ -4,7 +4,6 @@ import { Execution } from '@/lib/execution/Execution'
 import { Logging } from '@/lib/utils/Logging'
 import { PubSub } from '@/lib/pubsub'
 import { BrowserContext } from '@/lib/browser/BrowserContext'
-import { getBrowserOSAdapter } from '@/lib/browser/BrowserOSAdapter'
 
 /**
  * Handles execution-related messages:
@@ -263,12 +262,8 @@ export class ExecutionHandler {
 
       Logging.log('ExecutionHandler', `Found active tab: ${tabId}`)
 
-      // Get accessibility tree for the tab
-      const adapter = getBrowserOSAdapter()
-      const tree = await adapter.getAccessibilityTree(tabId)
-
-      // Format as JSON for now - will enhance later to extract actual text
-      const pageContent = JSON.stringify(tree, null, 2)
+      // Get hierarchical text representation
+      const pageContent = await page.getHierarchicalText()
 
       // Send success response with the content
       port.postMessage({

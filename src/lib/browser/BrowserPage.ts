@@ -16,6 +16,37 @@ import { ElementFormatter } from "./ElementFormatter";
 const FULL_FORMATTER = new ElementFormatter(false); // Full format
 const SIMPLIFIED_FORMATTER = new ElementFormatter(true); // Simplified format
 
+
+// Roles that contain meaningful content for extraction
+const EXTRACTABLE_ROLES = new Set([
+  // Text content
+  'staticText',
+  'heading',
+  'paragraph',
+
+  // Interactive elements
+  'link',
+  'button',
+  'textField',
+  'checkBox',
+  'comboBoxSelect',
+
+  // Labels and descriptions
+  'labelText',
+  'menuListOption',
+  'toggleButton',
+
+  // Informational
+  'status',
+  'alert',
+  'image',  // May have alt text in name
+
+  // High-level structure (for context)
+  'rootWebArea',
+  'navigation',
+  'main'
+]);
+
 // Schema for interactive elements
 export const InteractiveElementSchema = z.object({
   nodeId: z.number(), // Chrome BrowserOS node ID (sequential index)
@@ -260,6 +291,72 @@ export class BrowserPage {
   async getHierarchicalStructure(): Promise<string | null> {
     const snapshot = await this._getSnapshot();
     return snapshot?.hierarchicalStructure || null;
+  }
+
+  /**
+   * Get hierarchical text representation of the page
+   * Returns text content with tab indentation showing structure
+   */
+  async getHierarchicalText(): Promise<string> {
+    // Get accessibility tree from BrowserOS adapter
+    const tree = await this._browserOS.getAccessibilityTree(this._tabId);
+
+    // Extract text with hierarchy
+    return this._extractHierarchicalText(tree);
+  }
+
+  /**
+   * Private method to extract text from accessibility tree with tab indentation
+   * Uses iterative DFS to build a hierarchical text representation
+   */
+  private _extractHierarchicalText(tree: chrome.browserOS.AccessibilityTree): string {
+    // Validate tree structure
+    if (!tree || !tree.nodes || !tree.rootId) {
+      Logging.log("BrowserPage", "Invalid accessibility tree structure", "warning");
+      return "";
+    }
+
+    const lines: string[] = [];
+
+    // Stack for iterative DFS
+    const stack: Array<{ nodeId: number; depth: number }> = [];
+    stack.push({ nodeId: tree.rootId, depth: 0 });
+
+    // Process nodes using DFS
+    while (stack.length > 0) {
+      const { nodeId, depth } = stack.pop()!;
+
+      // Get node (keys are strings)
+      const node = tree.nodes[String(nodeId)];
+      if (!node) continue;
+
+      // Add text line if node has extractable role and name
+      if (EXTRACTABLE_ROLES.has(node.role) && node.name) {
+        const indentation = '\t'.repeat(depth);
+        lines.push(`${indentation}${node.name}`);
+      }
+
+      // Always traverse children to maintain hierarchy
+      // Add in reverse order for correct DFS traversal
+      if (node.childIds && Array.isArray(node.childIds)) {
+        for (let i = node.childIds.length - 1; i >= 0; i--) {
+          stack.push({
+            nodeId: node.childIds[i],
+            depth: depth + 1
+          });
+        }
+      }
+    }
+
+    const result = lines.join('\n');
+
+    Logging.log(
+      "BrowserPage",
+      `Extracted hierarchical text: ${lines.length} lines`,
+      "info"
+    );
+
+    return result;
   }
 
   // ============= Actions =============
