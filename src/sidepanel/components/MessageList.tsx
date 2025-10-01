@@ -30,12 +30,16 @@ interface MessageListProps {
 }
 
 // Example prompts - showcasing BrowserOS capabilities
-const EXAMPLES = [
-  "Visit BrowserOS launch and upvote ❤️",
-  // "Find top-rated headphones under $200",
-  "Go to GitHub and star BrowserOS ⭐",
-  // "Turn this article into a LinkedIn post",
-  "Open amazon.com and order Sensodyne toothpaste 🪥",
+const CHAT_EXAMPLES = [
+  'Summarize this page',
+  'What topics does this page talk about?',
+  'Extract comments from this page',
+]
+
+const AGENT_EXAMPLES = [
+  'Visit BrowserOS launch and upvote ❤️',
+  'Go to GitHub and star BrowserOS ⭐',
+  'Open amazon.com and order Sensodyne toothpaste 🪥',
 ]
 
 // Animation constants  
@@ -50,10 +54,10 @@ export function MessageList({ messages, isProcessing = false, onScrollStateChang
   const { trackFeature } = useAnalytics()
   const { sendMessage } = useSidePanelPortMessaging()
   const { upsertMessage, setProcessing } = useChatStore()
-  const { chatMode, setChatMode } = useSettingsStore()
+  const { chatMode } = useSettingsStore()
   const { getContextTabs, clearSelectedTabs } = useTabsStore()
   const [, setIsAtBottom] = useState(true)
-  const [currentExamples] = useState<string[]>(EXAMPLES)
+  const currentExamples = useMemo<string[]>(() => (chatMode ? CHAT_EXAMPLES : AGENT_EXAMPLES), [chatMode])
   const [isAnimating] = useState(false)
   const [displayCount] = useState(DEFAULT_DISPLAY_COUNT)
   
@@ -156,9 +160,6 @@ export function MessageList({ messages, isProcessing = false, onScrollStateChang
     // Prevent any event propagation that might interfere
     trackFeature('example_prompt', { prompt })
 
-    // Switch to Agent Mode for example runs
-    try { setChatMode(false) } catch { /* no-op */ }
-
     // Mirror ChatInput.submitTask behavior
     const msgId = `user_${Date.now()}`
     upsertMessage({ msgId, role: 'user', content: prompt, ts: Date.now() })
@@ -172,7 +173,7 @@ export function MessageList({ messages, isProcessing = false, onScrollStateChang
       query: prompt.trim(),
       tabIds,
       source: 'sidepanel',
-      chatMode: false
+      chatMode
     })
 
     // Clear selected tabs after sending (mirror ChatInput)
@@ -195,10 +196,10 @@ export function MessageList({ messages, isProcessing = false, onScrollStateChang
             <h2 className="text-3xl font-bold text-muted-foreground animate-fade-in-up text-center px-2 leading-tight">
               <div className="flex items-center justify-center gap-2">
                 <span>Your</span>
-                <span className="text-brand">Agentic</span>
+                <span className="text-brand">{chatMode ? 'Chat' : 'Agentic'}</span>
               </div>
               <div className="flex items-center justify-center gap-2 mt-1">
-                <span>web assistant</span>
+                <span>assistant</span>
                 <img 
                   src="/assets/browseros.svg" 
                   alt="BrowserOS" 
