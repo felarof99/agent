@@ -213,47 +213,49 @@ export function TeachModeHome() {
       {/* Bottom bar — match Chat/Agent input shell - ALWAYS PRESENT */}
       <div className="relative bg-[hsl(var(--header))] border-t border-border/50 px-3 py-3 pb-4 flex-shrink-0 overflow-hidden z-20">
         <div className="relative">
-          <div className="relative flex items-end w-full transition-all duration-300 ease-out">
-            <div className="relative flex-1">
-              {/* Faux textarea surface */}
-              <div
-                aria-label="Teach mode quick tips"
-                className={cn(
-                  'min-h-[100px] pr-44 pb-14 text-sm w-full',
-                  'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
-                  'hover:border-brand/50 hover:bg-background/90 hover:shadow-md',
-                  'rounded-2xl shadow-sm px-4 py-3',
-                  'transition-all duration-300 ease-out'
-                )}
-              >
-                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-                  How teach mode works
+          {/* Faux textarea surface with responsive layout */}
+          <div
+            aria-label="Teach mode quick tips"
+            className={cn(
+              'text-sm w-full',
+              'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
+              'hover:border-brand/50 hover:bg-background/90 hover:shadow-md',
+              'rounded-2xl shadow-sm px-4 py-3',
+              'transition-all duration-300 ease-out',
+              'flex flex-col min-[450px]:flex-row min-[450px]:items-end gap-4'
+            )}
+          >
+            {/* Tips content */}
+            <div className="flex-1">
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                How teach mode works
+              </div>
+              <div className="space-y-2 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground flex-shrink-0">1</span>
+                  <span className="text-xs min-[450px]:text-sm">Record your actions step by step</span>
                 </div>
-                <div className="space-y-2 text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">1</span>
-                    <span>Record your actions step by step</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">2</span>
-                    <span>Narrate what you're doing as you click, type</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">3</span>
-                    <span>Run your workflow anytime with one click</span>
-                  </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground flex-shrink-0">2</span>
+                  <span className="text-xs min-[450px]:text-sm">Narrate what you're doing as you click, type</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground flex-shrink-0">3</span>
+                  <span className="text-xs min-[450px]:text-sm">Run your workflow anytime with one click</span>
                 </div>
               </div>
+            </div>
 
-              {/* CTA button — bottom-right, rounded like send */}
+            {/* CTA button — responsive position */}
+            <div className="flex justify-center min-[450px]:justify-start">
               <Button
                 onClick={handleCreateNew}
                 size="sm"
-                className="absolute right-3 bottom-4 h-9 rounded-full px-4 bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center gap-2"
-                aria-label="Create new workflow"
+                className="h-9 rounded-full px-4 bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center gap-2 whitespace-nowrap w-full min-[450px]:w-auto"
+                aria-label="Teach new workflow"
               >
                 <Wand2 className="w-4 h-4" />
-                Create New Workflow
+                Teach new workflow
               </Button>
             </div>
           </div>
