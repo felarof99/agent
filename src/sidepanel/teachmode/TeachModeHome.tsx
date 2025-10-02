@@ -74,228 +74,182 @@ export function TeachModeHome() {
 
   return (
     <div className="h-full flex flex-col bg-background-alt overflow-hidden">
-      {hasWorkflows ? (
-        <>
-          {/* Header Section - Compact when workflows exist */}
-          <div className="flex flex-col items-center px-6 pt-6 pb-5 border-b border-border">
-            {/* BrowserOS Branding */}
-            <div className="flex items-center justify-center mb-3">
-              <h2 className="text-2xl font-bold text-muted-foreground flex items-center gap-2 text-center">
+      {/* Main centered content - ALWAYS CENTERED */}
+      <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-8 text-center">
+        <div className="relative z-0 flex flex-col items-center justify-center min-h-0 max-w-lg w-full">
+
+          {/* Title Section - Always visible */}
+          <div className="flex flex-col items-center justify-center -mt-4">
+            <h2 className="text-3xl font-bold text-muted-foreground animate-fade-in-up text-center px-2 leading-tight">
+              <div className="flex items-center justify-center gap-2">
                 <span>Teach</span>
                 <span className="text-brand">BrowserOS</span>
                 <img
                   src="/assets/browseros.svg"
                   alt="BrowserOS"
-                  className="w-6 h-6 inline-block ml-1"
+                  className="w-8 h-8 inline-block align-middle animate-fade-in-up"
                 />
-              </h2>
-            </div>
-
-            {/* Subtitle */}
-            <p className="text-base text-muted-foreground mb-4">
+              </div>
+            </h2>
+            <p className="text-lg text-muted-foreground mt-4">
               Show it once, automate forever
             </p>
-
-            {/* Create Button */}
-            <Button
-              onClick={handleCreateNew}
-              size="default"
-              variant="outline"
-              className="gap-2 border-[hsl(var(--brand))] text-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))] hover:text-white transition-colors"
-            >
-              <Wand2 className="w-4 h-4" />
-              Create New Workflow
-            </Button>
           </div>
 
-          {/* Workflows Section - Scrollable */}
-          <div className="flex-1 overflow-y-auto px-6 py-6">
-            <div className="space-y-4 pb-4">
-              {/* Workflows Header */}
-              <div className="flex items-center justify-between px-1">
-                <h3 className="text-sm font-medium text-foreground">
-                  Your Workflows
-                </h3>
-                <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                  {recordings.length}
-                </span>
-              </div>
+          {/* Question */}
+          <div className="mb-8 mt-2">
+            <h3 className="text-lg font-semibold text-foreground mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+              What would you like to do?
+            </h3>
 
-              {/* Simplified Workflow Cards */}
-              <div className="space-y-3">
-                {recordings.map((recording) => (
-                  <div
-                    key={recording.id}
-                    onClick={() => handleRecordingClick(recording)}
-                    className={cn(
-                      "group relative flex items-center gap-3 p-4 rounded-lg border border-border",
-                      "bg-card hover:bg-muted hover:border-border hover:shadow-sm",
-                      "transition-all duration-200 cursor-pointer"
-                    )}
-                  >
-                    {/* Icon */}
-                    <div className="text-2xl flex-shrink-0">
-                      {recording.icon}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h4 className="text-sm font-medium text-foreground truncate">
-                        {recording.name}
-                      </h4>
-                      <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>{recording.steps.length} steps</span>
-                        {recording.runCount > 0 && (
-                          <>
-                            <span>•</span>
-                            <span>Run {recording.runCount} times</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => handleRun(recording.id, e)}
-                        className="h-8 w-8 p-0 border-[hsl(var(--brand))] text-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))] hover:text-white transition-colors"
-                      >
-                        <Play className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={(e) => handleDelete(recording.id, e)}
-                        className="h-8 w-8 p-0 border-destructive text-destructive hover:bg-destructive hover:text-white transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
+            {/* Content area - conditionally render workflows or examples */}
+            <div className="flex flex-col items-center max-w-lg w-full space-y-3">
+              {hasWorkflows ? (
+                <>
+                  {/* Your Workflows label */}
+                  <div className="w-full flex items-center justify-between px-2 mb-2">
+                    <span className="text-sm font-medium text-muted-foreground">Your Workflows</span>
+                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                      {recordings.length}
+                    </span>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        /* Empty state - matches Agent Mode layout */
-        <>
-          {/* Main centered content */}
-          <div className="flex-1 overflow-y-auto flex flex-col items-center justify-center p-8 text-center">
-            <div className="relative z-0 flex flex-col items-center justify-center min-h-0 max-w-lg w-full">
 
-              {/* Title Section */}
-              <div className="flex flex-col items-center justify-center -mt-4">
-                <h2 className="text-3xl font-bold text-muted-foreground animate-fade-in-up text-center px-2 leading-tight">
-                  <div className="flex items-center justify-center gap-2">
-                    <span>Teach</span>
-                    <span className="text-brand">BrowserOS</span>
-                    <img
-                      src="/assets/browseros.svg"
-                      alt="BrowserOS"
-                      className="w-8 h-8 inline-block align-middle animate-fade-in-up"
-                    />
-                  </div>
-                </h2>
-                <p className="text-lg text-muted-foreground mt-4">
-                  Show it once, automate forever
-                </p>
-              </div>
-
-              {/* Question */}
-              <div className="mb-8 mt-2">
-                <h3 className="text-lg font-semibold text-foreground mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-                  What would you like to do?
-                </h3>
-
-                {/* Popular Workflows as buttons */}
-                <div className="flex flex-col items-center max-w-lg w-full space-y-3">
-                  {[
-                    { icon: "📧", text: "Unsubscribe from emails" },
-                    { icon: "📊", text: "Extract data from websites" },
-                    { icon: "🛍️", text: "Find best deals online" }
-                  ].map((workflow, index) => (
-                    <Button
-                      key={index}
-                      type="button"
-                      variant="outline"
-                      className="group relative text-sm h-auto py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter"
-                      onClick={() => {
-                        // Future: This could trigger a pre-built workflow template
-                        handleCreateNew()
-                      }}
+                  {/* Workflow Cards - styled like example buttons */}
+                  {recordings.map((recording) => (
+                    <div
+                      key={recording.id}
+                      className="group relative text-sm h-auto py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter rounded-lg cursor-pointer"
+                      onClick={() => handleRecordingClick(recording)}
                     >
                       {/* Animated background */}
                       <div className="absolute inset-0 bg-gradient-to-r from-brand/0 via-brand/5 to-brand/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
-                      {/* Content */}
-                      <div className="relative z-10 flex items-center justify-center gap-2 font-medium text-foreground group-hover:text-brand transition-colors duration-300">
-                        <span className="text-base">{workflow.icon}</span>
-                        <span>{workflow.text}</span>
+                      {/* Content with actions */}
+                      <div className="relative z-10 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{recording.icon}</span>
+                          <div className="text-left">
+                            <div className="font-medium text-foreground group-hover:text-brand transition-colors duration-300">
+                              {recording.name}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {recording.steps.length} steps
+                              {recording.runCount > 0 && ` • Run ${recording.runCount} times`}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => handleRun(recording.id, e)}
+                            className="h-7 w-7 p-0 hover:bg-brand hover:text-white"
+                          >
+                            <Play className="w-3 h-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => handleDelete(recording.id, e)}
+                            className="h-7 w-7 p-0 hover:bg-destructive hover:text-white"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
 
                       {/* Glow effect */}
                       <div className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-brand/20 to-transparent"></div>
-                    </Button>
+                    </div>
                   ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom bar — match Chat/Agent input shell */}
-          <div className="relative bg-[hsl(var(--header))] border-t border-border/50 px-3 py-3 pb-4 flex-shrink-0 overflow-hidden z-20">
-            <div className="relative">
-              <div className="relative flex items-end w-full transition-all duration-300 ease-out">
-                <div className="relative flex-1">
-                  {/* Faux textarea surface */}
-                  <div
-                    aria-label="Teach mode quick tips"
-                    className={cn(
-                      'min-h-[100px] pr-44 text-sm w-full',
-                      'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
-                      'hover:border-brand/50 hover:bg-background/90 hover:shadow-md',
-                      'rounded-2xl shadow-sm px-4 py-3',
-                      'transition-all duration-300 ease-out'
-                    )}
-                  >
-                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-                      How teach mode works
-                    </div>
-                    <div className="space-y-2 text-muted-foreground">
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">1</span>
-                        <span>Record your actions step by step</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">2</span>
-                        <span>Narrate what you're doing as you click, type</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">3</span>
-                        <span>Run your workflow anytime with one click</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* CTA button — bottom-right, rounded like send */}
+                </>
+              ) : (
+                /* Example Workflows - when empty */
+                [
+                  { icon: "📧", text: "Unsubscribe from emails" },
+                  { icon: "📊", text: "Extract data from websites" },
+                  { icon: "🛍️", text: "Find best deals online" }
+                ].map((workflow, index) => (
                   <Button
-                    onClick={handleCreateNew}
-                    size="sm"
-                    className="absolute right-3 bottom-4 h-9 rounded-full px-4 bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center gap-2"
-                    aria-label="Create new workflow"
+                    key={index}
+                    type="button"
+                    variant="outline"
+                    className="group relative text-sm h-auto py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter"
+                    onClick={() => {
+                      // Future: This could trigger a pre-built workflow template
+                      handleCreateNew()
+                    }}
                   >
-                    <Wand2 className="w-4 h-4" />
-                    Create New Workflow
+                    {/* Animated background */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-brand/0 via-brand/5 to-brand/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+
+                    {/* Content */}
+                    <div className="relative z-10 flex items-center justify-center gap-2 font-medium text-foreground group-hover:text-brand transition-colors duration-300">
+                      <span className="text-base">{workflow.icon}</span>
+                      <span>{workflow.text}</span>
+                    </div>
+
+                    {/* Glow effect */}
+                    <div className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-brand/20 to-transparent"></div>
                   </Button>
-                </div>
-              </div>
+                ))
+              )}
             </div>
           </div>
-        </>
-      )}
+        </div>
+      </div>
+
+      {/* Bottom bar — match Chat/Agent input shell - ALWAYS PRESENT */}
+      <div className="relative bg-[hsl(var(--header))] border-t border-border/50 px-3 py-3 pb-4 flex-shrink-0 overflow-hidden z-20">
+        <div className="relative">
+          <div className="relative flex items-end w-full transition-all duration-300 ease-out">
+            <div className="relative flex-1">
+              {/* Faux textarea surface */}
+              <div
+                aria-label="Teach mode quick tips"
+                className={cn(
+                  'min-h-[100px] pr-44 text-sm w-full',
+                  'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
+                  'hover:border-brand/50 hover:bg-background/90 hover:shadow-md',
+                  'rounded-2xl shadow-sm px-4 py-3',
+                  'transition-all duration-300 ease-out'
+                )}
+              >
+                <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                  How teach mode works
+                </div>
+                <div className="space-y-2 text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">1</span>
+                    <span>Record your actions step by step</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">2</span>
+                    <span>Narrate what you're doing as you click, type</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">3</span>
+                    <span>Run your workflow anytime with one click</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA button — bottom-right, rounded like send */}
+              <Button
+                onClick={handleCreateNew}
+                size="sm"
+                className="absolute right-3 bottom-4 h-9 rounded-full px-4 bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center gap-2"
+                aria-label="Create new workflow"
+              >
+                <Wand2 className="w-4 h-4" />
+                Create New Workflow
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Browser upgrade notice - Bottom */}
       {showUpgradeNotice && (
