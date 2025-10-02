@@ -262,16 +262,16 @@ export function TeachModeHome() {
                     )}
                   >
                     <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
-                      How it works
+                      How teach mode works
                     </div>
                     <div className="space-y-2 text-muted-foreground">
                       <div className="flex items-center gap-2">
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">1</span>
-                        <span>Record your actions on any website</span>
+                        <span>Record your actions step by step</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">2</span>
-                        <span>Narrate what you're doing as you click</span>
+                        <span>Narrate what you're doing as you click, type</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">3</span>
