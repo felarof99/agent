@@ -82,8 +82,11 @@ export function TeachModeHome() {
           <div className="flex flex-col items-center justify-center -mt-4">
             <h2 className="text-3xl font-bold text-muted-foreground animate-fade-in-up text-center px-2 leading-tight">
               <div className="flex items-center justify-center gap-2">
-                <span>Teach</span>
-                <span className="text-brand">BrowserOS</span>
+                <span>Your</span>
+                <span className="text-brand">copycat</span>
+              </div>
+              <div className="flex items-center justify-center gap-2 mt-1">
+                <span>assistant</span>
                 <img
                   src="/assets/browseros.svg"
                   alt="BrowserOS"
@@ -91,15 +94,12 @@ export function TeachModeHome() {
                 />
               </div>
             </h2>
-            <p className="text-lg text-muted-foreground mt-4">
-              Show it once, automate forever
-            </p>
           </div>
 
           {/* Question */}
           <div className="mb-8 mt-2">
             <h3 className="text-lg font-semibold text-foreground mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              What would you like to do?
+              Show BrowserOS your workflow, automate forever
             </h3>
 
             {/* Content area - conditionally render workflows or examples */}
@@ -168,15 +168,15 @@ export function TeachModeHome() {
               ) : (
                 /* Example Workflows - when empty */
                 [
-                  { icon: "📧", text: "Unsubscribe from emails" },
-                  { icon: "📊", text: "Extract data from websites" },
-                  { icon: "🛍️", text: "Find best deals online" }
-                ].map((workflow, index) => (
+                  { emoji: '📧', text: 'Unsubscribe from emails' },
+                  { emoji: '📊', text: 'Extract data from websites' },
+                  { emoji: '🛍️', text: 'Find best deals online' }
+                ].map((example, index) => (
                   <Button
                     key={index}
                     type="button"
                     variant="outline"
-                    className="group relative text-sm h-auto py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter"
+                    className="group relative text-sm h-auto min-h-[48px] py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter"
                     onClick={() => {
                       // Future: This could trigger a pre-built workflow template
                       handleCreateNew()
@@ -186,10 +186,9 @@ export function TeachModeHome() {
                     <div className="absolute inset-0 bg-gradient-to-r from-brand/0 via-brand/5 to-brand/0 transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
 
                     {/* Content */}
-                    <div className="relative z-10 flex items-center justify-center gap-2 font-medium text-foreground group-hover:text-brand transition-colors duration-300">
-                      <span className="text-base">{workflow.icon}</span>
-                      <span>{workflow.text}</span>
-                    </div>
+                    <span className="relative z-10 font-medium text-foreground group-hover:text-brand transition-colors duration-300">
+                      {example.text} <span className="ml-1">{example.emoji}</span>
+                    </span>
 
                     {/* Glow effect */}
                     <div className="absolute inset-0 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-brand/20 to-transparent"></div>

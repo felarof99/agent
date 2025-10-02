@@ -232,7 +232,7 @@ export function MessageList({ messages, isProcessing = false, onScrollStateChang
                   <Button
                     type="button"
                     variant="outline"
-                    className="group relative text-sm h-auto py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter"
+                    className="group relative text-sm h-auto min-h-[48px] py-3 px-4 whitespace-normal bg-background/50 backdrop-blur-sm border-2 border-brand/30 hover:border-brand hover:bg-brand/5 smooth-hover smooth-transform hover:scale-105 hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none overflow-hidden w-full message-enter"
                     onClick={(e: React.MouseEvent) => {
                       e.preventDefault()
                       e.stopPropagation()
