@@ -277,9 +277,9 @@ export class LocalAgent {
     const taskLower = task.toLowerCase();
 
     // BrowserOS Launch Upvote Task
-    if (taskLower === "visit browseros launch and upvote ❤️") {
+    if (taskLower === "read about vision and upvote ❤️") {
       return {
-        task: "Visit BrowserOS launch and upvote",
+        task: "Read about vision and upvote",
         metadata: {
           executionMode: 'predefined' as const,
           predefinedPlan: {
@@ -290,16 +290,16 @@ export class LocalAgent {
               "Navigate to https://dub.sh/browseros-launch",
               "Find and click the upvote button on the page using visual_click",
               "Use celebration tool to show confetti animation"
-            ]  
+            ]
           }
         }
       };
     }
 
     // GitHub Star Task
-    if (taskLower === "go to github and star browseros ⭐") {
+    if (taskLower === "support browseros on github ⭐") {
       return {
-        task: "Star the BrowserOS GitHub repository",
+        task: "Support BrowserOS on GitHub",
         metadata: {
           executionMode: 'predefined' as const,
           predefinedPlan: {
