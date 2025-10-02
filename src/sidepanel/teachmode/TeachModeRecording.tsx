@@ -189,10 +189,10 @@ export function TeachModeRecording() {
             {/* Main Message */}
             <div className="text-center space-y-3 mb-12">
               <h2 className="text-2xl font-semibold text-muted-foreground">
-                Ready to show <span className="text-[hsl(var(--brand))]">BrowserOS</span> a workflow
+                Ready to show <span className="text-[hsl(var(--brand))]">BrowserOS</span> your workflow?
               </h2>
               <p className="text-base text-muted-foreground">
-                Press start when you're ready. We'll capture every action
+                Press start when you're ready. We'll capture your actions
                 <br />and your narration in real time.
               </p>
             </div>
@@ -202,7 +202,7 @@ export function TeachModeRecording() {
               <div className="flex items-start gap-3 p-4 rounded-lg bg-muted border border-border">
                 <Mic className="w-5 h-5 text-[hsl(var(--brand))] mt-0.5 flex-shrink-0" />
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Narrate intent</p>
+                  <p className="text-sm font-medium text-foreground">Narrate your intent</p>
                   <p className="text-xs text-muted-foreground">
                     Speak as you go so the agent learns context
                   </p>
@@ -214,7 +214,7 @@ export function TeachModeRecording() {
                   <div className="w-2 h-2 rounded-full bg-[hsl(var(--brand))]" />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">Move naturally</p>
+                  <p className="text-sm font-medium text-foreground">Act naturally</p>
                   <p className="text-xs text-muted-foreground">
                     Pauses and rethinks are totally fine
                   </p>
@@ -226,7 +226,7 @@ export function TeachModeRecording() {
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-foreground">Stop anytime</p>
                   <p className="text-xs text-muted-foreground">
-                    We'll process everything you captured
+                    We'll process everything you captured and create a repeatable workflow!
                   </p>
                 </div>
               </div>
