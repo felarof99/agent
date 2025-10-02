@@ -219,7 +219,7 @@ export function TeachModeHome() {
               <div
                 aria-label="Teach mode quick tips"
                 className={cn(
-                  'min-h-[100px] pr-44 text-sm w-full',
+                  'min-h-[100px] pr-44 pb-14 text-sm w-full',
                   'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
                   'hover:border-brand/50 hover:bg-background/90 hover:shadow-md',
                   'rounded-2xl shadow-sm px-4 py-3',
