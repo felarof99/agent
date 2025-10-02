@@ -203,6 +203,15 @@ export function TeachModeHome() {
       {/* Bottom bar — match Chat/Agent input shell - ALWAYS PRESENT */}
       <div className="relative bg-[hsl(var(--header))] border-t border-border/50 px-3 py-3 pb-4 flex-shrink-0 overflow-hidden z-20">
         <div className="relative">
+          {/* Upgrade notice overlays on top of the box without shifting layout */}
+          {showUpgradeNotice && (
+            <div className="absolute left-0 right-0 top-0 px-3 pb-2 z-30">
+              <BrowserUpgradeNotice
+                currentVersion={browserVersion}
+                onDismiss={handleDismissUpgradeNotice}
+              />
+            </div>
+          )}
           <div className="relative flex items-end w-full transition-all duration-300 ease-out">
             <div className="relative flex-1">
               {/* Faux textarea surface */}
@@ -250,15 +259,7 @@ export function TeachModeHome() {
         </div>
       </div>
 
-      {/* Browser upgrade notice - Bottom */}
-      {showUpgradeNotice && (
-        <div className="px-6 pb-4 pt-2">
-          <BrowserUpgradeNotice
-            currentVersion={browserVersion}
-            onDismiss={handleDismissUpgradeNotice}
-          />
-        </div>
-      )}
+      {/* Upgrade notice now rendered as overlay above; no separate block here */}
     </div>
   )
 }
