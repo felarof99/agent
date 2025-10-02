@@ -247,23 +247,21 @@ export function TeachModeHome() {
 
           {/* Bottom Material Card - replaces input area */}
           <div className="px-6 pb-4">
-            <div className="bg-card border-2 border-border rounded-lg p-4 shadow-sm flex items-center justify-between">
-              {/* How it works - horizontal layout */}
-              <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                <span className="font-medium uppercase text-xs tracking-wider">How it works</span>
-                <div className="flex gap-5">
-                  <span className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">1</span>
-                    <span>Record</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">2</span>
-                    <span>Narrate</span>
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">3</span>
-                    <span>Run</span>
-                  </span>
+            <div className="bg-card border-2 border-border rounded-lg px-4 py-3 shadow-sm flex items-center justify-between min-h-[120px]">
+              {/* How it works - vertical layout */}
+              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+                <span className="font-medium uppercase text-xs tracking-wider mb-1">How it works</span>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">1</span>
+                  <span>Record your actions on any website</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">2</span>
+                  <span>Narrate what you're doing as you click</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">3</span>
+                  <span>Run your workflow anytime with one click</span>
                 </div>
               </div>
 
@@ -271,7 +269,7 @@ export function TeachModeHome() {
               <Button
                 onClick={handleCreateNew}
                 size="default"
-                className="gap-2 bg-brand text-white hover:bg-brand/90 transition-colors"
+                className="gap-2 bg-brand text-white hover:bg-brand/90 transition-colors ml-6"
               >
                 <Wand2 className="w-4 h-4" />
                 Create New Workflow
