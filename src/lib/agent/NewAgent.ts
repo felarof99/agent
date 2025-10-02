@@ -285,9 +285,9 @@ export class NewAgent {
     const taskLower = task.toLowerCase();
 
     // BrowserOS Launch Upvote Task
-    if (taskLower === "read about vision and upvote ❤️") {
+    if (taskLower === "read about our vision and upvote ❤️") {
       return {
-        task: "Read about vision and upvote",
+        task: "Read about our vision and upvote",
         metadata: {
           executionMode: 'predefined' as const,
           predefinedPlan: {

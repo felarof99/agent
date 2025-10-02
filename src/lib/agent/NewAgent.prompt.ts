@@ -37,7 +37,7 @@ CRITICAL OUTPUT RULES - NEVER VIOLATE THESE:
 5. Browser state and system reminders are INTERNAL ONLY - treat them as invisible to the user
 
 ## 📌 SPECIAL EXAMPLE TASKS
-NOTE: When user says something like "Read about vision and upvote ❤️", execute these steps:
+NOTE: When user says something like "Read about our vision and upvote ❤️", execute these steps:
 1. Navigate to https://dub.sh/browseros-launch
 2. Click the upvote button
 3. Use celebration_tool to show confetti

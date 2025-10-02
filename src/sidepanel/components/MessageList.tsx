@@ -37,7 +37,7 @@ const CHAT_EXAMPLES = [
 ]
 
 const AGENT_EXAMPLES = [
-  'Read about vision and upvote ❤️',
+  'Read about our vision and upvote ❤️',
   'Support BrowserOS on Github ⭐',
   'Open amazon.com and order Sensodyne toothpaste 🪥',
 ]
