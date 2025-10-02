@@ -106,10 +106,15 @@ export function TeachModeHome() {
             <div className="flex flex-col items-center max-w-lg w-full space-y-3">
               {hasWorkflows ? (
                 <>
-                  {/* Your Workflows label */}
+                  {/* Your Taught Workflows label */}
                   <div className="w-full flex items-center justify-between px-2 mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Your Workflows</span>
-                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full text-muted-foreground">
+                    <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                      <span className="text-base">🎓</span>
+                      <span className="bg-gradient-to-r from-brand to-brand/70 bg-clip-text text-transparent">
+                        Your Taught Workflows
+                      </span>
+                    </span>
+                    <span className="text-xs bg-brand/20 px-2 py-0.5 rounded-full text-brand font-semibold">
                       {recordings.length}
                     </span>
                   </div>
@@ -126,15 +131,13 @@ export function TeachModeHome() {
 
                       {/* Content with actions */}
                       <div className="relative z-10 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{recording.icon}</span>
+                        <div className="flex items-center">
                           <div className="text-left">
                             <div className="font-medium text-foreground group-hover:text-brand transition-colors duration-300">
                               {recording.name}
                             </div>
                             <div className="text-xs text-muted-foreground mt-0.5">
                               {recording.steps.length} steps
-                              {recording.runCount > 0 && ` • Run ${recording.runCount} times`}
                             </div>
                           </div>
                         </div>
