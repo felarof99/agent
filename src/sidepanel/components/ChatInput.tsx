@@ -354,7 +354,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
               placeholder={getPlaceholder()}
               disabled={isProcessing}
               className={cn(
-                'min-h-[100px] max-h-[200px] resize-none pr-16 text-sm w-full',
+                'min-h-[100px] max-h-[220px] resize-none pr-16 text-sm w-full',
                 'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
                 'focus-visible:outline-none focus-visible:border-brand/60 focus-visible:shadow-lg focus-visible:shadow-brand/10',
                 'focus:outline-none focus:border-brand/60 focus:shadow-lg focus:shadow-brand/10',
@@ -420,7 +420,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
                 type="submit"
                 disabled={isProcessing || !input.trim()}
                 size="sm"
-                className="absolute right-3 bottom-4 h-8 w-8 p-0 rounded-full bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center justify-center"
+                className="absolute right-3 bottom-4 h-9 w-9 p-0 rounded-full bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center justify-center"
                 variant={'default'}
                 aria-label={'Send message'}
               >

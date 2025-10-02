@@ -245,35 +245,53 @@ export function TeachModeHome() {
             </div>
           </div>
 
-          {/* Bottom Material Card - replaces input area */}
-          <div className="px-6 pb-4">
-            <div className="bg-card border-2 border-border rounded-lg px-4 py-3 shadow-sm flex items-center justify-between min-h-[120px]">
-              {/* How it works - vertical layout */}
-              <div className="flex flex-col gap-1 text-sm text-muted-foreground">
-                <span className="font-medium uppercase text-xs tracking-wider mb-1">How it works</span>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">1</span>
-                  <span>Record your actions on any website</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">2</span>
-                  <span>Narrate what you're doing as you click</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">3</span>
-                  <span>Run your workflow anytime with one click</span>
+          {/* Bottom bar — match Chat/Agent input shell */}
+          <div className="relative bg-[hsl(var(--header))] border-t border-border/50 px-3 py-3 pb-4 flex-shrink-0 overflow-hidden z-20">
+            <div className="relative">
+              <div className="relative flex items-end w-full transition-all duration-300 ease-out">
+                <div className="relative flex-1">
+                  {/* Faux textarea surface */}
+                  <div
+                    aria-label="Teach mode quick tips"
+                    className={cn(
+                      'min-h-[100px] pr-44 text-sm w-full',
+                      'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
+                      'hover:border-brand/50 hover:bg-background/90 hover:shadow-md',
+                      'rounded-2xl shadow-sm px-4 py-3',
+                      'transition-all duration-300 ease-out'
+                    )}
+                  >
+                    <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                      How it works
+                    </div>
+                    <div className="space-y-2 text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">1</span>
+                        <span>Record your actions on any website</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">2</span>
+                        <span>Narrate what you're doing as you click</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-muted text-[11px] font-semibold text-foreground">3</span>
+                        <span>Run your workflow anytime with one click</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTA button — bottom-right, rounded like send */}
+                  <Button
+                    onClick={handleCreateNew}
+                    size="sm"
+                    className="absolute right-3 bottom-4 h-9 rounded-full px-4 bg-[hsl(var(--brand))] hover:bg-[hsl(var(--brand))]/90 text-white shadow-lg flex items-center gap-2"
+                    aria-label="Create new workflow"
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    Create New Workflow
+                  </Button>
                 </div>
               </div>
-
-              {/* Create button */}
-              <Button
-                onClick={handleCreateNew}
-                size="default"
-                className="gap-2 bg-brand text-white hover:bg-brand/90 transition-colors ml-6"
-              >
-                <Wand2 className="w-4 h-4" />
-                Create New Workflow
-              </Button>
             </div>
           </div>
         </>
