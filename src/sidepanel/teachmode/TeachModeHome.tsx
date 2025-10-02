@@ -171,9 +171,9 @@ export function TeachModeHome() {
               ) : (
                 /* Example Workflows - when empty */
                 [
-                  { emoji: '📧', text: 'Unsubscribe from emails' },
-                  { emoji: '📊', text: 'Extract data from websites' },
-                  { emoji: '🛍️', text: 'Find best deals online' }
+                  { emoji: '📧', text: 'Teach how to unsubscribe from promotional emails' },
+                  { emoji: '📊', text: 'Show data to extract from website and fill out a form' },
+                  { emoji: '🥳', text: 'Teach any other workflow that comes to your mind!' }
                 ].map((example, index) => (
                   <Button
                     key={index}
