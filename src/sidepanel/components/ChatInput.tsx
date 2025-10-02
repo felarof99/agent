@@ -354,7 +354,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
               placeholder={getPlaceholder()}
               disabled={isProcessing}
               className={cn(
-                'min-h-[100px] max-h-[220px] resize-none pr-16 text-sm w-full',
+                'min-h-[120px] max-h-[260px] resize-none pr-16 text-sm w-full',
                 'bg-background/80 backdrop-blur-sm border-2 border-brand/30',
                 'focus-visible:outline-none focus-visible:border-brand/60 focus-visible:shadow-lg focus-visible:shadow-brand/10',
                 'focus:outline-none focus:border-brand/60 focus:shadow-lg focus:shadow-brand/10',
@@ -364,7 +364,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
                 'transition-all duration-300 ease-out',
                  isProcessing && 'opacity-50 cursor-not-allowed bg-muted'
               )}
-              rows={3}
+              rows={4}
               aria-label="Chat message input"
               aria-describedby="input-hint"
                aria-invalid={isProcessing}
