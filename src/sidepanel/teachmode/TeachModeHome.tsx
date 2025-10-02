@@ -99,7 +99,7 @@ export function TeachModeHome() {
           {/* Question */}
           <div className="mb-8 mt-2">
             <h3 className="text-lg font-semibold text-foreground mb-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
-              Show BrowserOS your workflow, automate forever
+              What would you like to automate?
             </h3>
 
             {/* Content area - conditionally render workflows or examples */}
