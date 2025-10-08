@@ -30,7 +30,7 @@ export const MODELS_DATA: ModelsData = {
     { modelId: 'claude-3-5-haiku-20241022', contextLength: 200000 }
   ],
   google_gemini: [
-    { modelId: 'gemini-2.5-flash', contextLength: 1048576 }  // 1M context
+    { modelId: 'gemini-2.5-flash', contextLength: 1048576 },  // 1M context
     { modelId: 'gemini-2.5-pro', contextLength: 1048576 },  // 1M context
   ],
   openrouter: [
