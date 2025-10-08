@@ -369,3 +369,9 @@ declare namespace chrome.browserOS {
     callback: () => void,
   ): void;
 }
+declare namespace chrome {
+  namespace BrowserOS {
+    function getPrefs(keys: string[], callback: (prefs: Record<string, unknown>) => void): void;
+    function setPrefs(prefs: Record<string, unknown>, callback?: (success: boolean) => void): void;
+  }
+}
