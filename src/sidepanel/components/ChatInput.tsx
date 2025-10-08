@@ -380,7 +380,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
                   </span>
                   <button
                     type="button"
-                    className="ml-1 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-foreground/10 text-xs text-muted-foreground hover:text-foreground"
+                    className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full hover:bg-foreground/10 text-sm text-muted-foreground hover:text-foreground"
                     aria-label={`Remove ${tab.title} from selection`}
                     onClick={() => handleRemoveSelectedTab(tab.id)}
                   >
