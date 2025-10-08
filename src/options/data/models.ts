@@ -14,59 +14,47 @@ export interface ModelsData {
 
 export const MODELS_DATA: ModelsData = {
   openai: [
+    // GPT-4.1 Series - 1M context
+    { modelId: 'gpt-4.1', contextLength: 1000000 },
+    { modelId: 'gpt-4.1-mini', contextLength: 1000000 },
+    { modelId: 'o4-mini', contextLength: 200000 },
+    { modelId: 'o3-mini', contextLength: 200000 },
     { modelId: 'gpt-4o', contextLength: 128000 },
     { modelId: 'gpt-4o-mini', contextLength: 128000 },
-    { modelId: 'gpt-4-turbo', contextLength: 128000 },
-    { modelId: 'gpt-4', contextLength: 8192 },
-    { modelId: 'gpt-3.5-turbo', contextLength: 16385 },
-    { modelId: 'o1', contextLength: 200000 },
-    { modelId: 'o1-mini', contextLength: 128000 },
-    { modelId: 'o3-mini', contextLength: 128000 }
   ],
   anthropic: [
-    { modelId: 'claude-opus-4-20250514', contextLength: 200000 },
+    { modelId: 'claude-sonnet-4-5-20250929', contextLength: 200000 },
     { modelId: 'claude-sonnet-4-20250514', contextLength: 200000 },
-    { modelId: 'claude-3-5-sonnet-20241022', contextLength: 200000 },
-    { modelId: 'claude-3-5-haiku-20241022', contextLength: 200000 },
-    { modelId: 'claude-3-opus-20240229', contextLength: 200000 },
-    { modelId: 'claude-3-sonnet-20240229', contextLength: 200000 },
-    { modelId: 'claude-3-haiku-20240307', contextLength: 200000 }
+    { modelId: 'claude-opus-4-20250514', contextLength: 200000 },
+    { modelId: 'claude-3-7-sonnet-20250219', contextLength: 200000 },
+    { modelId: 'claude-3-5-haiku-20241022', contextLength: 200000 }
   ],
   google_gemini: [
-    { modelId: 'gemini-2.0-flash-exp', contextLength: 1048576 },
-    { modelId: 'gemini-1.5-pro-latest', contextLength: 2097152 },
-    { modelId: 'gemini-1.5-flash-latest', contextLength: 1048576 },
-    { modelId: 'gemini-2.5-pro', contextLength: 2097152 },
-    { modelId: 'gemini-2.5-flash', contextLength: 1048576 }
+    { modelId: 'gemini-2.5-flash', contextLength: 1048576 }  // 1M context
+    { modelId: 'gemini-2.5-pro', contextLength: 1048576 },  // 1M context
   ],
   openrouter: [
-    { modelId: 'deepseek/deepseek-chat', contextLength: 64000 },
-    { modelId: 'anthropic/claude-opus-4', contextLength: 200000 },
-    { modelId: 'anthropic/claude-3.5-sonnet', contextLength: 200000 },
-    { modelId: 'google/gemini-2.0-flash-exp', contextLength: 1048576 },
+    { modelId: 'google/gemini-2.5-flash', contextLength: 1048576 },
     { modelId: 'openai/gpt-4o', contextLength: 128000 },
-    { modelId: 'meta-llama/llama-3.3-70b-instruct', contextLength: 131072 },
-    { modelId: 'mistralai/mistral-large', contextLength: 128000 }
+    { modelId: 'anthropic/claude-sonnet-4.5', contextLength: 1000000 },
+    { modelId: 'anthropic/claude-sonnet-4', contextLength: 1000000 },
+    { modelId: 'anthropic/claude-3.7-sonnet', contextLength: 200000 },
+    { modelId: 'openai/gpt-oss-120b', contextLength: 128000 },
+    { modelId: 'openai/gpt-oss-20b', contextLength: 128000 },
+    { modelId: 'qwen/qwen3-14b', contextLength: 131072 },
+    { modelId: 'qwen/qwen3-8b', contextLength: 131072 },
   ],
   openai_compatible: [
-    { modelId: 'lmstudio-community/Meta-Llama-3.1-8B-Instruct-GGUF', contextLength: 131072 },
-    { modelId: 'lmstudio-community/Qwen2.5-Coder-32B-Instruct-GGUF', contextLength: 32768 },
-    { modelId: 'TheBloke/Mistral-7B-Instruct-v0.2-GGUF', contextLength: 32768 },
-    { modelId: 'deepseek-ai/DeepSeek-R1-Distill-Qwen-32B-GGUF', contextLength: 64000 }
+    { modelId: 'openai/gpt-oss-20b', contextLength: 128000 },  // GPT OSS 20B
+    { modelId: 'lmstudio-community/Qwen3-14B-GGUF', contextLength: 131072 },  // Qwen3 14B
+    { modelId: 'lmstudio-community/Qwen3-8B-GGUF', contextLength: 131072 },  // Qwen3 8B
   ],
   ollama: [
-    { modelId: 'qwen3:4b', contextLength: 32768 },  
-    { modelId: 'qwen3:8b', contextLength: 32768 },
-    { modelId: 'qwen3:14b', contextLength: 32768 },
-    { modelId: 'qwen3-coder:30b', contextLength: 131072 },  
-    { modelId: 'llama3.1:8b', contextLength: 131072 },
-    { modelId: 'llama3.2:3b', contextLength: 131072 },
-    { modelId: 'deepseek-r1:7b', contextLength: 64000 },
-    { modelId: 'qwen2.5:7b', contextLength: 32768 },  
-    { modelId: 'qwen2.5-coder:7b', contextLength: 32768 },  
-    { modelId: 'mistral:7b', contextLength: 32768 },
-    { modelId: 'codellama:7b', contextLength: 16384 },
-    { modelId: 'phi3:3.8b', contextLength: 131072 }
+    { modelId: 'qwen3:4b', contextLength: 262144 },  // 256K context
+    { modelId: 'qwen3:8b', contextLength: 40960 },  // 40K context
+    { modelId: 'qwen3:14b', contextLength: 40960 },  // 40K context
+    { modelId: 'gpt-oss:20b', contextLength: 128000 },  // 128K context
+    { modelId: 'gpt-oss:120b', contextLength: 128000 }  // 128K context
   ]
 }
 
