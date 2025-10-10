@@ -6,7 +6,7 @@ import { CreateAgentPage } from './pages/CreateAgentPage'
 import { UserAgentsSection } from './components/UserAgentsSection'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import { useAgentsStore } from './stores/agentsStore'
-import { Settings } from 'lucide-react'
+import { Settings, SlidersHorizontal } from 'lucide-react'
 
 export function NewTab() {
   const { theme, fontSize } = useSettingsStore()
@@ -77,6 +77,24 @@ export function NewTab() {
     <div className="min-h-screen bg-background relative">
       {/* Top Right Controls - Settings and Theme Toggle */}
       <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
+        {/* LLM Provider Settings Button */}
+        <button
+          type="button"
+          className="
+            p-2 rounded-full
+            transition-colors duration-200 ease-in-out
+            focus:outline-none focus:ring-2 focus:ring-offset-2
+            focus:ring-offset-white dark:focus:ring-offset-gray-900 gray:focus:ring-offset-gray-800
+            focus:ring-gray-400
+            text-gray-600 dark:text-gray-300 gray:text-gray-400
+            hover:bg-gray-100 dark:hover:bg-gray-800 gray:hover:bg-gray-700
+          "
+          aria-label="LLM Provider Settings"
+          onClick={() => chrome.runtime.openOptionsPage()}
+        >
+          <SlidersHorizontal size={20} className="transition-transform duration-200" />
+        </button>
+
         {/* Settings Button */}
         <button
           type="button"
@@ -94,7 +112,7 @@ export function NewTab() {
         >
           <Settings size={20} className="transition-transform duration-200" />
         </button>
-        
+
         {/* Theme Toggle */}
         <ThemeToggle />
       </div>

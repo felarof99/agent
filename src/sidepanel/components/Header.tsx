@@ -6,7 +6,7 @@ import { useAnalytics } from '../hooks/useAnalytics'
 import { SettingsModal } from './SettingsModal'
 import { HelpSection } from './HelpSection'
 // import { ExperimentModal } from './ExperimentModal'  // Removed - old evals system deprecated
-import { HelpCircle, Settings, Pause, RotateCcw, ChevronDown, Plus, Trash2, Star, Copy, SlidersHorizontal } from 'lucide-react'
+import { HelpCircle, Settings, Pause, RotateCcw, ChevronDown, Plus, Trash2, Star, Copy } from 'lucide-react'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import { useEffect } from 'react'
 import { z } from 'zod'
@@ -195,7 +195,7 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing, i
         role="banner"
       >
 
-        <div className="flex items-center ">
+        <div className="flex items-center">
           {providersConfig && (
             <div className="relative mt-0.5">
               <select
@@ -203,6 +203,15 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing, i
                 value={providersConfig.defaultProviderId}
                 onChange={(e) => {
                   const nextId = e.target.value
+
+                  // Check if "+ Add Provider" was selected
+                  if (nextId === '__add_new_provider__') {
+                    handleOpenOptions()
+                    // Reset select to current provider
+                    e.target.value = providersConfig.defaultProviderId
+                    return
+                  }
+
                   const nextProviders = providersConfig.providers.map(p => ({ ...p, isDefault: p.id === nextId }))
                   const nextConfig: BrowserOSProvidersConfig = {
                     defaultProviderId: nextId,
@@ -223,6 +232,17 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing, i
                 {providersConfig.providers.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
+                <option
+                  value="__add_new_provider__"
+                  style={{
+                    borderTop: '1px solid #ddd',
+                    paddingTop: '6px',
+                    marginTop: '4px',
+                    fontWeight: '600'
+                  }}
+                >
+                  + New Provider
+                </option>
               </select>
               <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground opacity-80" />
             </div>
@@ -354,19 +374,6 @@ export const Header = memo(function Header({ onReset, showReset, isProcessing, i
               <RotateCcw className="w-4 h-4" />
             </Button>
           )}
-
-          {/* AI Settings button - Before Settings */}
-          <Button
-            onClick={handleOpenOptions}
-            variant="ghost"
-            size="sm"
-            className="h-9 px-2 rounded-xl hover:bg-brand/10 hover:text-brand smooth-hover smooth-transform hover:scale-105 flex items-center gap-1.5 group"
-            aria-label="AI Settings"
-            title="AI Settings"
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            <span className="hidden sm:inline text-xs font-medium">AI</span>
-          </Button>
 
           {/* Settings button - Last position (rightmost) */}
           <Button

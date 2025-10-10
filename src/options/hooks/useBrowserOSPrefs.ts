@@ -129,41 +129,6 @@ export function useBrowserOSPrefs() {
   }, [providers, saveProvidersConfig])
 
   const addProvider = useCallback(async (provider: LLMProvider) => {
-    // Check for duplicate provider based on type, modelId, and baseUrl
-    const isDuplicate = providers.some(existingProvider => {
-      // Skip BrowserOS built-in provider check
-      if (existingProvider.id === 'browseros' || provider.type === 'browseros') {
-        return false
-      }
-
-      // Check if same type
-      if (existingProvider.type !== provider.type) {
-        return false
-      }
-
-      // For providers with modelId, check if modelId matches
-      if (provider.modelId && existingProvider.modelId) {
-        if (existingProvider.modelId === provider.modelId) {
-          // For custom providers with baseUrl, also check baseUrl
-          if (provider.baseUrl && existingProvider.baseUrl) {
-            return existingProvider.baseUrl === provider.baseUrl
-          }
-          return true
-        }
-      }
-
-      // For Ollama or custom providers without modelId, check baseUrl
-      if (provider.baseUrl && existingProvider.baseUrl) {
-        return existingProvider.baseUrl === provider.baseUrl
-      }
-
-      return false
-    })
-
-    if (isDuplicate) {
-      throw new Error('A provider with the same configuration already exists')
-    }
-
     const newProvider = {
       ...provider,
       id: provider.id || crypto.randomUUID(),

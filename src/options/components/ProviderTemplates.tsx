@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { LLMProvider } from '../types/llm-settings'
+import { getModelsForProvider, getModelContextLength } from '../data/models'
 
 interface ProviderTemplatesProps {
   onUseTemplate: (template: LLMProvider) => void
@@ -57,95 +58,133 @@ const getProviderIcon = (type: string) => {
   }
 }
 
+// Helper to get default model and context for a provider type
+const getProviderDefaults = (providerType: string) => {
+  const models = getModelsForProvider(providerType)
+  const defaultModel = models[0]?.modelId || ''
+  const contextWindow = defaultModel ? getModelContextLength(providerType, defaultModel) || 128000 : 128000
+  return { modelId: defaultModel, contextWindow }
+}
+
 const PROVIDER_TEMPLATES = [
   {
     name: 'OpenAI',
     type: 'openai',
     color: '#10A37F',
-    template: {
-      id: '',
-      name: 'OpenAI',
-      type: 'openai' as const,
-      baseUrl: 'https://api.openai.com/v1',
-      isBuiltIn: false,
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    template: (() => {
+      const { modelId, contextWindow } = getProviderDefaults('openai')
+      return {
+        id: '',
+        name: 'OpenAI',
+        type: 'openai' as const,
+        baseUrl: 'https://api.openai.com/v1',
+        modelId,
+        modelConfig: { contextWindow, temperature: 0.7 },
+        isBuiltIn: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    })()
   },
   {
     name: 'Claude',
     type: 'claude',
     color: '#7C3AED',
-    template: {
-      id: '',
-      name: 'Claude',
-      type: 'anthropic' as const,
-      baseUrl: 'https://api.anthropic.com',
-      isBuiltIn: false,
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    template: (() => {
+      const { modelId, contextWindow } = getProviderDefaults('anthropic')
+      return {
+        id: '',
+        name: 'Claude',
+        type: 'anthropic' as const,
+        baseUrl: 'https://api.anthropic.com',
+        modelId,
+        modelConfig: { contextWindow, temperature: 0.7 },
+        isBuiltIn: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    })()
   },
   {
     name: 'Gemini',
     type: 'gemini',
     color: '#FFFFFF',
-    template: {
-      id: '',
-      name: 'Gemini',
-      type: 'google_gemini' as const,
-      isBuiltIn: false,
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    template: (() => {
+      const { modelId, contextWindow } = getProviderDefaults('google_gemini')
+      return {
+        id: '',
+        name: 'Gemini',
+        type: 'google_gemini' as const,
+        modelId,
+        modelConfig: { contextWindow, temperature: 0.7 },
+        isBuiltIn: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    })()
   },
   {
     name: 'Ollama',
     type: 'ollama',
     color: '#6B7280',
-    template: {
-      id: '',
-      name: 'Ollama',
-      type: 'ollama' as const,
-      baseUrl: 'http://localhost:11434',
-      isBuiltIn: false,
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    template: (() => {
+      const { modelId, contextWindow } = getProviderDefaults('ollama')
+      return {
+        id: '',
+        name: 'Ollama',
+        type: 'ollama' as const,
+        baseUrl: 'http://localhost:11434',
+        modelId,
+        modelConfig: { contextWindow, temperature: 0.7 },
+        isBuiltIn: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    })()
   },
   {
     name: 'OpenRouter',
     type: 'openrouter',
     color: '#374151',
-    template: {
-      id: '',
-      name: 'OpenRouter',
-      type: 'openrouter' as const,
-      baseUrl: 'https://openrouter.ai/api/v1',
-      isBuiltIn: false,
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    template: (() => {
+      const { modelId, contextWindow } = getProviderDefaults('openrouter')
+      return {
+        id: '',
+        name: 'OpenRouter',
+        type: 'openrouter' as const,
+        baseUrl: 'https://openrouter.ai/api/v1',
+        modelId,
+        modelConfig: { contextWindow, temperature: 0.7 },
+        isBuiltIn: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    })()
   },
   {
     name: 'LM Studio',
     type: 'lm studio',
     color: '#3B82F6',
-    template: {
-      id: '',
-      name: 'LM Studio',
-      type: 'openai_compatible' as const,
-      baseUrl: 'http://localhost:1234/v1',
-      isBuiltIn: false,
-      isDefault: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    }
+    template: (() => {
+      const { modelId, contextWindow } = getProviderDefaults('openai_compatible')
+      return {
+        id: '',
+        name: 'LM Studio',
+        type: 'openai_compatible' as const,
+        baseUrl: 'http://localhost:1234/v1',
+        modelId,
+        modelConfig: { contextWindow, temperature: 0.7 },
+        isBuiltIn: false,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+    })()
   }
 ]
 

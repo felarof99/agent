@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useTheme } from './ThemeProvider'
+import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import {
   Bot, Settings, Menu, X, Moon, Sun, Cloud
 } from 'lucide-react'
@@ -20,7 +20,7 @@ interface SettingsLayoutProps {
 }
 
 export function SettingsLayout({ children }: SettingsLayoutProps) {
-  const { theme, setTheme } = useTheme()
+  const { theme, setTheme } = useSettingsStore()
   const [activeSection, setActiveSection] = useState('browseros-ai')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

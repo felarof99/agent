@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
 import { LLMProvider, ProviderType } from '../types/llm-settings'
-import { getModelsForProvider, ModelInfo } from '../data/models'
+import { getModelsForProvider, getModelContextLength, ModelInfo } from '../data/models'
 
 interface AddProviderModalProps {
   isOpen: boolean
@@ -24,6 +24,15 @@ function getModelOptions(providerType: ProviderType): string[] {
   const builtInModels = getModelsForProvider(providerType).map(m => m.modelId)
   return builtInModels.length > 0 ? [...builtInModels, 'custom'] : ['custom']
 }
+
+// Calculate initial context window for default provider
+function getInitialContextWindow(): string {
+  const defaultProviderType = 'openai'
+  const defaultModel = getModelOptions(defaultProviderType)[0]
+  const contextLength = getModelContextLength(defaultProviderType, defaultModel)
+  return String(contextLength || 128000)
+}
+
 const DEFAULT_BASE_URLS: Record<ProviderType, string> = {
   openai: 'https://api.openai.com/v1',
   anthropic: 'https://api.anthropic.com',
@@ -43,7 +52,7 @@ export function AddProviderModal({ isOpen, onClose, onSave, editProvider }: AddP
   const [customModelId, setCustomModelId] = useState('')
   const [apiKey, setApiKey] = useState('')
   const [supportsImages, setSupportsImages] = useState(false)
-  const [contextWindow, setContextWindow] = useState('128000')
+  const [contextWindow, setContextWindow] = useState(getInitialContextWindow)
   const [temperature, setTemperature] = useState('0.7')
   const [isSaving, setIsSaving] = useState(false)
 
@@ -72,17 +81,29 @@ export function AddProviderModal({ isOpen, onClose, onSave, editProvider }: AddP
 
         setApiKey(editProvider.apiKey || '')
         setSupportsImages(editProvider.capabilities?.supportsImages || false)
-        setContextWindow(String(editProvider.modelConfig?.contextWindow || 128000))
+
+        // Use stored context window, or auto-calculate from model if available
+        let contextWindowValue = editProvider.modelConfig?.contextWindow
+        if (!contextWindowValue && storedModelId) {
+          const calculatedContext = getModelContextLength(editProvider.type, storedModelId)
+          contextWindowValue = calculatedContext || 128000
+        }
+        setContextWindow(String(contextWindowValue || 128000))
         setTemperature(String(editProvider.modelConfig?.temperature || 0.7))
       } else {
-        setProviderType('openai')
+        // Reset form for new provider
+        const defaultProviderType = 'openai'
+        const defaultModel = getModelOptions(defaultProviderType)[0]
+        const contextLength = getModelContextLength(defaultProviderType, defaultModel) || 128000
+
+        setProviderType(defaultProviderType)
         setProviderName('')
-        setBaseUrl(DEFAULT_BASE_URLS.openai)
-        setModelId(getModelOptions('openai')[0])
+        setBaseUrl(DEFAULT_BASE_URLS[defaultProviderType])
+        setModelId(defaultModel)
         setCustomModelId('')
+        setContextWindow(String(contextLength))
         setApiKey('')
         setSupportsImages(false)
-        setContextWindow('128000')
         setTemperature('0.7')
       }
     }
@@ -95,6 +116,12 @@ export function AddProviderModal({ isOpen, onClose, onSave, editProvider }: AddP
       const defaultModel = options[0] || (options.includes('custom') ? 'custom' : '')
       setModelId(defaultModel)
       setCustomModelId(defaultModel === 'custom' ? '' : '')
+
+      // Auto-update context window for default model
+      if (defaultModel !== 'custom') {
+        const contextLength = getModelContextLength(providerType, defaultModel)
+        setContextWindow(String(contextLength || 128000))
+      }
     }
   }, [providerType, editProvider])
 
@@ -102,6 +129,10 @@ export function AddProviderModal({ isOpen, onClose, onSave, editProvider }: AddP
     setModelId(value)
     if (value !== 'custom') {
       setCustomModelId('')
+
+      // Auto-update context window for built-in models
+      const contextLength = getModelContextLength(providerType, value)
+      setContextWindow(String(contextLength || 128000))
     }
   }
 
