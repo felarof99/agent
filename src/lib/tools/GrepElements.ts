@@ -5,7 +5,7 @@ import { PubSubChannel } from "@/lib/pubsub/PubSubChannel";
 
 const GrepElementsInputSchema = z.object({
   pattern: z.string().describe("Regex pattern to search for (e.g., 'button.*login', 'input.*(email|user)')"),
-  limit: z.number().int().positive().optional().default(15)
+  limit: z.number().int().min(1).optional().default(15)
     .describe("Maximum number of results to return (default: 15)"),
 });
 type GrepElementsInput = z.infer<typeof GrepElementsInputSchema>;

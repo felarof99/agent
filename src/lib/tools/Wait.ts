@@ -6,7 +6,7 @@ import { PubSubChannel } from "@/lib/pubsub/PubSubChannel";
 const WaitInputSchema = z.object({
   seconds: z
     .number()
-    .positive()
+    .min(0)
     .optional()
     .default(2)
     .describe("Additional seconds to wait (default: 2)"),

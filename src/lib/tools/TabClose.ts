@@ -4,7 +4,7 @@ import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
 import { PubSubChannel } from "@/lib/pubsub/PubSubChannel";
 
 const TabCloseInputSchema = z.object({
-  tabId: z.number().int().positive().describe("Tab ID to close"),
+  tabId: z.number().int().min(1).describe("Tab ID to close"),
 });
 type TabCloseInput = z.infer<typeof TabCloseInputSchema>;
 

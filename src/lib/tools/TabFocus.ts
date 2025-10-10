@@ -4,7 +4,7 @@ import { ExecutionContext } from "@/lib/runtime/ExecutionContext";
 import { PubSubChannel } from "@/lib/pubsub/PubSubChannel";
 
 const TabFocusInputSchema = z.object({
-  tabId: z.number().int().positive().describe("Tab ID to focus"),
+  tabId: z.number().int().min(1).describe("Tab ID to focus"),
 });
 type TabFocusInput = z.infer<typeof TabFocusInputSchema>;
 

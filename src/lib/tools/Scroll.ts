@@ -7,7 +7,7 @@ const ScrollInputSchema = z.object({
   nodeId: z
     .number()
     .int()
-    .positive()
+    .min(1)
     .optional()
     .describe("NodeId to scroll to (optional)"),
   direction: z
@@ -17,7 +17,7 @@ const ScrollInputSchema = z.object({
   amount: z
     .number()
     .int()
-    .positive()
+    .min(1)
     .optional()
     .default(1)
     .describe("Number of viewport heights to scroll (default: 1)"),

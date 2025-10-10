@@ -7,7 +7,7 @@ const TypeInputSchema = z.object({
   nodeId: z
     .number()
     .int()
-    .positive()
+    .min(1)
     .describe("The nodeId number from [brackets] in element list"),
   text: z.string().describe("Text to type into the element"),
 });

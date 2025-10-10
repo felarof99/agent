@@ -7,7 +7,7 @@ const ClearInputSchema = z.object({
   nodeId: z
     .number()
     .int()
-    .positive()
+    .min(1)
     .describe("The nodeId number from [brackets] in element list"),
 });
 type ClearInput = z.infer<typeof ClearInputSchema>;
