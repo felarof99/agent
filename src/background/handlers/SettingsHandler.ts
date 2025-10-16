@@ -168,6 +168,70 @@ export class SettingsHandler {
     }
   }
 
+  async handleTestMCP(message: PortMessage, port: chrome.runtime.Port): Promise<void> {
+    const { serverUrl } = message.payload as { serverUrl: string }
+
+    try {
+      const startTime = performance.now()
+
+      const response = await fetch(serverUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json, text/event-stream'
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'tools/list',
+          id: 1
+        }),
+        signal: AbortSignal.timeout(10000)
+      })
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const data = await response.json()
+
+      if (data.error) {
+        throw new Error(`MCP Error: ${data.error.message || JSON.stringify(data.error)}`)
+      }
+
+      if (!data.result || !Array.isArray(data.result.tools)) {
+        throw new Error('Invalid MCP response: missing tools array')
+      }
+
+      const toolCount = data.result.tools.length
+      const tools = data.result.tools.map((tool: any) => ({
+        name: tool.name,
+        description: tool.description
+      }))
+
+      port.postMessage({
+        type: MessageType.SETTINGS_TEST_MCP_RESPONSE,
+        payload: {
+          success: true,
+          toolCount,
+          tools,
+          timestamp: new Date().toISOString()
+        },
+        id: message.id
+      })
+    } catch (error) {
+      Logging.log('SettingsHandler', `Error testing MCP server: ${error}`, 'error')
+      port.postMessage({
+        type: MessageType.SETTINGS_TEST_MCP_RESPONSE,
+        payload: {
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString()
+        },
+        id: message.id
+      })
+    }
+  }
+
   async handleTestProvider(message: PortMessage, port: chrome.runtime.Port): Promise<void> {
     const { provider } = message.payload as { provider: any }
 
