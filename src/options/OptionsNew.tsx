@@ -5,6 +5,8 @@ import { ProviderTemplates } from './components/ProviderTemplates'
 import { ConfiguredModelsList } from './components/ConfiguredModelsList'
 import { AddProviderModal } from './components/AddProviderModal'
 import { MCPSection } from './components/MCPSection'
+import { SearchProvidersSection } from './components/SearchProvidersSection'
+import { AboutSection } from './components/AboutSection'
 import { useBrowserOSPrefs } from './hooks/useBrowserOSPrefs'
 import { useOptionsStore } from './stores/optionsStore'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
@@ -15,10 +17,35 @@ import './styles.css'
 export function OptionsNew() {
   const { providers, defaultProvider, setDefaultProvider, addProvider, updateProvider, deleteProvider } = useBrowserOSPrefs()
   const { theme } = useSettingsStore()
-  const [activeSection, setActiveSection] = useState('browseros-ai')
+
+  // Get initial section from URL hash or default to 'browseros-ai'
+  const getInitialSection = () => {
+    const hash = window.location.hash.slice(1) // Remove '#'
+    const validSections = ['browseros-ai', 'mcp', 'search-providers', 'about']
+    return validSections.includes(hash) ? hash : 'browseros-ai'
+  }
+
+  const [activeSection, setActiveSection] = useState(getInitialSection())
   const [isAddingProvider, setIsAddingProvider] = useState(false)
   const [editingProvider, setEditingProvider] = useState<LLMProvider | null>(null)
   const [testResults, setTestResults] = useState<Record<string, TestResult>>({})
+
+  // Update URL hash when section changes
+  const handleSectionChange = (section: string) => {
+    setActiveSection(section)
+    window.location.hash = section
+  }
+
+  // Listen for hash changes (browser back/forward)
+  useEffect(() => {
+    const handleHashChange = () => {
+      const newSection = getInitialSection()
+      setActiveSection(newSection)
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   // Apply theme on mount and when it changes
   useEffect(() => {
@@ -103,7 +130,7 @@ export function OptionsNew() {
   }
 
   return (
-    <SettingsLayout activeSection={activeSection} onSectionChange={setActiveSection}>
+    <SettingsLayout activeSection={activeSection} onSectionChange={handleSectionChange}>
       <div className="space-y-6">
         {activeSection === 'browseros-ai' && (
           <>
@@ -140,6 +167,14 @@ export function OptionsNew() {
 
         {activeSection === 'mcp' && (
           <MCPSection />
+        )}
+
+        {activeSection === 'search-providers' && (
+          <SearchProvidersSection />
+        )}
+
+        {activeSection === 'about' && (
+          <AboutSection />
         )}
       </div>
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import {
-  Bot, Settings, Menu, X, Moon, Sun, Cloud, Server
+  Bot, Settings, Menu, X, Moon, Sun, Cloud, Server, ScanSearch, Info
 } from 'lucide-react'
 
 interface SidebarItem {
@@ -11,9 +11,14 @@ interface SidebarItem {
   disabled?: boolean
 }
 
-const sidebarItems: SidebarItem[] = [
+const mainSidebarItems: SidebarItem[] = [
   { id: 'browseros-ai', label: 'BrowserOS AI', icon: Bot },
-  { id: 'mcp', label: 'MCP', icon: Server }
+  { id: 'mcp', label: 'MCP', icon: Server },
+  { id: 'search-providers', label: 'Search Providers', icon: ScanSearch }
+]
+
+const bottomSidebarItems: SidebarItem[] = [
+  { id: 'about', label: 'About BrowserOS', icon: Info }
 ]
 
 interface SettingsLayoutProps {
@@ -130,27 +135,55 @@ export function SettingsLayout({ children, activeSection: controlledSection, onS
             </div>
 
             {/* Sidebar Items */}
-            <div className="flex-1 overflow-y-auto pt-2">
-              {sidebarItems.map((item) => {
-                const Icon = item.icon
-                return (
-                  <div
-                    key={item.id}
-                    className={`
-                      settings-sidebar-item
-                      ${activeSection === item.id ? 'active' : ''}
-                      ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                    onClick={() => handleSectionClick(item.id, item.disabled)}
-                  >
-                    <Icon
-                      className="absolute left-5 w-5 h-5 flex-shrink-0"
-                      style={{ strokeWidth: 1.5 }}
-                    />
-                    <span className="font-normal" style={{ fontFamily: 'Arial, sans-serif' }}>{item.label}</span>
-                  </div>
-                )
-              })}
+            <div className="flex-1 overflow-y-auto pt-2 flex flex-col">
+              {/* Main Items */}
+              <div className="flex-1">
+                {mainSidebarItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <div
+                      key={item.id}
+                      className={`
+                        settings-sidebar-item
+                        ${activeSection === item.id ? 'active' : ''}
+                        ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                      onClick={() => handleSectionClick(item.id, item.disabled)}
+                    >
+                      <Icon
+                        className="absolute left-5 w-5 h-5 flex-shrink-0"
+                        style={{ strokeWidth: 1.5 }}
+                      />
+                      <span className="font-normal" style={{ fontFamily: 'Arial, sans-serif' }}>{item.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Bottom Items with separator */}
+              <div className="mt-auto pb-2">
+                <div className="mx-4 mb-1 border-t border-border"></div>
+                {bottomSidebarItems.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <div
+                      key={item.id}
+                      className={`
+                        settings-sidebar-item
+                        ${activeSection === item.id ? 'active' : ''}
+                        ${item.disabled ? 'opacity-50 cursor-not-allowed' : ''}
+                      `}
+                      onClick={() => handleSectionClick(item.id, item.disabled)}
+                    >
+                      <Icon
+                        className="absolute left-5 w-5 h-5 flex-shrink-0"
+                        style={{ strokeWidth: 1.5 }}
+                      />
+                      <span className="font-normal" style={{ fontFamily: 'Arial, sans-serif' }}>{item.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         </aside>

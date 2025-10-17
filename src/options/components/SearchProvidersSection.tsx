@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { GripVertical, X, Plus, Trash2 } from 'lucide-react'
-import { useProviderStore, type Provider } from '../stores/providerStore'
+import { GripVertical, X, Plus, Trash2, ScanSearch } from 'lucide-react'
+import { useProviderStore, type Provider } from '@/newtab/stores/providerStore'
 
 function ensureProtocol(url: string) {
   if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url)) {
@@ -33,7 +33,7 @@ interface AddProviderFormState {
   urlPattern: string
 }
 
-export function ProviderSettings() {
+export function SearchProvidersSection() {
   const enabledProviders = useProviderStore(state => state.getEnabledProviders())
   const disabledProviders = useProviderStore(state => state.getDisabledProviders())
   const enableProvider = useProviderStore(state => state.enableProvider)
@@ -244,70 +244,82 @@ export function ProviderSettings() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-sm font-medium">Manage Search Providers</h3>
-          <p className="text-xs text-muted-foreground">
-            Reorder providers, disable ones you do not use, or add your own search shortcuts.
+    <section className="bg-card rounded-lg px-6 py-5 border border-border shadow-sm">
+      {/* Header with Logo */}
+      <div className="flex items-start gap-4 mb-6">
+        {/* Search Icon Logo */}
+        <div className="w-12 h-12 rounded-full bg-brand flex items-center justify-center flex-shrink-0 shadow-md">
+          <ScanSearch className="w-6 h-6 text-white" strokeWidth={2} />
+        </div>
+
+        {/* Header Text */}
+        <div className="flex-1">
+          <h2 className="text-foreground text-[18px] font-medium leading-tight mb-1">
+            Search Providers
+          </h2>
+          <p className="text-muted-foreground text-[14px] leading-normal">
+            Manage your search providers and custom shortcuts
           </p>
         </div>
+
+        {/* Add Provider Button */}
         <button
           type="button"
           onClick={() => setIsFormOpen(open => !open)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
+          className="flex items-center gap-2 px-5 py-2 bg-transparent border-2 border-brand/30 text-foreground rounded-lg hover:border-brand hover:bg-brand/5 hover:text-brand transition-all text-[14px] font-medium flex-shrink-0"
         >
-          <Plus className="w-3 h-3" />
-          {isFormOpen ? 'Cancel' : 'Add provider'}
+          <Plus className="w-5 h-5" strokeWidth={2} />
+          <span>{isFormOpen ? 'Cancel' : 'Add provider'}</span>
         </button>
       </div>
 
+      {/* Add Provider Form */}
       {isFormOpen && (
         <form
           onSubmit={handleAddProvider}
-          className="space-y-3 rounded-lg border border-dashed border-border/80 bg-card/50 p-4"
+          className="space-y-4 rounded-lg border border-dashed border-border/80 bg-background/50 p-4 mb-6"
         >
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1 text-xs font-medium text-foreground/90">
-              Provider name
+          <div className="grid gap-4 sm:grid-cols-2">
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-foreground">Provider name</span>
               <input
                 type="text"
                 value={formState.name}
                 onChange={event => setFormState(state => ({ ...state, name: event.target.value }))}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/20 transition-all"
                 placeholder="Example Search"
               />
             </label>
-            <label className="flex flex-col gap-1 text-xs font-medium text-foreground/90">
-              Provider URL
+            <label className="flex flex-col gap-2">
+              <span className="text-sm font-medium text-foreground">Provider URL</span>
               <input
                 type="text"
                 value={formState.urlPattern}
                 onChange={event => setFormState(state => ({ ...state, urlPattern: event.target.value }))}
-                className="rounded-md border border-border bg-background px-3 py-2 text-sm focus:border-primary focus:outline-none"
+                className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand/20 transition-all"
                 placeholder="https://example.com"
               />
             </label>
           </div>
 
-          <p className="text-[11px] text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Paste the provider home or search URL. We will grab the favicon automatically.
           </p>
 
           {faviconPreview && (
-            <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>Preview icon:</span>
-              <img src={faviconPreview} alt="Favicon preview" className="h-4 w-4" />
+              <img src={faviconPreview} alt="Favicon preview" className="h-4 w-4 rounded" />
             </div>
           )}
 
           {formError && (
-            <div className="rounded-md border border-destructive bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <div className="rounded-lg border border-destructive bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {formError}
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2">
+          <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={() => {
@@ -315,13 +327,13 @@ export function ProviderSettings() {
                 setFormState({ name: '', urlPattern: '' })
                 setFormError(null)
               }}
-              className="rounded-md border border-border px-3 py-2 text-xs font-medium hover:bg-accent"
+              className="px-4 py-2 rounded-lg border border-input bg-background hover:bg-accent text-sm font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90"
+              className="px-4 py-2 rounded-lg bg-brand text-white hover:bg-brand/90 text-sm font-medium transition-colors"
             >
               Save provider
             </button>
@@ -329,15 +341,16 @@ export function ProviderSettings() {
         </form>
       )}
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">Visible in search dropdown</label>
+      {/* Enabled Providers List */}
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-foreground">Visible in search dropdown</label>
         <div
-          className="min-h-[120px] rounded-lg border border-border bg-card p-2"
+          className="min-h-[120px] rounded-lg border border-border bg-background p-3"
           onDragOver={event => event.preventDefault()}
           onDrop={event => handleDropOnList(event, 'enabled')}
         >
           {enabledProviders.length === 0 ? (
-            <p className="py-4 text-center text-xs text-muted-foreground">
+            <p className="py-8 text-center text-sm text-muted-foreground">
               Drag providers here to enable them.
             </p>
           ) : (
@@ -346,15 +359,16 @@ export function ProviderSettings() {
         </div>
       </div>
 
-      <div>
-        <label className="mb-2 block text-sm font-medium">Disabled providers</label>
+      {/* Disabled Providers List */}
+      <div className="space-y-3 mt-6">
+        <label className="block text-sm font-medium text-foreground">Disabled providers</label>
         <div
-          className="min-h-[80px] rounded-lg border border-border bg-muted/10 p-2"
+          className="min-h-[80px] rounded-lg border border-border bg-muted/20 p-3"
           onDragOver={event => event.preventDefault()}
           onDrop={event => handleDropOnList(event, 'disabled')}
         >
           {disabledProviders.length === 0 ? (
-            <p className="py-3 text-center text-xs text-muted-foreground">
+            <p className="py-6 text-center text-sm text-muted-foreground">
               Drag providers here to hide them from the dropdown.
             </p>
           ) : (
@@ -362,6 +376,6 @@ export function ProviderSettings() {
           )}
         </div>
       </div>
-    </div>
+    </section>
   )
 }

@@ -1,16 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { CommandInput } from './components/CommandInput'
 import { ThemeToggle } from './components/ThemeToggle'
-import { SettingsDialog } from './components/SettingsDialog'
 import { CreateAgentPage } from './pages/CreateAgentPage'
 import { UserAgentsSection } from './components/UserAgentsSection'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import { useAgentsStore } from './stores/agentsStore'
-import { Settings, SlidersHorizontal } from 'lucide-react'
+import { Settings } from 'lucide-react'
 
 export function NewTab() {
   const { theme, fontSize } = useSettingsStore()
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [currentView, setCurrentView] = useState<'main' | 'create-agent'>('main')
   const { loadAgents } = useAgentsStore()
 
@@ -92,24 +90,6 @@ export function NewTab() {
           aria-label="LLM Provider Settings"
           onClick={() => chrome.runtime.openOptionsPage()}
         >
-          <SlidersHorizontal size={20} className="transition-transform duration-200" />
-        </button>
-
-        {/* Settings Button */}
-        <button
-          type="button"
-          className="
-            p-2 rounded-full
-            transition-colors duration-200 ease-in-out
-            focus:outline-none focus:ring-2 focus:ring-offset-2
-            focus:ring-offset-white dark:focus:ring-offset-gray-900 gray:focus:ring-offset-gray-800
-            focus:ring-gray-400
-            text-gray-600 dark:text-gray-300 gray:text-gray-400
-            hover:bg-gray-100 dark:hover:bg-gray-800 gray:hover:bg-gray-700
-          "
-          aria-label="Settings"
-          onClick={() => setIsSettingsOpen(true)}
-        >
           <Settings size={20} className="transition-transform duration-200" />
         </button>
 
@@ -139,12 +119,6 @@ export function NewTab() {
         {/* User Agents Section - Shows up to 4 random agents */}
         <UserAgentsSection onEditAgent={() => setCurrentView('create-agent')} />
       </div>
-      
-      {/* Settings Dialog */}
-      <SettingsDialog 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
     </div>
   )
 }
