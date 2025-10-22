@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSettingsStore } from '@/sidepanel/stores/settingsStore'
 import {
-  Bot, Settings, Menu, X, Moon, Sun, Cloud, Server, ScanSearch, Info
+  Bot, Settings, Menu, X, Moon, Sun, Cloud, Server, ScanSearch, Info, LogIn
 } from 'lucide-react'
 
 interface SidebarItem {
@@ -14,7 +14,8 @@ interface SidebarItem {
 const mainSidebarItems: SidebarItem[] = [
   { id: 'browseros-ai', label: 'BrowserOS AI', icon: Bot },
   { id: 'mcp', label: 'MCP', icon: Server },
-  { id: 'search-providers', label: 'Search Providers', icon: ScanSearch }
+  { id: 'search-providers', label: 'Search Providers', icon: ScanSearch },
+  { id: 'revisit-onboarding', label: 'Revisit Onboarding', icon: LogIn }
 ]
 
 const bottomSidebarItems: SidebarItem[] = [
@@ -48,6 +49,13 @@ export function SettingsLayout({ children, activeSection: controlledSection, onS
 
   const handleSectionClick = (sectionId: string, disabled?: boolean) => {
     if (!disabled) {
+      // Handle special case for revisit onboarding
+      if (sectionId === 'revisit-onboarding') {
+        handleRevisitOnboarding()
+        setSidebarOpen(false)
+        return
+      }
+
       if (onSectionChange) {
         onSectionChange(sectionId)
       } else {
@@ -73,6 +81,19 @@ export function SettingsLayout({ children, activeSection: controlledSection, onS
     const currentIndex = themes.indexOf(theme)
     const nextIndex = (currentIndex + 1) % themes.length
     setTheme(themes[nextIndex])
+  }
+
+  const handleRevisitOnboarding = async () => {
+    try {
+      // Clear onboarding completion flag
+      await chrome.storage.local.remove('hasCompletedOnboarding')
+
+      // Open onboarding page in a new tab
+      const onboardingUrl = chrome.runtime.getURL('onboarding.html')
+      await chrome.tabs.create({ url: onboardingUrl })
+    } catch (error) {
+      console.error('Failed to open onboarding:', error)
+    }
   }
 
   return (

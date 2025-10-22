@@ -99,7 +99,7 @@ export function useMessageHandler() {
     return () => {
       chrome.runtime.onMessage.removeListener(handleRuntimeMessage)
     }
-  }, [setProcessing])  // Only depend on setProcessing which is stable
+  }, [setProcessing])
 
   // Set up port message listeners
   useEffect(() => {

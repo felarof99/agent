@@ -164,7 +164,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
 
   const submitTask = (query: string) => {
     if (!query.trim()) return
-    
+
     // Add user message via upsert
     upsertMessage({
       msgId: `user_${Date.now()}`,
@@ -172,12 +172,13 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
       content: query,
       ts: Date.now()
     })
-    
+
     // Processing state will be handled by TypingIndicator component
     // No need to inject hardcoded "Thinking..." message
-    
+
     // Get selected tab IDs from tabsStore
     const contextTabs = getContextTabs()
+
     // In chat mode, if no tabs are selected, explicitly send null to prevent using current page
     // In agent mode, undefined means "use current active tab"
     const tabIds = contextTabs.length > 0
@@ -192,6 +193,8 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
       source: 'sidepanel',
       chatMode  // Include chat mode setting
     })
+
+    // Clear input and selected tabs
     
     // Clear input and history
     setInput('')
