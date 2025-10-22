@@ -114,10 +114,14 @@ export function StepThree() {
       // Wait for the tab to load
       await new Promise(resolve => setTimeout(resolve, 1500))
 
+      // Determine if this should be chat mode or browse mode
+      const chatMode = example.id === 'chat-mode'
+
       await chrome.runtime.sendMessage({
         type: 'NEWTAB_EXECUTE_QUERY',
         tabId: newTab.id,
         query: example.query,
+        chatMode: chatMode,
         metadata: {
           source: 'onboarding',
           executionMode: 'dynamic'

@@ -289,16 +289,16 @@ export class ExecutionHandler {
     message: any,
     sendResponse: (response: any) => void
   ): Promise<void> {
-    const { tabId, query, metadata } = message
+    const { tabId, query, chatMode, metadata } = message
 
     Logging.log('ExecutionHandler',
-      `Received query from newtab for tab ${tabId}: "${query}"`)
+      `Received query from newtab for tab ${tabId}: "${query}" (mode: ${chatMode ? 'chat' : 'browse'})`)
 
     // Log metrics
     Logging.logMetric('query_initiated', {
       query,
       source: metadata?.source || 'newtab',
-      mode: 'browse',
+      mode: chatMode ? 'chat' : 'browse',
       executionMode: metadata?.executionMode || 'dynamic',
     })
 
@@ -312,7 +312,8 @@ export class ExecutionHandler {
       // Notify sidepanel that execution is starting (for processing state)
       chrome.runtime.sendMessage({
         type: MessageType.EXECUTION_STARTING,
-        source: 'newtab'
+        source: 'newtab',
+        mode: chatMode ? 'chat' : 'browse'
       }).catch(() => {
         // Sidepanel might not be ready yet, that's OK - it will pick up state from stream
       })
@@ -325,7 +326,7 @@ export class ExecutionHandler {
 
       // Update execution options
       this.execution.updateOptions({
-        mode: 'browse',
+        mode: chatMode ? 'chat' : 'browse',
         tabIds: [tabId],
         metadata,
         debug: false
