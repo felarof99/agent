@@ -11,7 +11,7 @@ export function StepOne() {
   return (
     <div className="flex flex-col space-y-10 max-w-5xl mx-auto px-4">
       {/* Header */}
-      <div className="text-center space-y-4 pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="text-center space-y-4 pt-16">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
           Seamless Migration
         </h2>
@@ -21,7 +21,7 @@ export function StepOne() {
       </div>
 
       {/* Visual flow diagram */}
-      <div className="flex items-center justify-center gap-4 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+      <div className="flex items-center justify-center gap-4 sm:gap-8">
         <div className="flex flex-col items-center gap-3">
           <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white border-2 border-border/40 flex items-center justify-center shadow-xl p-4">
             <img
@@ -52,7 +52,7 @@ export function StepOne() {
       </div>
 
       {/* What gets imported */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         {[
           { icon: '🔖', title: 'Bookmarks', desc: 'All your saved sites' },
           { icon: '🕐', title: 'History', desc: 'Browsing timeline' },
@@ -60,8 +60,7 @@ export function StepOne() {
         ].map((item, index) => (
           <div
             key={item.title}
-            className="group bg-gradient-to-br from-card/80 to-background/60 backdrop-blur-sm border-2 border-border/60 rounded-2xl p-6 text-center hover:border-brand/50 hover:shadow-xl hover:shadow-brand/10 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 animate-in fade-in zoom-in duration-500"
-            style={{ animationDelay: `${index * 100 + 300}ms` }}
+            className="group bg-gradient-to-br from-card/80 to-background/60 backdrop-blur-sm border-2 border-border/60 rounded-2xl p-6 text-center hover:border-brand/50 hover:shadow-xl hover:shadow-brand/10 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
           >
             <div className="text-4xl mb-3">{item.icon}</div>
             <h4 className="font-bold text-base mb-2">{item.title}</h4>
@@ -71,7 +70,7 @@ export function StepOne() {
       </div>
 
       {/* CTA Section */}
-      <div className="flex flex-col items-center gap-5 bg-gradient-to-br from-orange-50/50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 rounded-2xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+      <div className="flex flex-col items-center gap-5 bg-gradient-to-br from-orange-50/50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 rounded-2xl p-8">
         <div className="text-center space-y-2 max-w-xl">
           <h3 className="text-xl font-bold">Ready to Import Your Data?</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">

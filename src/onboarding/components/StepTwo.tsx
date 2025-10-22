@@ -11,7 +11,7 @@ export function StepTwo() {
   return (
     <div className="flex flex-col space-y-10 max-w-5xl mx-auto px-4">
       {/* Header */}
-      <div className="text-center space-y-4 pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="text-center space-y-4 pt-16">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
           Bring Your Own Keys
         </h2>
@@ -21,7 +21,7 @@ export function StepTwo() {
       </div>
 
       {/* Why BYOK - Compact Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {[
           {
             icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
@@ -46,8 +46,7 @@ export function StepTwo() {
         ].map((item, index) => (
           <div
             key={item.title}
-            className="bg-gradient-to-br from-card/80 to-background/60 backdrop-blur-sm border-2 border-border/60 rounded-xl p-4 text-center hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95 animate-in fade-in zoom-in duration-500"
-            style={{ animationDelay: `${index * 80 + 200}ms` }}
+            className="bg-gradient-to-br from-card/80 to-background/60 backdrop-blur-sm border-2 border-border/60 rounded-xl p-4 text-center hover:border-brand/50 hover:shadow-lg hover:shadow-brand/10 transition-all duration-300 hover:-translate-y-1 hover:scale-105 active:scale-95"
           >
             <div className="w-10 h-10 mx-auto rounded-lg bg-gradient-to-br from-brand/15 to-orange-500/15 border border-brand/20 flex items-center justify-center text-brand mb-3 shadow-sm">
               {item.icon}
@@ -59,7 +58,7 @@ export function StepTwo() {
       </div>
 
       {/* CTA Section */}
-      <div className="flex flex-col items-center gap-5 bg-gradient-to-br from-orange-50/50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 rounded-2xl p-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+      <div className="flex flex-col items-center gap-5 bg-gradient-to-br from-orange-50/50 to-orange-100/30 dark:from-orange-950/20 dark:to-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 rounded-2xl p-8">
         <div className="text-center space-y-2 max-w-xl">
           <h3 className="text-xl font-bold">Ready to Configure Your Keys?</h3>
           <p className="text-sm text-muted-foreground leading-relaxed">

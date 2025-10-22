@@ -7,7 +7,7 @@ export function VideoStep() {
   return (
     <div className="flex flex-col space-y-8 max-w-5xl mx-auto px-4">
       {/* Header */}
-      <div className="text-center space-y-4 pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="text-center space-y-4 pt-16">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
           See BrowserOS in Action
         </h2>
@@ -17,7 +17,7 @@ export function VideoStep() {
       </div>
 
       {/* Video Container */}
-      <div className="animate-in fade-in zoom-in duration-700 delay-100">
+      <div>
         <div className="relative w-full rounded-2xl overflow-hidden shadow-2xl shadow-brand/20 border-2 border-border/50 bg-card">
           {/* 16:9 Aspect Ratio Container */}
           <div className="relative pb-[56.25%]">
@@ -33,7 +33,7 @@ export function VideoStep() {
       </div>
 
       {/* Info Card */}
-      <div className="text-center p-4 bg-muted/30 border border-border/50 rounded-xl animate-in fade-in duration-700 delay-200">
+      <div className="text-center p-4 bg-muted/30 border border-border/50 rounded-xl">
         <p className="text-sm text-muted-foreground">
           🎬 <span className="font-semibold">Tip:</span> This video showcases the key features and capabilities of BrowserOS. You can skip it if you prefer to jump right in!
         </p>

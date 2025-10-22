@@ -7,7 +7,7 @@ export function WelcomeStep() {
   return (
     <div className="flex flex-col items-center justify-center text-center space-y-10 max-w-5xl mx-auto px-4 py-8">
       {/* Logo with glow effect */}
-      <div className="flex items-center justify-center mb-2 animate-in fade-in zoom-in duration-700">
+      <div className="flex items-center justify-center mb-2">
         <div className="relative">
           <div className="absolute inset-0 bg-brand/10 blur-3xl rounded-full animate-pulse" />
           <img
@@ -19,7 +19,7 @@ export function WelcomeStep() {
       </div>
 
       {/* Hero heading with staggered animation */}
-      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+      <div className="space-y-4">
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight px-4">
           Welcome to{' '}
           <span className="inline-block bg-gradient-to-r from-brand via-orange-500 to-brand bg-clip-text text-transparent">
@@ -35,7 +35,7 @@ export function WelcomeStep() {
       </div>
 
       {/* Feature highlights with enhanced cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto pt-6 px-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-4xl mx-auto pt-6 px-4">
         <div className="group flex flex-col items-center text-center space-y-3 p-6 rounded-2xl border-2 border-border/60 bg-card/80 hover:bg-card hover:border-brand/50 transition-all duration-300 hover:shadow-xl hover:shadow-brand/10 hover:-translate-y-1">
           <div className="w-14 h-14 rounded-full bg-gradient-to-br from-brand/20 to-orange-500/20 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
             <svg
@@ -104,7 +104,7 @@ export function WelcomeStep() {
       </div>
 
       {/* Navigation button with glass morphism */}
-      <div className="pt-10 animate-in fade-in zoom-in duration-700 delay-500">
+      <div className="pt-10">
         <button
           onClick={skipVideo}
           className="group relative px-10 py-4 backdrop-blur-md bg-orange-50/40 dark:bg-orange-950/40 border-2 border-orange-300/60 dark:border-orange-700/60 text-orange-600 dark:text-orange-400 font-bold rounded-xl transition-all duration-300 shadow-lg shadow-orange-500/20 hover:bg-orange-100/50 dark:hover:bg-orange-900/50 hover:border-orange-400/70 dark:hover:border-orange-600/70 hover:shadow-xl hover:shadow-orange-500/30 hover:scale-105 active:scale-95 overflow-hidden"

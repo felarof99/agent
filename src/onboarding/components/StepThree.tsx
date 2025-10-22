@@ -138,7 +138,7 @@ export function StepThree() {
   return (
     <div className="flex flex-col space-y-8 max-w-5xl mx-auto px-4">
       {/* Header */}
-      <div className="text-center space-y-4 pt-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="text-center space-y-4 pt-16">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
           Experience the AI Agent
         </h2>
@@ -148,7 +148,7 @@ export function StepThree() {
       </div>
 
       {/* Try These Examples Section */}
-      <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+      <div className="space-y-5">
         <div className="text-center space-y-2">
           <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
             <span className="text-2xl">✨</span>
@@ -166,8 +166,7 @@ export function StepThree() {
                 key={example.id}
                 onClick={() => handleTryExample(example)}
                 disabled={isExecuting}
-                className={`group relative flex flex-col bg-gradient-to-br ${example.bgGradient} border-2 border-border/60 ${example.hoverBorder} rounded-xl p-5 text-left transition-all duration-300 hover:shadow-xl hover:shadow-brand/10 hover:-translate-y-1 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0 animate-in fade-in zoom-in duration-500`}
-                style={{ animationDelay: `${index * 80 + 300}ms` }}
+                className={`group relative flex flex-col bg-gradient-to-br ${example.bgGradient} border-2 border-border/60 ${example.hoverBorder} rounded-xl p-5 text-left transition-all duration-300 hover:shadow-xl hover:shadow-brand/10 hover:-translate-y-1 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0`}
               >
                 {/* Icon & Title */}
                 <div className="flex items-start gap-3 mb-3">
@@ -221,13 +220,12 @@ export function StepThree() {
       </div>
 
       {/* Additional Features Section */}
-      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+      <div className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {exampleQueries.filter(ex => !ex.clickable).map((example, index) => (
             <div
               key={example.id}
-              className={`flex flex-col bg-gradient-to-br ${example.bgGradient} border border-border/50 rounded-xl p-4 text-left shadow-sm animate-in fade-in zoom-in duration-500`}
-              style={{ animationDelay: `${(index + 2) * 80 + 300}ms` }}
+              className={`flex flex-col bg-gradient-to-br ${example.bgGradient} border border-border/50 rounded-xl p-4 text-left shadow-sm`}
             >
               {/* Icon & Title */}
               <div className="flex items-start gap-3 mb-3">
@@ -257,7 +255,7 @@ export function StepThree() {
       </div>
 
       {/* Help Text */}
-      <div className="text-center p-4 bg-muted/30 border border-border/50 rounded-xl animate-in fade-in duration-700 delay-300">
+      <div className="text-center p-4 bg-muted/30 border border-border/50 rounded-xl">
         <p className="text-sm text-muted-foreground">
           💡 <span className="font-semibold">Tip:</span> Click on the first two cards to try them live. The AI agent panel will open showing the execution in real-time
         </p>

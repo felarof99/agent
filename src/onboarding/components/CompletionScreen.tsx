@@ -50,14 +50,14 @@ export function CompletionScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-700">
+    <div className="flex flex-col items-center justify-center text-center space-y-8">
       {/* Success animation */}
       <div className="relative">
         <div className="absolute inset-0 bg-brand/20 blur-3xl animate-pulse" />
         <img
           src="/assets/new_tab_search/browseros.svg"
           alt="BrowserOS"
-          className="relative w-32 h-32 object-contain drop-shadow-2xl animate-in zoom-in duration-500"
+          className="relative w-32 h-32 object-contain drop-shadow-2xl"
         />
       </div>
 
