@@ -102,18 +102,18 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
       setInput(e.detail)
       textareaRef.current?.focus()
     }
-    
+
     window.addEventListener('setInputValue', handleSetInput as EventListener)
     return () => {
       window.removeEventListener('setInputValue', handleSetInput as EventListener)
     }
   }, [])
-  
 
-  
+
+
   const submitTask = (query: string) => {
     if (!query.trim()) return
-    
+
     // Add user message via upsert
     upsertMessage({
       msgId: `user_${Date.now()}`,
@@ -121,14 +121,14 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
       content: query,
       ts: Date.now()
     })
-    
+
     // Processing state will be handled by TypingIndicator component
     // No need to inject hardcoded "Thinking..." message
-    
+
     // Get selected tab IDs from tabsStore
     const contextTabs = getContextTabs()
     const tabIds = contextTabs.length > 0 ? contextTabs.map(tab => tab.id) : undefined
-    
+
     // Send to background
     setProcessing(true)
     sendMessage(MessageType.EXECUTE_QUERY, {
@@ -137,7 +137,7 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
       source: 'sidepanel',
       chatMode  // Include chat mode setting
     })
-    
+
     // Clear input and selected tabs
     setInput('')
     setHistoryIndex(-1)

@@ -367,12 +367,56 @@ async function toggleSidePanel(tabId: number): Promise<void> {
 }
 
 /**
+ * Handle extension installation
+ */
+chrome.runtime.onInstalled.addListener(async (details) => {
+  console.log('[Onboarding] chrome.runtime.onInstalled fired', { reason: details.reason })
+
+  if (details.reason === 'install' || details.reason === 'update') {
+    Logging.log('Background', `Extension ${details.reason} - checking for first run`)
+
+    try {
+      // Check if onboarding has been completed
+      const result = await chrome.storage.local.get('hasCompletedOnboarding')
+      const hasCompletedOnboarding = result.hasCompletedOnboarding
+
+      console.log('[Onboarding] Storage check result:', { hasCompletedOnboarding })
+
+      // For testing: In development mode with update, always show onboarding to test
+      const shouldShowOnboarding = !hasCompletedOnboarding ||
+        (isDevelopmentMode() && details.reason === 'update')
+
+      if (shouldShowOnboarding) {
+        console.log('[Onboarding] Opening onboarding page')
+        Logging.log('Background', 'Opening onboarding page')
+        Logging.logMetric('onboarding_started', {
+          trigger: details.reason,
+          isDev: isDevelopmentMode()
+        })
+
+        // Open onboarding page in a new tab
+        const onboardingUrl = chrome.runtime.getURL('onboarding.html')
+        console.log('[Onboarding] URL:', onboardingUrl)
+
+        await chrome.tabs.create({ url: onboardingUrl })
+        console.log('[Onboarding] Tab created successfully')
+      } else {
+        console.log('[Onboarding] Skipping - already completed')
+      }
+    } catch (error) {
+      console.error('[Onboarding] Error during onboarding check:', error)
+      Logging.log('Background', `Onboarding error: ${error}`, 'error')
+    }
+  }
+})
+
+/**
  * Initialize the extension
  */
 function initialize(): void {
   Logging.log('Background', 'Nxtscape extension initializing')
   Logging.logMetric('extension_initialized')
-  
+
   // Register all handlers
   registerHandlers()
 
