@@ -178,7 +178,6 @@ export function ChatInput({ isConnected, isProcessing }: ChatInputProps) {
 
     // Get selected tab IDs from tabsStore
     const contextTabs = getContextTabs()
-    const tabIds = contextTabs.length > 0 ? contextTabs.map(tab => tab.id) : undefined
 
     // In chat mode, if no tabs are selected, explicitly send null to prevent using current page
     // In agent mode, undefined means "use current active tab"
