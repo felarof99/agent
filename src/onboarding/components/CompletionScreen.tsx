@@ -53,14 +53,12 @@ export function CompletionScreen() {
     <div className="flex flex-col items-center justify-center text-center space-y-8 animate-in fade-in zoom-in duration-700">
       {/* Success animation */}
       <div className="relative">
-        <div className="absolute inset-0 bg-brand/20 rounded-full blur-3xl animate-pulse" />
-        <div className="relative w-24 h-24 bg-gradient-to-br from-brand to-orange-500 rounded-full flex items-center justify-center shadow-2xl p-6 animate-in zoom-in duration-500">
-          <img
-            src="/assets/product_logo_svg.svg"
-            alt="BrowserOS"
-            className="w-full h-full object-contain animate-in zoom-in duration-500 delay-300"
-          />
-        </div>
+        <div className="absolute inset-0 bg-brand/20 blur-3xl animate-pulse" />
+        <img
+          src="/assets/new_tab_search/browseros.svg"
+          alt="BrowserOS"
+          className="relative w-32 h-32 object-contain drop-shadow-2xl animate-in zoom-in duration-500"
+        />
       </div>
 
       {/* Heading */}
