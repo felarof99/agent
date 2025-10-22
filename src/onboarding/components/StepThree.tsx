@@ -184,8 +184,8 @@ export function StepThree() {
 
                 {/* Example Query */}
                 <div className="mt-auto">
-                  <div className="p-2.5 bg-background/60 backdrop-blur-sm border border-border/50 rounded-lg">
-                    <p className="text-xs font-mono text-muted-foreground/90">
+                  <div className="p-2.5 bg-card/95 backdrop-blur-sm border-2 border-border rounded-lg shadow-sm">
+                    <p className="text-xs font-mono text-foreground font-medium leading-relaxed">
                       "{example.query}"
                     </p>
                   </div>
@@ -244,9 +244,9 @@ export function StepThree() {
 
               {/* Example */}
               <div className="mt-auto">
-                <p className="text-xs font-semibold text-muted-foreground/60 mb-1.5">Example:</p>
-                <div className="p-2 bg-background/50 backdrop-blur-sm border border-border/40 rounded-lg">
-                  <p className="text-xs font-mono text-muted-foreground/80 italic">
+                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Example:</p>
+                <div className="p-2 bg-card/90 backdrop-blur-sm border-2 border-border/80 rounded-lg shadow-sm">
+                  <p className="text-xs font-mono text-foreground/90 font-medium italic leading-relaxed">
                     {example.query}
                   </p>
                 </div>
