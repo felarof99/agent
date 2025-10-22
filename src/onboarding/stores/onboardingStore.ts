@@ -1,9 +1,9 @@
 import { create } from 'zustand'
 
-const TOTAL_STEPS = 4  // Welcome, Step 1, Step 2, Step 3, Completion
+const TOTAL_STEPS = 5  // Welcome, Step 1, Step 2, Step 3, Video, Completion
 
 interface OnboardingState {
-  currentStep: number  // 0 = welcome, 1-3 = steps, 4 = completion
+  currentStep: number  // 0 = welcome, 1-3 = steps, 4 = video, 5 = completion
   videoSkipped: boolean
   completedSteps: Set<number>
 

@@ -6,6 +6,7 @@ import { WelcomeStep } from './components/WelcomeStep'
 import { StepOne } from './components/StepOne'
 import { StepTwo } from './components/StepTwo'
 import { StepThree } from './components/StepThree'
+import { VideoStep } from './components/VideoStep'
 import { CompletionScreen } from './components/CompletionScreen'
 import './styles.css'
 
@@ -33,6 +34,8 @@ export function OnboardingApp() {
       case 3:
         return <StepThree />
       case 4:
+        return <VideoStep />
+      case 5:
         return <CompletionScreen />
       default:
         return <WelcomeStep />
