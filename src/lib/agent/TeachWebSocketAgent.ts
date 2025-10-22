@@ -7,6 +7,7 @@ import { TeachModeEventPayload } from "@/lib/pubsub/types";
 import { Logging } from "@/lib/utils/Logging";
 import { type SemanticWorkflow } from "@/lib/teach-mode/types";
 import { GlowAnimationService } from '@/lib/services/GlowAnimationService';
+import { isDevelopmentMode } from '@/config';
 
 interface PredefinedPlan {
   agentId: string;
@@ -177,14 +178,7 @@ ${JSON.stringify(userTrajectorySteps, null, 2)}`;
       });
 
       // Start glow animation
-      try {
-        const currentPage = await this.executionContext.browserContext.getCurrentPage();
-        if (currentPage?.tabId && !this.glowService.isGlowActive(currentPage.tabId)) {
-          await this.glowService.startGlow(currentPage.tabId);
-        }
-      } catch (error) {
-        Logging.log("TeachWebSocketAgent", `Could not start glow animation: ${error}`, "warning");
-      }
+      this._maybeStartGlow();
 
       // Connect to WebSocket server
       await this._connect();
@@ -233,7 +227,7 @@ ${JSON.stringify(userTrajectorySteps, null, 2)}`;
 
     return new Promise((resolve, reject) => {
       const connectMsgId = PubSub.generateId('teach_ws_connect');
-      this._emitThinking(connectMsgId, '🔗 Connecting to reasoning server...');
+      this._emitThinking(connectMsgId, 'Getting ready...');
       Logging.log("TeachWebSocketAgent", `Connecting to ${wsUrl}`, "info");
 
       // Create WebSocket
@@ -254,8 +248,6 @@ ${JSON.stringify(userTrajectorySteps, null, 2)}`;
       // WebSocket opened
       this.ws.onopen = () => {
         Logging.log("TeachWebSocketAgent", "WebSocket connection opened", "info");
-        const openMsgId = PubSub.generateId('teach_ws_open');
-        this._emitThinking(openMsgId, '✅ WebSocket opened, waiting for server...');
       };
 
       // WebSocket message received
@@ -269,9 +261,6 @@ ${JSON.stringify(userTrajectorySteps, null, 2)}`;
               clearTimeout(timeout);
               this.sessionId = data.data?.sessionId;
               this.isConnected = true;
-
-              const connectedMsgId = PubSub.generateId('teach_ws_connected');
-              this._emitThinking(connectedMsgId, '✅ Connected to reasoning server');
 
               if (this.sessionId) {
                 Logging.log(
@@ -428,26 +417,65 @@ ${formattedSteps}`;
       // Update last event time for timeout tracking
       this.lastEventTime = Date.now();
 
+      this._maybeStartGlow();
+
       // Route based on message type
-      if (data.type === 'connection') {
-        // Already handled in _connect
-        return;
-      }
+      const isDev = isDevelopmentMode();
 
-      if (data.type === 'completion') {
-        this._handleCompletion(data);
-        return;
-      }
+      switch (data.type) {
+        case 'connection':
+          // Already handled in _connect
+          break;
 
-      if (data.type === 'error') {
-        this._handleError(data);
-        return;
-      }
+        case 'completion':
+          this._handleCompletion(data);
+          break;
 
-      // For all other types (response, tool_use, thinking, etc), emit as thinking
-      if (data.content) {
-        const thinkingMsgId = PubSub.generateId('teach_ws_server');
-        this._emitThinking(thinkingMsgId, data.content);
+        case 'error':
+          this._handleError(data);
+          break;
+
+        case 'init':
+          if (isDev && data.content) {
+            const msgId = PubSub.generateId('teach_ws_server');
+            this._emitThinking(msgId, data.content);
+          }
+          break;
+
+        case 'thinking':
+          if (data.content) {
+            const msgId = PubSub.generateId('teach_ws_server');
+            this._emitThinking(msgId, data.content);
+          }
+          break;
+
+        case 'tool_use':
+          if (data.content) {
+            const msgId = PubSub.generateId('teach_ws_server');
+            this._emitThinking(msgId, data.content);
+          }
+          break;
+
+        case 'tool_result':
+          if (isDev && data.content) {
+            const msgId = PubSub.generateId('teach_ws_server');
+            this._emitThinking(msgId, data.content);
+          }
+          break;
+
+        case 'response':
+          if (data.content) {
+            const msgId = PubSub.generateId('teach_ws_server');
+            this._emitThinking(msgId, data.content);
+          }
+          break;
+
+        default:
+          if (isDev && data.content) {
+            Logging.log("TeachWebSocketAgent", `Unknown message type: ${data.type}`, "warning");
+            const msgId = PubSub.generateId('teach_ws_server');
+            this._emitThinking(msgId, data.content);
+          }
       }
 
     } catch (error) {
@@ -556,6 +584,21 @@ ${formattedSteps}`;
         error: errorMessage
       });
     }
+  }
+
+  /**
+   * Start glow animation (fire and forget)
+   */
+  private _maybeStartGlow(): void {
+    this.executionContext.browserContext.getCurrentPage()
+      .then(page => {
+        if (page?.tabId && !this.glowService.isGlowActive(page.tabId)) {
+          return this.glowService.startGlow(page.tabId);
+        }
+      })
+      .catch(error => {
+        Logging.log("TeachWebSocketAgent", `Could not start glow: ${error}`, "warning");
+      });
   }
 
   /**

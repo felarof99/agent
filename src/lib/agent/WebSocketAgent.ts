@@ -4,6 +4,7 @@ import { AbortError } from "@/lib/utils/Abortable";
 import { ExecutionMetadata } from "@/lib/types/messaging";
 import { Logging } from "@/lib/utils/Logging";
 import { GlowAnimationService } from '@/lib/services/GlowAnimationService';
+import { isDevelopmentMode } from '@/config';
 
 
 interface PredefinedPlan {
@@ -123,14 +124,7 @@ export class WebSocketAgent {
       Logging.log("WebSocketAgent", "Starting execution", "info");
 
       // Start glow animation
-      try {
-        const currentPage = await this.executionContext.browserContext.getCurrentPage();
-        if (currentPage?.tabId && !this.glowService.isGlowActive(currentPage.tabId)) {
-          await this.glowService.startGlow(currentPage.tabId);
-        }
-      } catch (error) {
-        Logging.log("WebSocketAgent", `Could not start glow animation: ${error}`, "warning");
-      }
+      this._maybeStartGlow();
 
       // Connect to WebSocket server
       await this._connect();
@@ -177,7 +171,7 @@ export class WebSocketAgent {
     const wsUrl = await this.executionContext.getAgentServerUrl();
 
     return new Promise((resolve, reject) => {
-      this._publishMessage('🔗 Connecting to reasoning server...', 'thinking');
+      this._publishMessage('Getting ready...', 'thinking');
       Logging.log("WebSocketAgent", `Connecting to ${wsUrl}`, "info");
 
       // Create WebSocket
@@ -198,7 +192,6 @@ export class WebSocketAgent {
       // WebSocket opened
       this.ws.onopen = () => {
         Logging.log("WebSocketAgent", "WebSocket connection opened", "info");
-        this._publishMessage('✅ WebSocket opened, waiting for server...', 'thinking');
       };
 
       // WebSocket message received
@@ -212,8 +205,6 @@ export class WebSocketAgent {
               clearTimeout(timeout);
               this.sessionId = data.data?.sessionId;
               this.isConnected = true;
-
-              this._publishMessage('✅ Connected to reasoning server', 'thinking');
 
               if (this.sessionId) {
                 Logging.log(
@@ -356,25 +347,60 @@ ${formattedSteps}`;
       // Update last event time for timeout tracking
       this.lastEventTime = Date.now();
 
+      // Trigger glow
+      this._maybeStartGlow();
+
       // Route based on message type
-      if (data.type === 'connection') {
-        // Already handled in _connect
-        return;
-      }
+      const isDev = isDevelopmentMode();
 
-      if (data.type === 'completion') {
-        this._handleCompletion(data);
-        return;
-      }
+      switch (data.type) {
+        case 'connection':
+          // Already handled in _connect
+          break;
 
-      if (data.type === 'error') {
-        this._handleError(data);
-        return;
-      }
+        case 'completion':
+          this._handleCompletion(data);
+          break;
 
-      // For all other types (response, tool_use, thinking, etc), publish content
-      if (data.content) {
-        this._publishMessage(data.content, 'thinking');
+        case 'error':
+          this._handleError(data);
+          break;
+
+        case 'init':
+          if (isDev && data.content) {
+            this._publishMessage(data.content, 'thinking');
+          }
+          break;
+
+        case 'thinking':
+          if (data.content) {
+            this._publishMessage(data.content, 'thinking');
+          }
+          break;
+
+        case 'tool_use':
+          if (data.content) {
+            this._publishMessage(data.content, 'thinking');
+          }
+          break;
+
+        case 'tool_result':
+          if (isDev && data.content) {
+            this._publishMessage(data.content, 'thinking');
+          }
+          break;
+
+        case 'response':
+          if (data.content) {
+            this._publishMessage(data.content, 'thinking');
+          }
+          break;
+
+        default:
+          if (isDev && data.content) {
+            Logging.log("WebSocketAgent", `Unknown message type: ${data.type}`, "warning");
+            this._publishMessage(data.content, 'thinking');
+          }
       }
 
     } catch (error) {
@@ -464,6 +490,21 @@ ${formattedSteps}`;
     this.pubsub.publishMessage(
       PubSub.createMessage(content, type as any)
     );
+  }
+
+  /**
+   * Start glow animation (fire and forget)
+   */
+  private _maybeStartGlow(): void {
+    this.executionContext.browserContext.getCurrentPage()
+      .then(page => {
+        if (page?.tabId && !this.glowService.isGlowActive(page.tabId)) {
+          return this.glowService.startGlow(page.tabId);
+        }
+      })
+      .catch(error => {
+        Logging.log("WebSocketAgent", `Could not start glow: ${error}`, "warning");
+      });
   }
 
   /**
