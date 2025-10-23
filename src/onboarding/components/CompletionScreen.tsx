@@ -67,7 +67,25 @@ export function CompletionScreen() {
           You're All Set! 🎉
         </h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Thank you for downloading BrowserOS! Join our discord or slack community to provide feedback and suggest new features!
+          Thank you for downloading BrowserOS! Join our{' '}
+          <a
+            href="https://discord.gg/browseros"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold underline hover:text-brand"
+          >
+            Discord
+          </a>{' '}
+          or{' '}
+          <a
+            href="https://dub.sh/browserOS-slack"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold underline hover:text-sky-500"
+          >
+            Slack
+          </a>{' '}
+          community to provide feedback and suggest new features!
         </p>
       </div>
 
@@ -77,13 +95,13 @@ export function CompletionScreen() {
           onClick={handleOpenSidePanel}
           className="px-10 py-4 bg-gradient-to-r from-brand to-orange-500 hover:from-brand/90 hover:to-orange-500/90 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-brand/25 hover:shadow-xl hover:shadow-brand/40 hover:scale-105 active:scale-95"
         >
-          Open AI Agent Panel
+          Open BrowserOS agent
         </button>
         <button
           onClick={handleOpenSettings}
           className="px-10 py-4 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-bold rounded-xl transition-all duration-300 border-2 border-border hover:scale-105 active:scale-95"
         >
-          Go to Settings
+          Go to BrowserOS settings
         </button>
       </div>
 
