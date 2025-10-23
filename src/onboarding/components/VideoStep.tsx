@@ -9,10 +9,10 @@ export function VideoStep() {
       {/* Header */}
       <div className="text-center space-y-4 pt-16">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-          See BrowserOS in Action
+          Why switch to BrowserOS?
         </h2>
         <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Watch our launch video to see how BrowserOS transforms your browsing experience with AI-powered automation
+          Watch our launch video to understand the vision of BrowserOS and key features!
         </p>
       </div>
 

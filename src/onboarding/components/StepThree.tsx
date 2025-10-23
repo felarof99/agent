@@ -14,7 +14,7 @@ export function StepThree() {
       url: 'https://news.google.com',
       clickable: true,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -35,7 +35,7 @@ export function StepThree() {
       url: 'chrome://newtab/',
       clickable: true,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -55,7 +55,7 @@ export function StepThree() {
       query: 'Unsubscribe from all promotional emails on my gmail tab',
       clickable: false,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -63,10 +63,7 @@ export function StepThree() {
             d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
           />
         </svg>
-      ),
-      gradient: 'from-purple-500 to-purple-600',
-      bgGradient: 'from-purple-500/10 to-purple-600/10',
-      hoverBorder: 'hover:border-purple-500/60'
+      )
     },
     {
       id: 'mcp-server',
@@ -75,7 +72,7 @@ export function StepThree() {
       query: '(in claude code) "Open LinkedIn.com and extract all my connections and give it as a table"',
       clickable: false,
       icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -89,10 +86,53 @@ export function StepThree() {
             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
           />
         </svg>
-      ),
-      gradient: 'from-green-500 to-green-600',
-      bgGradient: 'from-green-500/10 to-green-600/10',
-      hoverBorder: 'hover:border-green-500/60'
+      )
+    },
+    {
+      id: 'split-view',
+      title: 'Split-View AI on Any Page',
+      description: 'Open ChatGPT, Claude, or Gemini alongside any website. Get help while you work — summarize articles, draft responses, or analyze data without switching tabs.',
+      query: '',
+      clickable: false,
+      icon: (
+        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 5a2 2 0 012-2h12a2 2 0 012 2v6H4V5z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 13h7v6H6a2 2 0 01-2-2v-4zm9 0h7v4a2 2 0 01-2 2h-5v-6z"
+          />
+        </svg>
+      )
+    },
+    {
+      id: 'private-default',
+      title: 'Private by Default',
+      description: 'Run AI locally with Ollama or bring your own API keys. Your data never leaves your machine unless you choose.',
+      query: '',
+      clickable: false,
+      icon: (
+        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 15a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"
+          />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 10V8a6 6 0 1112 0v2m-1 0h-10a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2z"
+          />
+        </svg>
+      )
     }
   ]
 
@@ -147,18 +187,14 @@ export function StepThree() {
           Experience the AI Agent
         </h2>
         <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          BrowserOS comes with a built-in AI agent that can execute complex web tasks! Try the below features
+          BrowserOS comes with a built-in AI agent that can execute complex web tasks!
         </p>
       </div>
 
       {/* Try These Examples Section */}
       <div className="space-y-5">
-        <div className="text-center space-y-2">
-          <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
-            <span className="text-2xl">✨</span>
-            Try These Examples
-          </h3>
-          <p className="text-sm text-muted-foreground">Click on the first two cards to see the agent in action</p>
+        <div className="text-center">
+          <h3 className="text-2xl font-bold">Try These Examples</h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -225,44 +261,36 @@ export function StepThree() {
 
       {/* Additional Features Section */}
       <div className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {exampleQueries.filter(ex => !ex.clickable).map((example, index) => (
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xl">✨</span>
+          <h3 className="text-2xl font-bold">More Features!</h3>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {exampleQueries.filter(ex => !ex.clickable).map(example => (
             <div
               key={example.id}
-              className={`flex flex-col bg-gradient-to-br ${example.bgGradient} border border-border/50 rounded-xl p-4 text-left shadow-sm`}
+              className="flex items-start gap-3 p-4 bg-card/95 border border-border/60 rounded-2xl shadow-sm transition-all duration-300 hover:border-brand/40 hover:shadow-lg hover:shadow-brand/10 hover:-translate-y-1"
             >
-              {/* Icon & Title */}
-              <div className="flex items-start gap-3 mb-3">
-                <div className={`flex-shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br ${example.gradient} flex items-center justify-center text-white shadow-md`}>
-                  {example.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="font-bold text-sm mb-1 leading-tight">{example.title}</h4>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {example.description}
-                  </p>
-                </div>
+              <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-brand/15 to-orange-500/15 border border-brand/20 text-brand flex items-center justify-center">
+                {example.icon}
               </div>
-
-              {/* Example */}
-              <div className="mt-auto">
-                <p className="text-xs font-semibold text-muted-foreground mb-1.5">Example:</p>
-                <div className="p-2 bg-card/90 backdrop-blur-sm border-2 border-border/80 rounded-lg shadow-sm">
-                  <p className="text-xs font-mono text-foreground/90 font-medium italic leading-relaxed">
-                    {example.query}
+              <div className="space-y-1.5">
+                <h4 className="font-semibold text-sm leading-snug text-foreground">
+                  {example.title}
+                </h4>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {example.description}
+                </p>
+                {example.query && (
+                  <p className="text-xs text-muted-foreground/80 italic">
+                    {example.id === 'teach-mode' || example.id === 'mcp-server' ? `Example: ${example.query}` : example.query}
                   </p>
-                </div>
+                )}
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Help Text */}
-      <div className="text-center p-4 bg-muted/30 border border-border/50 rounded-xl">
-        <p className="text-sm text-muted-foreground">
-          💡 <span className="font-semibold">Tip:</span> Click on the first two cards to try them live. The AI agent panel will open showing the execution in real-time
-        </p>
       </div>
 
       {/* Navigation - Glass morphism style */}
